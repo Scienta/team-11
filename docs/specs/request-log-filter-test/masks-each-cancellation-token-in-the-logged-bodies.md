@@ -10,6 +10,10 @@ same body as the response.
 | ✅ passes | Token in a 201 | {"id":1,"cancellationToken":"kQ9-x_Z2"} | {"id":1,"cancellationToken":"***"} |
 | ✅ passes | Token in a DELETE | {"token":"kQ9-x_Z2"} | {"token":"***"} |
 | ✅ passes | Spaces around the colon | {"token" : "kQ9-x_Z2"} | {"token" : "***"} |
+| ✅ passes | Tab before the colon | {"token"&#x21E5;:"kQ9-x_Z2"} | {"token"&#x21E5;:"***"} |
+| ✅ passes | Tab after the colon | {"token":&#x21E5;"kQ9-x_Z2"} | {"token":&#x21E5;"***"} |
+| ✅ passes | Nine spaces before the colon | {"token"&#x2423;&#x2423;&#x2423;&#x2423;&#x2423;&#x2423;&#x2423;&#x2423;&#x2423;:"kQ9-x_Z2"} | {"token"&#x2423;&#x2423;&#x2423;&#x2423;&#x2423;&#x2423;&#x2423;&#x2423;&#x2423;:"***"} |
+| ✅ passes | Token of 300 characters | {"token":"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"} | {"token":"***"} |
 | ✅ passes | Empty token | {"token":""} | {"token":"***"} |
 | ✅ passes | Token that is not text | {"token":42} | {"token":42} |
 | ✅ passes | Another field ending in token | {"csrfToken":"kQ9-x_Z2"} | {"csrfToken":"kQ9-x_Z2"} |
