@@ -38,6 +38,23 @@ The full steps are in [`workflow/process.md`](workflow/process.md). The agent ru
 <!-- Who or what reviewed the agents' work (people, review agents, tests, Hurl examples, gates in
 the deploy workflow), and against what (the spec, its examples, your own checks). -->
 
+Four checks, in this order. Each one checks against the spec on the harness, not against the code.
+
+1. **Tests first, from the example tables.** Each row in `workflow/specs/<feature>/spec.md` becomes a
+   JUnit row before the code changes, and we see it fail.
+2. **A review agent with no shared context.** It gets the harness spec, our spec, the rubric
+   ([`workflow/review-rubric.md`](workflow/review-rubric.md)) and the commits. It does not get the
+   conversation that wrote the code.
+3. **Hurl examples against the real service.** `examples/our-*.hurl` cover every example row. We run
+   them against a local build first, then against the team URL after the deploy.
+4. **The request log and the harness transcripts.** `RequestLogFilter` writes one line per request,
+   so we can compare our answers with what the checks sent.
+
+Story (12:50): the Hurl run against a local build failed on `ratedAtDisplay`. The local JDK is 27,
+and from Java 20 the US short format puts U+202F, not a space, before "AM". The service runs Java
+11, so the harness passed, and no test checked the format. We fixed it with an explicit pattern
+before a Java upgrade could break it (`f9fa516`).
+
 ## 3. Claim log
 
 <!-- A running entry per feature or change request, written when you claim or decide to skip it:
@@ -47,6 +64,10 @@ claimed or skipped, at which tick, and the evidence you held before claiming. Fo
 |---|---|---|---|
 | Speakers | claimed | 3 | examples.hurl green against our URL, plus our own edge-case tests for R3 and R7 |
 -->
+
+| Feature | Claimed or skipped | Tick | Evidence before claiming |
+|---|---|---|---|
+| Speakers, talks, ratings | claimed by the organisers | 0 | Base features. At 12:25 all 15 checks were OK. Our own review then found 3 gaps against the specs (email, bio length, reviewer range), fixed in `336589f`, `fa1480e`, `dbe89fc`. |
 
 ## 4. What the harness caught that we didn't
 
