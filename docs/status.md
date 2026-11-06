@@ -1,6 +1,6 @@
 # Teststatus
 
-Laget 6. november 2026 kl. 14:57 fra versjon [247ff8f](https://github.com/Scienta/team-11/commit/247ff8ff5674b639f4d6ccd87d49a6e96179d2fb).
+Laget 6. november 2026 kl. 15:03 fra versjon [6d82881](https://github.com/Scienta/team-11/commit/6d828815245d174ee163cf8dc4e6fba3ed7d1391).
 
 ✅ Våre tester: alle 78 regler er i orden (340 av 340 eksempler).
 
