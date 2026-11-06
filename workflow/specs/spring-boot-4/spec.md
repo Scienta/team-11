@@ -61,7 +61,7 @@ The feature request does not give these. We decide them and write down why.
 |--------|------|--------|
 | POST | `/speakers/` | 201 |
 | GET | `/speakers/{id}/` | 200, the same body as `/speakers/{id}` |
-| PUT | `/speakers/{id}/` | 200 |
+| PUT | `/speakers/{id}/` | 405, like `PUT /speakers/{id}` since the security changes removed it |
 | GET | `/speakers/{id}/talks/` | 200 |
 | POST | `/talks/` | 201 |
 | GET | `/talks/{id}/` | 200 |

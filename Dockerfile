@@ -8,6 +8,7 @@ RUN mvn -B -q package -DskipTests
 
 # Runtime stage
 FROM eclipse-temurin:25-jre
+RUN useradd --system app
 WORKDIR /app
 COPY --from=build /build/target/cfp.jar app.jar
 # Scaleway's database needs TLS; the Compose Postgres doesn't, so application.properties defaults to off.
@@ -16,4 +17,5 @@ ENV PGSSLMODE=require
 ARG GIT_SHA=unknown
 ENV GIT_SHA=$GIT_SHA
 EXPOSE 8080
-ENTRYPOINT ["java", "-jar", "/app/app.jar"]
+USER app
+ENTRYPOINT ["java", "-XX:TieredStopAtLevel=1", "-jar", "/app/app.jar"]

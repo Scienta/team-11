@@ -70,7 +70,7 @@ class UpgradeContractTest {
         Scenario               | Method | Path                             | Body                                                                            | Status?
         Register a speaker     | POST   | /speakers/                       | '{"name":"Grace Hopper","email":"$email"}'                                      | 201
         Read a speaker         | GET    | /speakers/$speaker/              |                                                                                 | 200
-        Update a speaker       | PUT    | /speakers/$speaker/              | '{"name":"Grace Hopper","email":"$email"}'                                      | 200
+        PUT is gone            | PUT    | /speakers/$speaker/              | '{"name":"Grace Hopper","email":"$email"}'                                      | 405
         A speaker's talks      | GET    | /speakers/$speaker/talks/        |                                                                                 | 200
         Submit a talk          | POST   | /talks/                          | '{"title":"T","format":"PRESENTATION","level":"BEGINNER","speakerId":$speaker}' | 201
         Read a talk            | GET    | /talks/$talk/                    |                                                                                 | 200

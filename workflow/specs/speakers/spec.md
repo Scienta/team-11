@@ -34,7 +34,7 @@ Source: `request.md` in this folder (the base spec from the harness, not edited)
 | The same email, other letter case | 409 | R5. A conflict with an existing speaker, not a bad request. |
 | Unknown speaker ID | 404 | |
 | Speaker ID that is not a number | 400 | |
-| `PUT /speakers/{id}` (admin, not in the spec) | Same email and bio rules as POST | One rule for one business concept. The old limit for the bio was 1000. |
+| `PUT /speakers/{id}` (admin, not in the spec) | Removed: 405, the speaker does not change | It had no authorisation, so anybody could change any speaker's name and email (security review, 2026-11-06). No spec asks for it. |
 | Name, email and bio | Stored and returned as sent, not trimmed | R2: "exactly as registered" |
 | `GET /speakers/search?q=` (admin, not in the spec) | `q` is bound as a parameter, so `O'Brien` finds O'Brien. `%` and `_` in `q` still act as wildcards. | B1: the term was pasted into the SQL (injection). Escaping wildcards would be a second behaviour change; nobody has asked for it. |
 

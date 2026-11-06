@@ -77,7 +77,7 @@ public class CoSpeakerService {
     }
 
     private static void requireChangeable(TalkDto talk) {
-        if (UNCHANGEABLE_STATUSES.contains(TalkStatus.valueOf(talk.status))) {
+        if (UNCHANGEABLE_STATUSES.contains(talk.status)) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "a withdrawn or rejected talk can't be changed");
         }
     }

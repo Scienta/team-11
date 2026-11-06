@@ -73,7 +73,7 @@ public class ConferenceService {
         } catch (DuplicateKeyException e) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "email already registered");
         }
-        log.info("registered speaker " + id + " (" + form.getEmail() + ")");
+        log.info("registered speaker " + id);
         notifications.speakerRegistered(form.getEmail(), form.getName());
         Map<String, Object> speaker = new LinkedHashMap<>();
         speaker.put("id", id);
@@ -89,23 +89,6 @@ public class ConferenceService {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "speaker not found");
         }
         return speaker;
-    }
-
-    @Transactional
-    public Map<String, Object> updateSpeaker(long id, String name, String email, String bio) {
-        Map<String, Object> existing = getSpeaker(id);
-        if (name == null || name.equals("")) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "name is required");
-        }
-        if (!Utils.isValidEmail(email)) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "invalid email");
-        }
-        requireBioWithinLimit(bio);
-        if (!email.equalsIgnoreCase((String) existing.get("email")) && speakerDao.emailTaken(email)) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "email already registered");
-        }
-        speakerDao.update(id, name, email, bio);
-        return getSpeaker(id);
     }
 
     /** A character is one Unicode code point, so an emoji counts once. */
@@ -172,6 +155,7 @@ public class ConferenceService {
                 System.currentTimeMillis());
     }
 
+    @Transactional(readOnly = true)
     public TalkDto getTalk(long id) {
         TalkDto talk = talkDao.findById(id);
         if (talk == null) {
@@ -181,6 +165,7 @@ public class ConferenceService {
         return talk;
     }
 
+    @Transactional(readOnly = true)
     public List<TalkDto> getTalksForSpeaker(long speakerId) {
         if (speakerDao.findById(speakerId) == null) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "speaker not found");
@@ -193,6 +178,7 @@ public class ConferenceService {
     }
 
     /** The talk list without the withdrawn talks when {@code includeWithdrawn} is false (Acceptance R9). */
+    @Transactional(readOnly = true)
     public List<TalkDto> listTalks(String sort, Long speakerId, boolean includeWithdrawn) {
         return listTalks(sort, speakerId).stream()
                 .filter(talk -> includeWithdrawn || !isWithdrawn(talk))
@@ -200,6 +186,7 @@ public class ConferenceService {
     }
 
     /** The talks in the order of Ratings R5 or R6, with the withdrawn talks after the others (Acceptance R9). */
+    @Transactional(readOnly = true)
     public List<TalkDto> listTalks(String sort, Long speakerId) {
         Map<Boolean, List<TalkDto>> byWithdrawn = orderedTalks(sort, speakerId).stream()
                 .collect(Collectors.partitioningBy(ConferenceService::isWithdrawn));
@@ -209,7 +196,7 @@ public class ConferenceService {
     }
 
     private static boolean isWithdrawn(TalkDto talk) {
-        return TalkStatus.WITHDRAWN.name().equals(talk.status);
+        return talk.status == TalkStatus.WITHDRAWN;
     }
 
     private List<TalkDto> orderedTalks(String sort, Long speakerId) {
@@ -263,6 +250,7 @@ public class ConferenceService {
 
     // ---------------------------------------------------------------- statistics
 
+    @Transactional(readOnly = true)
     public Map<String, Object> statistics() {
         List<TalkDto> talks = listTalks(null, null);
         Map<String, Integer> byFormat = new LinkedHashMap<>();
@@ -275,7 +263,7 @@ public class ConferenceService {
         for (TalkDto t : talks) {
             byFormat.put(t.format, byFormat.getOrDefault(t.format, 0) + 1);
             byLevel.put(t.level, byLevel.getOrDefault(t.level, 0) + 1);
-            byStatus.put(t.status, byStatus.getOrDefault(t.status, 0) + 1);
+            byStatus.put(t.status.name(), byStatus.getOrDefault(t.status.name(), 0) + 1);
             if (!speakersWithTalks.contains(t.speakerId) && speakerDao.findById(t.speakerId) != null) {
                 speakersWithTalks.add(t.speakerId);
             }

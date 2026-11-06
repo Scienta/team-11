@@ -1,0 +1,84 @@
+package no.scienta.cfp;
+
+import java.util.List;
+import java.util.Optional;
+
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.RowMapper;
+import org.springframework.stereotype.Repository;
+
+/**
+ * Reads the talk that a registration is for, and reads and writes the workshop's registrations
+ * (workshop-registration). Reads the talk table with its own SQL and never changes it.
+ */
+@Repository
+public class WorkshopRegistrationDao {
+
+    private static final RowMapper<WorkshopTalk> TALK =
+            (rs, row) -> new WorkshopTalk(rs.getString("format"), TalkStatus.valueOf(rs.getString("status")));
+    private static final RowMapper<Registration> REGISTRATION = (rs, row) -> new Registration(
+            rs.getLong("id"), rs.getLong("talk_id"), rs.getString("name"), rs.getString("email"));
+
+    private final JdbcTemplate jdbc;
+    private final TalkDao talkDao;
+
+    public WorkshopRegistrationDao(JdbcTemplate jdbc, TalkDao talkDao) {
+        this.jdbc = jdbc;
+        this.talkDao = talkDao;
+    }
+
+    /**
+     * The talk, with its row locked until the transaction ends, so that registrations for one workshop take turns and
+     * none can see a seat that another has just taken (R5, R6). Must run inside a transaction.
+     */
+    public Optional<WorkshopTalk> lockTalk(long talkId) {
+        return talkDao.lock(talkId, TalkDao.Lock.UPDATE) ? findTalk(talkId) : Optional.empty();
+    }
+
+    public Optional<WorkshopTalk> findTalk(long talkId) {
+        return jdbc.query("SELECT format, status FROM talk WHERE id = ?", TALK, talkId).stream().findFirst();
+    }
+
+    public int seatsTaken(long talkId) {
+        Integer taken = jdbc.queryForObject("SELECT COUNT(*) FROM workshop_registration WHERE talk_id = ?",
+                Integer.class, talkId);
+        return taken == null ? 0 : taken;
+    }
+
+    public boolean emailRegistered(long talkId, String email) {
+        Integer found = jdbc.queryForObject(
+                "SELECT COUNT(*) FROM workshop_registration WHERE talk_id = ? AND lower(email) = lower(?)",
+                Integer.class, talkId, email);
+        return found != null && found > 0;
+    }
+
+    /**
+     * Saves the registration, or saves nothing and returns empty when the email is already on the list in some letter
+     * case. The unique index decides, so this holds even without the row lock (R6). {@code ON CONFLICT} leaves the
+     * transaction usable, where a duplicate-key error would abort it.
+     */
+    public Optional<Registration> addAttendee(long talkId, RegistrationRequest request) {
+        return jdbc.query("INSERT INTO workshop_registration (talk_id, name, email) VALUES (?, ?, ?) "
+                        + "ON CONFLICT (talk_id, lower(email)) DO NOTHING RETURNING id",
+                        (rs, row) -> rs.getLong("id"), talkId, request.name(), request.email())
+                .stream()
+                .findFirst()
+                .map(id -> new Registration(id, talkId, request.name(), request.email()));
+    }
+
+    /**
+     * Deletes the registration if it belongs to the workshop and has this email in any letter case (R9, R10). Returns
+     * whether one was deleted.
+     */
+    public boolean delete(long talkId, long registrationId, String email) {
+        return jdbc.update("DELETE FROM workshop_registration WHERE id = ? AND talk_id = ? AND lower(email) = lower(?)",
+                registrationId, talkId, email) == 1;
+    }
+
+    /** The workshop's registrations in the order they were saved (R8). */
+    public List<Registration> registrations(long talkId) {
+        return List.copyOf(jdbc.query(
+                "SELECT id, talk_id, name, email FROM workshop_registration WHERE talk_id = ? ORDER BY id",
+                REGISTRATION, talkId));
+    }
+}

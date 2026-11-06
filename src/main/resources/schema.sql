@@ -61,3 +61,13 @@ CREATE TABLE IF NOT EXISTS talk_co_speaker (
     added_order BIGSERIAL,
     PRIMARY KEY (talk_id, speaker_id)
 );
+
+-- 2026-11 workshop registration (workshop-registration R1-R8). No foreign key, like the other tables.
+-- The unique index backs "one registration per email per workshop, whatever the letter case" (R6).
+CREATE TABLE IF NOT EXISTS workshop_registration (
+    id      BIGSERIAL PRIMARY KEY,
+    talk_id BIGINT NOT NULL,
+    name    TEXT NOT NULL,
+    email   TEXT NOT NULL                          -- as the attendee typed it
+);
+CREATE UNIQUE INDEX IF NOT EXISTS ux_workshop_registration_email ON workshop_registration (talk_id, lower(email));

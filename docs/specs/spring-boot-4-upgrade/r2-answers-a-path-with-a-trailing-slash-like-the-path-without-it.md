@@ -9,7 +9,7 @@ and their talk, $other another registered speaker and $email a new address.
 | --- | --- | --- | --- | --- | --- |
 | ✅ passes | Register a speaker | POST | /speakers/ | {"name":"Grace Hopper","email":"$email"} | 201 |
 | ✅ passes | Read a speaker | GET | /speakers/$speaker/ |  | 200 |
-| ✅ passes | Update a speaker | PUT | /speakers/$speaker/ | {"name":"Grace Hopper","email":"$email"} | 200 |
+| ✅ passes | PUT is gone | PUT | /speakers/$speaker/ | {"name":"Grace Hopper","email":"$email"} | 405 |
 | ✅ passes | A speaker's talks | GET | /speakers/$speaker/talks/ |  | 200 |
 | ✅ passes | Submit a talk | POST | /talks/ | {"title":"T","format":"PRESENTATION","level":"BEGINNER","speakerId":$speaker} | 201 |
 | ✅ passes | Read a talk | GET | /talks/$talk/ |  | 200 |

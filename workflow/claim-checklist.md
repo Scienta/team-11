@@ -14,6 +14,7 @@ Set the team URL first: `TEAM_URL=https://fagsem-h2026-team-11.scienta.cloud`
 | `GET /health` on the team URL shows that SHA as `version` | `curl -s "$TEAM_URL/health"` |
 | `examples/run.sh "$TEAM_URL"` passes, all files | Output of the run |
 | The review agent found no open defect | The review summary |
+| The security guardian (`workflow/security-review.md`) and the architecture guardian (`workflow/architecture-review.md`) report no blocker | Their reports for the commits of the feature |
 | The base features still pass their examples | Output of the run |
 | No FAULTY check on the harness for this feature or the base features | `workflow/harness.sh feedback` |
 

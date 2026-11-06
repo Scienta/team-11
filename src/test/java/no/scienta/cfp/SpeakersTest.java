@@ -144,20 +144,21 @@ public class SpeakersTest {
         assertEquals(status, res.statusCode(), res.body());
     }
 
-    @DisplayName("R4: Applies the bio limit when an admin updates a speaker")
+    @DisplayName("Refuses to change a registered speaker")
     @Description("""
-            The admin update is PUT /speakers/{id}. Each row updates the bio of a registered speaker
-            and keeps the name and the email.
+            Speaker 1 registers as Grace Hopper. The request asks to change the name to Ada Lovelace.
+            No spec has an endpoint to change a speaker, and the old admin update had no
+            authorisation (security review, 2026-11-06).
             """)
     @TableTest("""
-        Scenario           | Bio      | Status?
-        Emoji at the limit | 500 × 😀 | 200
-        One past the limit | 501 × x  | 400
+        Scenario      | Path         | Status? | Name After?
+        Without slash | /speakers/1  | 405     | Grace Hopper
+        With slash    | /speakers/1/ | 405     | Grace Hopper
         """)
-    void limitsTheBioTo500CharactersOnUpdate(Bio bio, int status) throws Exception {
-        String id = JSON.readTree(register("grace@example.com", null).body()).get("id").asText();
-        HttpResponse<String> res = send("PUT", "/speakers/" + id, speaker("grace@example.com", bio));
-        assertEquals(status, res.statusCode(), res.body().substring(0, Math.min(200, res.body().length())));
+    void refusesToChangeARegisteredSpeaker(String path, int status, String nameAfter) throws Exception {
+        assertEquals(201, register("grace@example.com", null).statusCode());
+        assertEquals(status, send("PUT", path, speaker("Ada Lovelace", "grace@example.com", null)).statusCode());
+        assertEquals(nameAfter, JSON.readTree(send("GET", "/speakers/1", null).body()).get("name").asText());
     }
 
     @DisplayName("R5: Refuses a second speaker with the same email")

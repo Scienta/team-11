@@ -1,8 +1,8 @@
 # Teststatus
 
-Laget 6. november 2026 kl. 13:59 fra versjon [b5b8132](https://github.com/Scienta/team-11/commit/b5b8132c879b325ab58c5daa9015bf52536a2723).
+Laget 6. november 2026 kl. 14:29 fra versjon [ac85ae4](https://github.com/Scienta/team-11/commit/ac85ae4cae06e7913dffcb3cdece2673d577bc9c).
 
-✅ Våre tester: alle 43 regler er i orden (177 av 177 eksempler).
+✅ Våre tester: alle 64 regler er i orden (249 av 249 eksempler).
 
 ✅ Arrangørenes kontroller: alle 15 er i orden (Foredragsholdere, Foredrag, Karakterer).
 
@@ -15,7 +15,7 @@ Alle detaljer står i [testrapporten](specs/index.md).
 - ✅ **R3** En foredragsholder må ha et navn. — 4 av 4 eksempler · [se eksemplene](specs/speakers/r3-registers-a-speaker-only-with-a-name.md)
 - ✅ **R3** En foredragsholder må ha en gyldig e-postadresse. — 13 av 13 eksempler · [se eksemplene](specs/speakers/r3-registers-a-speaker-only-with-a-real-email-address.md)
 - ✅ **R4** Beskrivelsen av en foredragsholder kan ha høyst 500 tegn. — 5 av 5 eksempler · [se eksemplene](specs/speakers/r4-limits-the-bio-to-500-characters.md)
-- ✅ **R4** Grensen på 500 tegn gjelder også når en administrator endrer beskrivelsen. — 2 av 2 eksempler · [se eksemplene](specs/speakers/r4-applies-the-bio-limit-when-an-admin-updates-a-speaker.md)
+- ✅ Ingen kan endre en foredragsholder etter registreringen. — 2 av 2 eksempler · [se eksemplene](specs/speakers/refuses-to-change-a-registered-speaker.md)
 - ✅ **R5** To foredragsholdere kan ikke ha samme e-postadresse. — 2 av 2 eksempler · [se eksemplene](specs/speakers/r5-refuses-a-second-speaker-with-the-same-email.md)
 - ✅ **R7** En nettadresse med skråstrek til slutt virker som uten. — 2 av 2 eksempler · [se eksemplene](specs/speakers/r7-treats-a-trailing-slash-like-the-path-without-it.md)
 - ✅ Vi finner en registrert foredragsholder igjen. — 3 av 3 eksempler · [se eksemplene](specs/speakers/finds-a-registered-speaker-by-id.md)
@@ -26,6 +26,13 @@ Alle detaljer står i [testrapporten](specs/index.md).
 - ✅ **R4** Lengden på foredraget følger av formatet. Foredragsholderen velger den ikke. — 4 av 4 eksempler · [se eksemplene](specs/talks/r4-sets-the-duration-from-the-format.md)
 - ✅ **R5** Et foredrag har ett av de fire formatene: lyntale på 10 eller 20 minutter, presentasjon eller workshop. — 4 av 4 eksempler · [se eksemplene](specs/talks/r5-accepts-only-the-four-formats-in-capitals.md)
 - ✅ **R5** Et foredrag har ett av de tre nivåene: nybegynner, middels eller viderekommen. — 4 av 4 eksempler · [se eksemplene](specs/talks/r5-accepts-only-the-three-levels-in-capitals.md)
+- ✅ **R1, R2, R3, R5** Et foredrag kan ha høyst to medforedragsholdere. De må være registrert, og hovedforedragsholderen kan ikke være en av dem. — 10 av 10 eksempler · [se eksemplene](specs/co-speakers/r1-r2-r3-r5-adds-another-registered-speaker-at-most-two.md)
+- ✅ **R4** Alle foredrag viser medforedragsholderne i den rekkefølgen de ble lagt til. — 7 av 7 eksempler · [se eksemplene](specs/co-speakers/r4-shows-the-co-speakers-last-in-the-order-added-wherever-a-talk-is-shown.md)
+- ✅ **R4** Medforedragsholderne vises også når et foredrag blir godkjent, avvist, satt på venteliste eller trukket. — 2 av 2 eksempler · [se eksemplene](specs/co-speakers/r4-shows-the-co-speakers-in-the-answers-of-the-acceptance-endpoints.md)
+- ✅ **R6** En foredragsholders egen liste viser bare foredrag der hen er hovedforedragsholder. — 2 av 2 eksempler · [se eksemplene](specs/co-speakers/r6-a-co-speaker-s-own-talk-list-shows-only-their-own-talks.md)
+- ✅ **R8** En medforedragsholder kan fjernes igjen. Hovedforedragsholderen kan ikke fjernes. — 7 av 7 eksempler · [se eksemplene](specs/co-speakers/r8-removes-a-co-speaker-never-the-main-speaker.md)
+- ✅ **R9** Et foredrag som er trukket eller avvist, kan ikke få nye eller færre medforedragsholdere. — 2 av 2 eksempler · [se eksemplene](specs/co-speakers/r9-a-withdrawn-or-rejected-talk-can-t-be-changed.md)
+- ✅ Et ukjent foredrag gir en tydelig feilmelding. — 4 av 4 eksempler · [se eksemplene](specs/co-speakers/answers-404-for-an-unknown-talk-and-400-for-a-talk-id-that-is-not-a-number.md)
 
 ## Karakterer
 
@@ -53,6 +60,24 @@ Alle detaljer står i [testrapporten](specs/index.md).
 - ✅ **R9** Man kan velge å skjule trukne foredrag. Valget er ja eller nei. — 3 av 3 eksempler · [se eksemplene](specs/acceptance/r9-takes-only-true-or-false-to-leave-out-withdrawn-talks.md)
 - ✅ Vi sier tydelig fra når et foredrag ikke finnes. — 1 av 1 eksempel · [se eksemplene](specs/acceptance/answers-404-for-a-talk-that-does-not-exist.md)
 
+## Workshoper
+
+- ✅ **R1** En påmelding må ha et navn og en gyldig e-postadresse. — 9 av 9 eksempler · [se eksemplene](specs/workshop-registration/r1-registers-an-attendee-only-with-a-name-and-a-real-email.md)
+- ✅ En påmelding som ikke kan leses, avvises med en tydelig feil. — 5 av 5 eksempler · [se eksemplene](specs/workshop-registration/answers-400-for-a-request-it-cannot-use.md)
+- ✅ **R2** Bare workshoper tar imot påmeldinger. — 3 av 3 eksempler · [se eksemplene](specs/workshop-registration/r2-takes-registrations-only-for-a-workshop.md)
+- ✅ **R3** Man kan bare melde seg på en workshop som komiteen har godtatt. — 2 av 2 eksempler · [se eksemplene](specs/workshop-registration/r3-takes-registrations-only-for-an-accepted-workshop.md)
+- ✅ **R4** Når en workshop trekkes, står de påmeldte fortsatt på listen. — 2 av 2 eksempler · [se eksemplene](specs/workshop-registration/r4-keeps-the-attendees-of-a-withdrawn-workshop.md)
+- ✅ **R5** En workshop har plass til høyst 20 deltakere. — 2 av 2 eksempler · [se eksemplene](specs/workshop-registration/r5-takes-at-most-20-attendees-for-a-workshop.md)
+- ✅ **R5** Også når mange melder seg på samtidig, får bare 20 plass. — 2 av 2 eksempler · [se eksemplene](specs/workshop-registration/r5-keeps-20-seats-when-many-register-at-the-same-time.md)
+- ✅ **R6, R7** En e-postadresse kan bare meldes på én gang per workshop, uansett store eller små bokstaver. Samme person kan melde seg på flere workshoper. — 3 av 3 eksempler · [se eksemplene](specs/workshop-registration/r6-r7-registers-an-email-once-for-each-workshop.md)
+- ✅ **R6** Kommer samme påmelding flere ganger samtidig, teller den bare én gang. — 2 av 2 eksempler · [se eksemplene](specs/workshop-registration/r6-registers-one-of-the-same-email-sent-at-the-same-time.md)
+- ✅ **R8** Arrangørene ser deltakerne i den rekkefølgen de meldte seg på. — 3 av 3 eksempler · [se eksemplene](specs/workshop-registration/r8-lists-the-attendees-in-the-order-they-registered.md)
+- ✅ **R9** En deltaker kan melde seg av, og plassen blir ledig for en annen. — 2 av 2 eksempler · [se eksemplene](specs/workshop-registration/r9-frees-the-seat-when-an-attendee-unregisters.md)
+- ✅ **R9** En påmelding kan bare meldes av én gang, og bare fra sin egen workshop. — 5 av 5 eksempler · [se eksemplene](specs/workshop-registration/r9-unregisters-a-registration-once-from-its-own-workshop.md)
+- ✅ **R6, R9** Den som har meldt seg av, kan melde seg på igjen. — 2 av 2 eksempler · [se eksemplene](specs/workshop-registration/r6-r9-registers-an-email-again-after-it-unregistered.md)
+- ✅ **R9** En ledig plass går til én deltaker, også når mange melder seg på samtidig. — 2 av 2 eksempler · [se eksemplene](specs/workshop-registration/r9-gives-a-freed-seat-to-one-attendee-only.md)
+- ✅ **R10** For å melde seg av må man oppgi e-postadressen fra påmeldingen. — 5 av 5 eksempler · [se eksemplene](specs/workshop-registration/r10-unregisters-only-with-the-registration-s-email.md)
+
 ## Oppstart
 
 - ✅ **R1** Ved oppstart varmer tjenesten seg opp med de samme forespørslene som brukerne sender. — 6 av 6 eksempler · [se eksemplene](specs/warm-up/r1-sends-each-warm-up-request-through-the-http-port.md)
@@ -63,10 +88,9 @@ Alle detaljer står i [testrapporten](specs/index.md).
 
 ## Annet
 
-- ✅ Et foredrag kan ha høyst to medforedragsholdere. De må være registrert, og hovedforedragsholderen kan ikke være en av dem. — 10 av 10 eksempler · [se eksemplene](specs/co-speakers/r1-r2-r3-r5-adds-another-registered-speaker-at-most-two.md)
-- ✅ **R4** Alle foredrag viser medforedragsholderne i den rekkefølgen de ble lagt til. — 7 av 7 eksempler · [se eksemplene](specs/co-speakers/r4-shows-the-co-speakers-last-in-the-order-added-wherever-a-talk-is-shown.md)
-- ✅ **R4** Medforedragsholderne vises også når et foredrag blir godkjent, avvist, satt på venteliste eller trukket. — 2 av 2 eksempler · [se eksemplene](specs/co-speakers/r4-shows-the-co-speakers-in-the-answers-of-the-acceptance-endpoints.md)
-- ✅ **R6** En foredragsholders egen liste viser bare foredrag der hen er hovedforedragsholder. — 2 av 2 eksempler · [se eksemplene](specs/co-speakers/r6-a-co-speaker-s-own-talk-list-shows-only-their-own-talks.md)
-- ✅ **R8** En medforedragsholder kan fjernes igjen. Hovedforedragsholderen kan ikke fjernes. — 7 av 7 eksempler · [se eksemplene](specs/co-speakers/r8-removes-a-co-speaker-never-the-main-speaker.md)
-- ✅ **R9** Et foredrag som er trukket eller avvist, kan ikke få nye eller færre medforedragsholdere. — 2 av 2 eksempler · [se eksemplene](specs/co-speakers/r9-a-withdrawn-or-rejected-talk-can-t-be-changed.md)
-- ✅ Et ukjent foredrag gir en tydelig feilmelding. — 4 av 4 eksempler · [se eksemplene](specs/co-speakers/answers-404-for-an-unknown-talk-and-400-for-a-talk-id-that-is-not-a-number.md)
+- ✅ Ved en feil i databasen svarer tjenesten uten å vise tekniske detaljer. — 1 av 1 eksempel · [se eksemplene](specs/error-answers/answers-a-database-failure-without-its-details.md)
+- ✅ Tekst som inneholder et ugyldig nulltegn, avvises. — 2 av 2 eksempler · [se eksemplene](specs/error-answers/refuses-a-text-field-that-holds-a-nul-character.md)
+- ✅ E-postadresser skjules i loggen. — 7 av 7 eksempler · [se eksemplene](specs/request-log-filter-test/masks-each-email-in-the-logged-bodies.md)
+- ✅ Også en stor forespørsel blir logget raskt. — 3 av 3 eksempler · [se eksemplene](specs/request-log-filter-test/logs-a-large-body-in-a-short-time.md)
+- ✅ I eksporten til regneark blir en verdi som ligner en formel, lagret som tekst. — 6 av 6 eksempler · [se eksemplene](specs/utils-test/exports-a-value-that-starts-like-a-formula-as-text.md)
+- ✅ I eksporten til regneark får en verdi med semikolon eller linjeskift anførselstegn rundt seg. — 4 av 4 eksempler · [se eksemplene](specs/utils-test/quotes-a-value-with-a-semicolon-or-a-line-break.md)

@@ -2,15 +2,18 @@ package no.scienta.cfp;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTimeoutPreemptively;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.boot.test.system.CapturedOutput;
@@ -19,6 +22,9 @@ import org.springframework.mock.web.MockFilterChain;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.util.StreamUtils;
+import org.tabletest.junit.Description;
+import org.tabletest.junit.Scenario;
+import org.tabletest.junit.TableTest;
 
 /**
  * The request log: one line per request in the container logs, so we can see what the harness sends.
@@ -59,6 +65,67 @@ class RequestLogFilterTest {
 
         assertTrue(output.getOut().contains("…(+500 chars)"), output.getOut());
         assertFalse(output.getOut().contains(longTitle), "logged the whole body");
+    }
+
+    @Test
+    void keepsOnlyTheStartOfALargeBodyForTheLog(CapturedOutput output) throws Exception {
+        String largeBody = "x".repeat(1_000_000);
+
+        filter.doFilter(jsonRequest("PUT", "/talks/1/status", largeBody), new MockHttpServletResponse(),
+                chainAnswering(413, ""));
+
+        assertTrue(output.getOut().contains("…(+6000 chars)"), "the log kept more than 8000 bytes of the body");
+    }
+
+    @DisplayName("Masks each email in the logged bodies")
+    @Description("""
+            Each row sends the body as the request and gets the same body as the response. Both logged
+            bodies must show the masked form. The mask keeps the first character and the domain, so a
+            person can still match a log line with a harness transcript.
+            """)
+    @TableTest("""
+        Scenario                | Body                                                          | Logged Body?
+        One email               | '{"email":"ada@example.com"}'                                 | '{"email":"a***@example.com"}'
+        Email in capitals       | '{"email":"ADA@Example.com"}'                                 | '{"email":"A***@Example.com"}'
+        One letter before the @ | '{"email":"a@example.com"}'                                   | '{"email":"a***@example.com"}'
+        Two emails              | '[{"email":"ada@example.com"},{"email":"grace@example.org"}]' | '[{"email":"a***@example.com"},{"email":"g***@example.org"}]'
+        Domain without a dot    | '{"email":"ada@example"}'                                     | '{"email":"a***@example"}'
+        No @                    | '{"email":"not-an-email"}'                                    | '{"email":"not-an-email"}'
+        Nothing before the @    | '{"email":"@example.com"}'                                    | '{"email":"@example.com"}'
+        """)
+    void masksEachEmailInTheLoggedBodies(@Scenario String scenario, String body, String loggedBody,
+                                         CapturedOutput output) throws Exception {
+        filter.doFilter(jsonRequest("POST", "/speakers", body), new MockHttpServletResponse(), chainAnswering(201, body));
+
+        assertTrue(output.getOut().contains("request=" + loggedBody + " response=" + loggedBody), output.getOut());
+    }
+
+    @Test
+    void masksAnEmailThatTheCutGoesThrough(CapturedOutput output) throws Exception {
+        String body = "x".repeat(RequestLogFilter.MAX_BODY_CHARS - 10) + " ada.lovelace@example.com";
+
+        filter.doFilter(jsonRequest("POST", "/speakers", body), new MockHttpServletResponse(), chainAnswering(201, ""));
+
+        assertFalse(output.getOut().contains("ada.l"), output.getOut());
+    }
+
+    @DisplayName("Logs a large body in a short time")
+    @Description("""
+            The body has no @ and no line break: the slowest input for the email mask and for the
+            joining of lines. The filter logs the body as the request and as the response, and the
+            time limit is for both.
+            """)
+    @TableTest("""
+        Scenario         | Character | Repeats | Time Limit (ms)
+        80 KB of letters | A         | 80000   | 200
+        2 MB of letters  | A         | 2000000 | 200
+        2 MB of spaces   | ' '       | 2000000 | 200
+        """)
+    void logsALargeBodyInAShortTime(String character, int repeats, long timeLimitMillis) {
+        String body = character.repeat(repeats);
+
+        assertTimeoutPreemptively(Duration.ofMillis(timeLimitMillis), () -> filter.doFilter(
+                jsonRequest("POST", "/talks", body), new MockHttpServletResponse(), chainAnswering(200, body)));
     }
 
     private static MockHttpServletRequest jsonRequest(String method, String uri, String body) {
