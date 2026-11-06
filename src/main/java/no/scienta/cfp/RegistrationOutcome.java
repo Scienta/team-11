@@ -10,19 +10,23 @@ public sealed interface RegistrationOutcome {
     record Registered(Registration registration) implements RegistrationOutcome {
     }
 
+    /** Every outcome in which the attendee is not on the list. */
+    sealed interface Refusal extends RegistrationOutcome {
+    }
+
     /** No talk with this ID is a workshop (R2). */
-    record NotAWorkshop() implements RegistrationOutcome {
+    record NotAWorkshop() implements Refusal {
     }
 
     /** The workshop is not accepted, so it takes no registrations (R3). */
-    record Closed(TalkStatus status) implements RegistrationOutcome {
+    record Closed(TalkStatus status) implements Refusal {
     }
 
     /** Every seat is taken (R5). */
-    record Full(int seats) implements RegistrationOutcome {
+    record Full(int seats) implements Refusal {
     }
 
     /** This email is already on the workshop's list, in some letter case (R6). */
-    record AlreadyRegistered() implements RegistrationOutcome {
+    record AlreadyRegistered() implements Refusal {
     }
 }

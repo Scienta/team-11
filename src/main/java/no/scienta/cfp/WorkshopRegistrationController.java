@@ -58,13 +58,14 @@ public class WorkshopRegistrationController {
     }
 
     private static ResponseEntity<Registration> created(RegistrationOutcome outcome) {
-        if (outcome instanceof RegistrationOutcome.Registered registered) {
-            return ResponseEntity.status(HttpStatus.CREATED).body(registered.registration());
+        if (outcome instanceof RegistrationOutcome.Refusal refused) {
+            throw refusal(refused);
         }
-        throw refusal(outcome);
+        Registration registration = ((RegistrationOutcome.Registered) outcome).registration();
+        return ResponseEntity.status(HttpStatus.CREATED).body(registration);
     }
 
-    private static ResponseStatusException refusal(RegistrationOutcome outcome) {
+    private static ResponseStatusException refusal(RegistrationOutcome.Refusal outcome) {
         if (outcome instanceof RegistrationOutcome.NotAWorkshop) {
             return notAWorkshop();
         }
@@ -78,7 +79,7 @@ public class WorkshopRegistrationController {
         if (outcome instanceof RegistrationOutcome.AlreadyRegistered) {
             return new ResponseStatusException(HttpStatus.CONFLICT, "this email is already registered");
         }
-        throw new IllegalArgumentException("unknown registration outcome " + outcome);
+        throw new IllegalArgumentException("unknown registration refusal " + outcome);
     }
 
     private static ResponseStatusException notAWorkshop() {
