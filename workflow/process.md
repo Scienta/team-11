@@ -16,9 +16,11 @@ An agent does the other steps.
    `@DisplayName`. See it fail.
 6. **Implement.** Make the tests pass. Commit each step that compiles and passes the tests. When a
    `@TableTest` changed, update the product owners' report in `docs/specs/` and commit it with the
-   test:
+   test. Empty `target/junit-jupiter` first: the reporter reads every result in it, also from
+   earlier runs and from other sessions in this working tree. Check that no page has "Failed Rows".
 
    ```bash
+   rm -rf target/junit-jupiter docs/specs
    JAVA_HOME=$(/usr/libexec/java_home -v 17) ./mvnw test
    JAVA_HOME=$(/usr/libexec/java_home -v 21) ./mvnw org.tabletest:tabletest-reporter-maven-plugin:report
    ```
