@@ -1,8 +1,5 @@
 package no.scienta.cfp;
 
-import java.util.EnumSet;
-import java.util.Set;
-
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,7 +13,6 @@ import org.springframework.web.server.ResponseStatusException;
 public class CoSpeakerService {
 
     private static final int MAX_CO_SPEAKERS = 2;
-    private static final Set<TalkStatus> UNCHANGEABLE_STATUSES = EnumSet.of(TalkStatus.WITHDRAWN, TalkStatus.REJECTED);
 
     private final TalkDao talkDao;
     private final SpeakerDao speakerDao;
@@ -77,7 +73,7 @@ public class CoSpeakerService {
     }
 
     private static void requireChangeable(TalkDto talk) {
-        if (UNCHANGEABLE_STATUSES.contains(talk.status)) {
+        if (!talk.status.isOpenForCoSpeakerChanges()) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "a withdrawn or rejected talk can't be changed");
         }
     }
