@@ -29,12 +29,17 @@ public class WorkshopRegistrationService {
      * that {@link #register} takes.
      */
     private RegistrationOutcome registerIfTaken(WorkshopTalk talk, long workshopId, RegistrationRequest request) {
-        CancellationToken token = CancellationToken.random();
         return talk.refusal(dao.seatsTaken(workshopId), dao.emailRegistered(workshopId, request.email()))
-                .orElseGet(() -> dao.addAttendee(workshopId, request, token.hash())
-                        .<RegistrationOutcome>map(registration ->
-                                new RegistrationOutcome.Registered(RegistrationConfirmation.of(registration, token)))
-                        .orElseGet(RegistrationOutcome.AlreadyRegistered::new));
+                .orElseGet(() -> addWithNewToken(workshopId, request));
+    }
+
+    /** Saves the attendee with a new cancellation token, or refuses when the save finds the email on the list (R6). */
+    private RegistrationOutcome addWithNewToken(long workshopId, RegistrationRequest request) {
+        CancellationToken token = CancellationToken.random();
+        return dao.addAttendee(workshopId, request, token.hash())
+                .<RegistrationOutcome>map(registration ->
+                        new RegistrationOutcome.Registered(RegistrationConfirmation.of(registration, token)))
+                .orElseGet(RegistrationOutcome.AlreadyRegistered::new);
     }
 
     /**
