@@ -50,11 +50,18 @@ public class WorkshopRegistrationDao {
         return found != null && found > 0;
     }
 
-    public Registration insert(long talkId, RegistrationRequest request) {
-        long id = jdbc.queryForObject(
-                "INSERT INTO workshop_registration (talk_id, name, email) VALUES (?, ?, ?) RETURNING id",
-                Long.class, talkId, request.name(), request.email());
-        return new Registration(id, talkId, request.name(), request.email());
+    /**
+     * Saves the registration, or saves nothing and returns empty when the email is already on the list in some letter
+     * case. The unique index decides, so this holds even without the row lock (R6). {@code ON CONFLICT} leaves the
+     * transaction usable, where a duplicate-key error would abort it.
+     */
+    public Optional<Registration> insert(long talkId, RegistrationRequest request) {
+        return jdbc.query("INSERT INTO workshop_registration (talk_id, name, email) VALUES (?, ?, ?) "
+                        + "ON CONFLICT (talk_id, lower(email)) DO NOTHING RETURNING id",
+                        (rs, row) -> rs.getLong("id"), talkId, request.name(), request.email())
+                .stream()
+                .findFirst()
+                .map(id -> new Registration(id, talkId, request.name(), request.email()));
     }
 
     /** The workshop's registrations in the order they were saved (R8). */

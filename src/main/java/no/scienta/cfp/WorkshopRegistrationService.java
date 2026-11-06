@@ -24,7 +24,9 @@ public class WorkshopRegistrationService {
     public RegistrationOutcome register(long workshopId, RegistrationRequest request) {
         return dao.lockTalk(workshopId)
                 .map(talk -> talk.refusal(dao.seatsTaken(workshopId), dao.emailRegistered(workshopId, request.email()))
-                        .orElseGet(() -> new RegistrationOutcome.Registered(dao.insert(workshopId, request))))
+                        .orElseGet(() -> dao.insert(workshopId, request)
+                                .<RegistrationOutcome>map(RegistrationOutcome.Registered::new)
+                                .orElseGet(RegistrationOutcome.AlreadyRegistered::new)))
                 .orElseGet(RegistrationOutcome.NotAWorkshop::new);
     }
 
