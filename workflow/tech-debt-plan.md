@@ -33,9 +33,9 @@ Recorded here until `workflow/specs/<feature>/spec.md` exists. Move them there u
 |---|---|---|
 | 4 | acceptance: do withdrawn or rejected talks count towards the limit of 3? | 13:07: a withdrawn talk does **not** count; a rejected talk **does** count. So a speaker who withdraws a talk can submit a new one. |
 | 5 | acceptance: rating withdrawn, rejected or accepted talks; are withdrawn talks still listed in `?sort=rating`? | 13:08: reviewers **cannot** rate a talk that is withdrawn, rejected or accepted, only `SUBMITTED` and `WAITLISTED` talks. Still open (5b, asked again 13:09): whether withdrawn talks stay in `GET /talks` and `?sort=rating`. |
-| 6 | acceptance: may an accepted talk be withdrawn? | 13:09 (labelled "7", but answers 6; we've asked him to confirm): **yes**, that's intended. He'd also like a simple overview of gaps in the programme so they can be filled. That's a separate wish and not in any feature request. |
-| 7 | co-speakers + acceptance: can a co-speaker withdraw a talk? | Open. |
-| 8 | co-speakers + acceptance: co-speakers on withdrawn, rejected or accepted talks | Open. |
+| 6 | acceptance: may an accepted talk be withdrawn? | 13:09 (labelled "7", confirmed as 6 at 13:11): **yes**, that's intended. He'd also like a simple overview of gaps in the programme so they can be filled. That's a separate wish and not in any feature request. |
+| 7 | co-speakers + acceptance: can a co-speaker withdraw a talk? | 13:11: **no**, only the main speaker can withdraw a talk. |
+| 8 | co-speakers + acceptance: co-speakers on withdrawn, rejected or accepted talks | 13:11: co-speakers **can** be added to an accepted talk, but **not** to a rejected or withdrawn one. Still open (8b, asked 13:11): can co-speakers be removed from them? |
 
 The specs also confirm these constraints from sections 1c and 4:
 
