@@ -1,6 +1,5 @@
 package no.scienta.cfp;
 
-import java.util.List;
 import java.util.Optional;
 
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -14,9 +13,11 @@ import org.springframework.stereotype.Repository;
 public class TalkStatusDao {
 
     private final JdbcTemplate jdbc;
+    private final TalkDao talkDao;
 
-    public TalkStatusDao(JdbcTemplate jdbc) {
+    public TalkStatusDao(JdbcTemplate jdbc, TalkDao talkDao) {
         this.jdbc = jdbc;
+        this.talkDao = talkDao;
     }
 
     /**
@@ -39,7 +40,10 @@ public class TalkStatusDao {
      * a rating cannot land on a talk that a decision has just closed (R8). Must run inside a transaction.
      */
     public Optional<TalkStatus> lockStatus(long talkId) {
-        List<String> status = jdbc.queryForList("SELECT status FROM talk WHERE id = ? FOR SHARE", String.class, talkId);
-        return status.stream().findFirst().map(TalkStatus::valueOf);
+        if (!talkDao.lock(talkId, TalkDao.Lock.SHARE)) {
+            return Optional.empty();
+        }
+        return Optional.of(TalkStatus.valueOf(
+                jdbc.queryForObject("SELECT status FROM talk WHERE id = ?", String.class, talkId)));
     }
 }

@@ -43,12 +43,32 @@ public class TalkDao {
         return list.isEmpty() ? null : list.get(0);
     }
 
+    /** How a transaction holds a talk row until it ends. */
+    public enum Lock {
+        /** Blocks changes to the talk, but lets other readers take the same lock. */
+        SHARE("FOR SHARE"),
+        /** Blocks changes and every other lock on the talk, so changes to one talk happen one at a time. */
+        UPDATE("FOR UPDATE");
+
+        private final String clause;
+
+        Lock(String clause) {
+            this.clause = clause;
+        }
+    }
+
     /**
-     * Locks the talk row until the transaction ends, so changes to one talk happen one at a time. The talk is read in a
-     * second statement: one that waited for the lock still sees the co-speakers from before the wait.
+     * Locks the talk row until the transaction ends, and returns whether the talk exists. Read the talk in a later
+     * statement: a statement that waited for the lock still sees other tables, such as the co-speakers, as they were
+     * before the wait. Must run inside a transaction.
      */
+    public boolean lock(long id, Lock mode) {
+        return !jdbc.queryForList("SELECT id FROM talk WHERE id = ? " + mode.clause, Long.class, id).isEmpty();
+    }
+
+    /** The talk, read after {@link #lock} with {@link Lock#UPDATE}, or null when there is no such talk. */
     public TalkDto findByIdForUpdate(long id) {
-        jdbc.queryForList("SELECT id FROM talk WHERE id = ? FOR UPDATE", id);
+        lock(id, Lock.UPDATE);
         return findById(id);
     }
 
