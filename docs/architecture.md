@@ -1,6 +1,6 @@
 # Architecture
 
-The CFP backend is one Spring Boot 2.7 service (Java 11) with one Postgres database. It runs as one
+The CFP backend is one Spring Boot 2.7 service (Java 17) with one Postgres database. It runs as one
 Scaleway serverless container. The code is in one package, `no.scienta.cfp`, in three layers:
 controllers, one service and DAOs on `JdbcTemplate`. There is no JPA.
 
@@ -74,7 +74,7 @@ flowchart LR
   row (`SELECT … FOR UPDATE`) in the service transaction. Advisory locks are not available.
 - A rating is one `INSERT … ON CONFLICT DO UPDATE`, so a double-click cannot count twice.
 - `averageRating` and `ratingCount` come from one query per talk. `GET /talks` makes 1 + N queries.
-- `ratedAtDisplay` uses `DateFormat` with `Locale.US`. The output is correct on Java 11 only: Java 20
-  and later put a narrow no-break space before AM/PM.
+- `ratedAtDisplay` uses the explicit pattern `M/d/yy, h:mm a` with `Locale.US`. Do not use the
+  locale's SHORT style: from Java 20 it puts a narrow no-break space before AM/PM.
 - `/admin/*` and `/speakers/search` are not in the specs. `/speakers/search` builds its SQL with
   string concatenation.
