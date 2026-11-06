@@ -1,8 +1,8 @@
 # Teststatus
 
-Laget 6. november 2026 kl. 14:11 fra versjon [fdad9e5](https://github.com/Scienta/team-11/commit/fdad9e5ca99b46b279fa6741089ed3f8abac840a).
+Laget 6. november 2026 kl. 14:20 fra versjon [b966832](https://github.com/Scienta/team-11/commit/b96683226ef72e5403b4807be9747c98c03c2cbf).
 
-✅ Våre tester: alle 57 regler er i orden (221 av 221 eksempler).
+✅ Våre tester: alle 63 regler er i orden (246 av 246 eksempler).
 
 ✅ Arrangørenes kontroller: alle 15 er i orden (Foredragsholdere, Foredrag, Karakterer).
 
@@ -15,7 +15,7 @@ Alle detaljer står i [testrapporten](specs/index.md).
 - ✅ **R3** En foredragsholder må ha et navn. — 4 av 4 eksempler · [se eksemplene](specs/speakers/r3-registers-a-speaker-only-with-a-name.md)
 - ✅ **R3** En foredragsholder må ha en gyldig e-postadresse. — 13 av 13 eksempler · [se eksemplene](specs/speakers/r3-registers-a-speaker-only-with-a-real-email-address.md)
 - ✅ **R4** Beskrivelsen av en foredragsholder kan ha høyst 500 tegn. — 5 av 5 eksempler · [se eksemplene](specs/speakers/r4-limits-the-bio-to-500-characters.md)
-- ✅ **R4** Grensen på 500 tegn gjelder også når en administrator endrer beskrivelsen. — 2 av 2 eksempler · [se eksemplene](specs/speakers/r4-applies-the-bio-limit-when-an-admin-updates-a-speaker.md)
+- ✅ Ingen kan endre en foredragsholder etter registreringen. — 2 av 2 eksempler · [se eksemplene](specs/speakers/refuses-to-change-a-registered-speaker.md)
 - ✅ **R5** To foredragsholdere kan ikke ha samme e-postadresse. — 2 av 2 eksempler · [se eksemplene](specs/speakers/r5-refuses-a-second-speaker-with-the-same-email.md)
 - ✅ **R7** En nettadresse med skråstrek til slutt virker som uten. — 2 av 2 eksempler · [se eksemplene](specs/speakers/r7-treats-a-trailing-slash-like-the-path-without-it.md)
 - ✅ Vi finner en registrert foredragsholder igjen. — 3 av 3 eksempler · [se eksemplene](specs/speakers/finds-a-registered-speaker-by-id.md)
@@ -76,6 +76,7 @@ Alle detaljer står i [testrapporten](specs/index.md).
 - ✅ **R9** En påmelding kan bare meldes av én gang, og bare fra sin egen workshop. — 5 av 5 eksempler · [se eksemplene](specs/workshop-registration/r9-unregisters-a-registration-once-from-its-own-workshop.md)
 - ✅ **R6, R9** Den som har meldt seg av, kan melde seg på igjen. — 2 av 2 eksempler · [se eksemplene](specs/workshop-registration/r6-r9-registers-an-email-again-after-it-unregistered.md)
 - ✅ **R9** En ledig plass går til én deltaker, også når mange melder seg på samtidig. — 2 av 2 eksempler · [se eksemplene](specs/workshop-registration/r9-gives-a-freed-seat-to-one-attendee-only.md)
+- ✅ **R10** For å melde seg av må man oppgi e-postadressen fra påmeldingen. — 5 av 5 eksempler · [se eksemplene](specs/workshop-registration/r10-unregisters-only-with-the-registration-s-email.md)
 
 ## Oppstart
 
@@ -84,3 +85,11 @@ Alle detaljer står i [testrapporten](specs/index.md).
 - ✅ **R3** Tjenesten skriver i loggen hvor mange forespørsler oppvarmingen sendte. — 1 av 1 eksempel · [se eksemplene](specs/warm-up/r3-writes-the-number-of-requests-when-the-warm-up-ends.md)
 - ✅ **R4** En forespørsel som ikke får svar, regnes som en feil. — 2 av 2 eksempler · [se eksemplene](specs/warm-up-http-exchange/r4-turns-a-request-without-an-answer-into-a-failure.md)
 - ✅ **R4** Tjenesten varsler i loggen om et uventet svar eller en feil under oppvarmingen. — 3 av 3 eksempler · [se eksemplene](specs/warm-up-outcomes/r4-warns-about-an-unexpected-status-or-a-failure.md)
+
+## Annet
+
+- ✅ Ved en feil i databasen svarer tjenesten uten å vise tekniske detaljer. — 1 av 1 eksempel · [se eksemplene](specs/error-answers/answers-a-database-failure-without-its-details.md)
+- ✅ Tekst som inneholder et ugyldig nulltegn, avvises. — 2 av 2 eksempler · [se eksemplene](specs/error-answers/refuses-a-text-field-that-holds-a-nul-character.md)
+- ✅ E-postadresser skjules i loggen. — 7 av 7 eksempler · [se eksemplene](specs/request-log-filter-test/masks-each-email-in-the-logged-bodies.md)
+- ✅ I eksporten til regneark blir en verdi som ligner en formel, lagret som tekst. — 6 av 6 eksempler · [se eksemplene](specs/utils-test/exports-a-value-that-starts-like-a-formula-as-text.md)
+- ✅ I eksporten til regneark får en verdi med semikolon eller linjeskift anførselstegn rundt seg. — 4 av 4 eksempler · [se eksemplene](specs/utils-test/quotes-a-value-with-a-semicolon-or-a-line-break.md)
