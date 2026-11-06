@@ -36,6 +36,7 @@
   * [Ranks talks only for the sort order rating](./ratings-talk-lists/ranks-talks-only-for-the-sort-order-rating.md)
 * [Speakers](./speakers/index.md)
   * [Finds a registered speaker by ID](./speakers/finds-a-registered-speaker-by-id.md)
+  * [R3, R5: Updates a speaker by the rules of registration](./speakers/r3-r5-updates-a-speaker-by-the-rules-of-registration.md)
   * [R3: Registers a speaker only with a name](./speakers/r3-registers-a-speaker-only-with-a-name.md)
   * [R3: Registers a speaker only with a real email address](./speakers/r3-registers-a-speaker-only-with-a-real-email-address.md)
   * [R4: Applies the bio limit when an admin updates a speaker](./speakers/r4-applies-the-bio-limit-when-an-admin-updates-a-speaker.md)

@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.junit.jupiter.api.BeforeEach;
@@ -156,6 +157,33 @@ public class SpeakersTest {
         String id = JSON.readTree(register("grace@example.com", null).body()).get("id").asText();
         HttpResponse<String> res = api.send("PUT", "/speakers/" + id, speaker("grace@example.com", bio));
         assertEquals(status, res.statusCode(), res.body().substring(0, Math.min(200, res.body().length())));
+    }
+
+    @DisplayName("R3, R5: Updates a speaker by the rules of registration")
+    @Description("""
+            The admin update is PUT /speakers/{id}. Each row registers grace@example.com (ID 1) and
+            ada@example.com (ID 2) first. The reason is the message field of the error body.
+            """)
+    @TableTest("""
+        Scenario                    | Speaker ID | Name         | Email             | Status? | Message?
+        Own email in another case   | 1          | Grace Hopper | GRACE@example.com | 200     |
+        Another speaker's email     | 1          | Grace Hopper | ADA@example.com   | 409     | email already registered
+        Not an email                | 1          | Grace Hopper | not-an-email      | 400     | invalid email
+        No name                     | 1          |              | grace@example.com | 400     | name is required
+        Unknown speaker             | 3          | Grace Hopper | grace@example.com | 404     | speaker not found
+        """)
+    void updatesASpeakerByTheRulesOfRegistration(String speakerId, String name, String email, int status,
+                                                 String message) throws Exception {
+        assertEquals(201, register("grace@example.com", null).statusCode());
+        assertEquals(201, register("ada@example.com", null).statusCode());
+        HttpResponse<String> res = api.send("PUT", "/speakers/" + speakerId, speaker(name, email, null));
+        assertEquals(status, res.statusCode(), res.body());
+        JsonNode body = JSON.readTree(res.body());
+        if (message == null) {
+            assertEquals(email, body.get("email").asText());
+        } else {
+            assertEquals(message, body.get("message").asText());
+        }
     }
 
     @DisplayName("R5: Refuses a second speaker with the same email")
