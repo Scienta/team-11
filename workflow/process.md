@@ -10,8 +10,10 @@ An agent does the other steps.
    rule.
 3. **Ask the product owner (person).** A person takes the open questions to the organisers' product
    owner. Write each answer into the spec with the time of the answer.
-4. **Write the Hurl examples.** Put one Hurl file per feature in `examples/<feature>.hurl`. It covers
-   every row in the example tables, not only the happy path.
+4. **Write the Hurl examples.** Put one Hurl file per feature in `examples/our-<feature>.hurl`, for
+   example `our-speakers.hurl` and `our-ratings.hurl`. The prefix keeps our files apart from the
+   organisers' `examples/<feature>.hurl`. Our file covers every row in the example tables, not only
+   the happy path.
 5. **Write the tests first.** Write each example table as a `@TableTest`, with the rule ID in its
    `@DisplayName`. See it fail.
 6. **Implement.** Make the tests pass. Commit each step that compiles and passes the tests. When a
