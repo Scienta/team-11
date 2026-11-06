@@ -23,6 +23,12 @@ The steps from feature request to claim are in `workflow/process.md`. Follow the
 - Stage files by path (`git add <path>`), never `git add -A`, `git add .` or `git commit -a`. More
   than one agent session can work in this working tree, and they share one git index. Run
   `git status --short` before each commit.
+- Other people and agents push to origin/main. Run `git fetch origin` and
+  `git log --oneline HEAD..origin/main` before each commit and each push. Rebase local commits that
+  are not pushed with `git pull --rebase origin main`, and only when no other session is busy in
+  this working tree.
+- `git fetch`, `git pull` and `git push` use SSH, and the sandbox blocks `~/.ssh`. Run them outside
+  the sandbox.
 
 ## Running things on this laptop
 
