@@ -35,9 +35,18 @@ public class ProgrammeService {
         Optional<Place> scheduledAt = dao.placeOf(talk.id());
         return talk.refusal(place, dao.talksIn(place.slot()), scheduledAt)
                 .<ScheduleOutcome>map(refusal -> refusal)
-                .orElseGet(() -> scheduledAt.isPresent() || dao.add(place, talk.id())
-                        ? new ScheduleOutcome.Scheduled(ProgrammeEntry.at(place, talk.id()))
-                        : new ScheduleOutcome.AlreadyScheduled());
+                .orElseGet(() -> addUnlessThere(place, talk, scheduledAt));
+    }
+
+    /**
+     * Saves the entry, unless the talk is in the place already from the same request before. The unique index on the
+     * talk refuses the entry when the same talk went into another slot at the same time (R5, R8).
+     */
+    private ScheduleOutcome addUnlessThere(Place place, ProgrammeTalk talk, Optional<Place> scheduledAt) {
+        if (scheduledAt.isPresent() || dao.add(place, talk.id())) {
+            return new ScheduleOutcome.Scheduled(ProgrammeEntry.at(place, talk.id()));
+        }
+        return new ScheduleOutcome.AlreadyScheduled();
     }
 
     /** The talk in the place, if there is one, whatever has happened to the talk since (R2, R7). */
