@@ -9,7 +9,6 @@ import java.util.Optional;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
 
 @Repository
 public class TalkDao {
@@ -64,9 +63,9 @@ public class TalkDao {
     /**
      * Inserts the talk only if the speaker has fewer than {@code max} talks that count. A withdrawn talk does not
      * count (Acceptance R7). Returns the new id, or null.
-     * The speaker row is locked first so two submissions for the same speaker can't both see room under the limit.
+     * The speaker row is locked first so two submissions for the same speaker can't both see room under the limit. The
+     * caller's transaction holds the lock, so call this inside one.
      */
-    @Transactional
     public Long insertIfBelow(int max, String title, String format, int duration, String level, long speakerId, long submittedAt) {
         jdbc.queryForList("SELECT id FROM speaker WHERE id = ? FOR UPDATE", speakerId);
         List<Long> ids = jdbc.queryForList(
