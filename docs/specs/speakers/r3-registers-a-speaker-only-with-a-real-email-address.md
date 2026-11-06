@@ -1,7 +1,7 @@
 ## R3: Registers a speaker only with a real email address
 
 A real address has one @, a local part, and a domain of at least two labels split by dots,
-with no spaces.
+with no spaces. A blank cell sends JSON null as the email.
 
 
 | Scenario | Email | Status? |
@@ -16,3 +16,6 @@ with no spaces.
 | Two dots in a row in the domain | ada@example..com | 400 |
 | Two @ | ada@@example.com | 400 |
 | Space in the local part | ada lovelace@example.com | 400 |
+| Empty | "" | 400 |
+| Only spaces | &#x2423;&#x2423;&#x2423; | 400 |
+| No email |  | 400 |
