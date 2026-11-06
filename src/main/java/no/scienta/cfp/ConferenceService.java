@@ -155,6 +155,7 @@ public class ConferenceService {
                 System.currentTimeMillis());
     }
 
+    @Transactional(readOnly = true)
     public TalkDto getTalk(long id) {
         TalkDto talk = talkDao.findById(id);
         if (talk == null) {
@@ -164,6 +165,7 @@ public class ConferenceService {
         return talk;
     }
 
+    @Transactional(readOnly = true)
     public List<TalkDto> getTalksForSpeaker(long speakerId) {
         if (speakerDao.findById(speakerId) == null) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "speaker not found");
@@ -176,6 +178,7 @@ public class ConferenceService {
     }
 
     /** The talk list without the withdrawn talks when {@code includeWithdrawn} is false (Acceptance R9). */
+    @Transactional(readOnly = true)
     public List<TalkDto> listTalks(String sort, Long speakerId, boolean includeWithdrawn) {
         return listTalks(sort, speakerId).stream()
                 .filter(talk -> includeWithdrawn || !isWithdrawn(talk))
@@ -183,6 +186,7 @@ public class ConferenceService {
     }
 
     /** The talks in the order of Ratings R5 or R6, with the withdrawn talks after the others (Acceptance R9). */
+    @Transactional(readOnly = true)
     public List<TalkDto> listTalks(String sort, Long speakerId) {
         Map<Boolean, List<TalkDto>> byWithdrawn = orderedTalks(sort, speakerId).stream()
                 .collect(Collectors.partitioningBy(ConferenceService::isWithdrawn));
@@ -246,6 +250,7 @@ public class ConferenceService {
 
     // ---------------------------------------------------------------- statistics
 
+    @Transactional(readOnly = true)
     public Map<String, Object> statistics() {
         List<TalkDto> talks = listTalks(null, null);
         Map<String, Integer> byFormat = new LinkedHashMap<>();

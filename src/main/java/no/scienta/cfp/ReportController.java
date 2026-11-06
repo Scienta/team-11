@@ -5,6 +5,7 @@ import java.util.Map;
 
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -26,6 +27,7 @@ public class ReportController {
     }
 
     @GetMapping("/admin/talks.csv")
+    @Transactional(readOnly = true)
     public ResponseEntity<String> talksCsv() {
         List<TalkDto> talks = service.listTalks(null, null);
         StringBuilder sb = new StringBuilder();

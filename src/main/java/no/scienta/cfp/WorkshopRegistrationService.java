@@ -46,6 +46,7 @@ public class WorkshopRegistrationService {
     }
 
     /** The workshop's attendees in registration order, whatever its status (R4, R8). */
+    @Transactional(readOnly = true)
     public AttendeesOutcome attendees(long workshopId) {
         return dao.findTalk(workshopId)
                 .filter(WorkshopTalk::isWorkshop)
