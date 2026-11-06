@@ -57,7 +57,7 @@ email as the attendee typed it. Only the 201 of POST adds `cancellationToken` to
 | The workshop's own speakers | They take no seats: the 20 seats are for attendees only. | PO, Slack #team-11, 2026-11-06 14:00. |
 | Unregister (R9) | `DELETE /workshops/{id}/registrations/{registrationId}` gives 204 with no body. The registration is gone from the list. | The PO asked for it (2026-11-06 14:01). The Registration already has an `id`, so the request's API extends naturally. |
 | Unregister an unknown registration, one already unregistered, or one of another workshop | 404 | The resource does not exist under this path. Unregistering twice is not an error to hide: the second request finds nothing. |
-| Unregister from an unknown talk or a talk that is not a `WORKSHOP` | 404 | Same as GET (R2). A talk of another format has no registrations to delete. |
+| Unregister from an unknown talk or a talk that is not a `WORKSHOP` | 404 | An unknown talk does not exist, and a talk of another format has no registrations to delete. GET answers 200 `[]` for such a talk, but a DELETE names one registration, and there is none. |
 | Unregister from a `WITHDRAWN` workshop | 204 | R4 keeps the others on the list; an attendee may still leave it. |
 | The freed seat (R9) | Free at once: on a full workshop, the next registration after an unregistration gets 201. | The PO: "so that the seat goes to someone else". |
 | Register again after unregistering (R6, R9) | 201 | The email is no longer on the list. |
