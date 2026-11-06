@@ -32,20 +32,31 @@ Kristian's team. Co-speakers is reviewed by Carl Kristian's team.
 
 | ID | Severity | Finding | Where | Decision | Fix | Exploit re-run |
 |----|----------|---------|-------|----------|-----|----------------|
-| S1 | High | Anybody can change any speaker with `PUT /speakers/{id}`. It is in no spec. | `SpeakerController.java:41` | Remove (user, 2026-11-06) | | OPEN on `9573d72` |
-| S2 | Medium | A NUL character in a text field gives 500, and the answer shows the SQL. | `application.properties:14` | Fix | | OPEN on `9573d72` |
-| S2b | Low | 400 answers name Java classes. | `application.properties:14` | Fix with S2 | | OPEN on `9573d72` |
-| S3 | Medium | No limit on the body size. A 120 MB body gives `OutOfMemoryError` at a 256 MB heap. | `RequestLogFilter.java:32` | Fix | | OPEN on `9573d72` |
-| S4 | Medium | Tomcat 9.0.83 (Boot 2.7.18) has a multipart DoS (CVE-2025-48988). | `pom.xml:18` | Turn multipart off | | OPEN on `9573d72` |
-| S5 | Medium | Anybody can unregister anybody from a workshop. | `WorkshopRegistrationController.java:42` | The email is needed: R10 in spec `9573d72`, a JSON body `{"email"}` without letter case; wrong or no email 404, no body 400 | | OPEN on `9573d72` |
-| S6 | Medium | A title can start a formula or a new row in `/admin/talks.csv`. | `Utils.java:73` | Fix | | OPEN on `9573d72` |
-| S7 | Medium | Emails are in the container logs. | `RequestLogFilter.java:39`, `ConferenceService.java:76` | Fix | | OPEN on `9573d72` |
-| S8 | Low | The container runs as root. | `Dockerfile:19` | Fix | | OPEN on `9573d72` |
+| S1 | High | Anybody can change any speaker with `PUT /speakers/{id}`. It is in no spec. | `SpeakerController.java:41` | `c4c6205` | CLOSED on `b7f1b79` |
+| S2 | Medium | A NUL character in a text field gives 500, and the answer shows the SQL. | `application.properties:14` | `6e37faf` | CLOSED on `b7f1b79`: 400, no SQL |
+| S2b | Low | 400 answers name Java classes. | `application.properties:14` |  | OPEN on `b7f1b79` |
+| S3 | Medium | No limit on the body size. A 120 MB body gives `OutOfMemoryError` at a 256 MB heap. | `RequestLogFilter.java:32` | `9157ed4`, `84a7fab` | CLOSED on `62eec68`: 413 above 1 MB, also chunked; no OOM with 80 parallel bodies of 1 MB |
+| S4 | Medium | Tomcat 9.0.83 (Boot 2.7.18) has a multipart DoS (CVE-2025-48988). | `pom.xml:18` | `84a7fab` | CLOSED on `62eec68` |
+| S5 | Medium | Anybody can unregister anybody from a workshop. | `WorkshopRegistrationController.java:42` | `0a9c234` | CLOSED on `b7f1b79`: 404, 404, 400, then 204 |
+| S5b | Medium | The email that R10 asks for is public: `GET /workshops/{id}/registrations` lists every email, as the request's `Registration` schema requires. Anybody can read the list and then unregister an attendee. | `WorkshopRegistrationController` | Our decision (The Hand, 2026-11-06; the DELETE is our addition, not the request's): a secret cancellation token in the 201 of POST, required in DELETE. A later batch (Frikke). | | OPEN on `c4fe79c` |
+| S6 | Medium | A title can start a formula or a new row in `/admin/talks.csv`. | `Utils.java:73` | `9f3d7d2` | CLOSED on `b7f1b79` |
+| S7 | Medium | Emails are in the container logs. | `RequestLogFilter.java:39`, `ConferenceService.java:76` | `9458d53`, `f210ff0` | CLOSED on `b7f1b79` |
+| S8 | Low | The container runs as root. | `Dockerfile:19` | `4a8753f` | CLOSED on `b7f1b79` |
 | S9 | Low | `/actuator/info` shows the Java, Boot and Spring versions. | `VersionInfoContributor.java:21` | Keep: the spring-boot-4 feature needs it | none | not a defect |
 | S10 | Low | Anybody can decide on a talk, and the `speakerId` for a withdrawal is public. | `AcceptanceController.java:26` | The spec has no auth model: a PO question | none | not a defect |
+| S13 | Low | `GET /talks` and `/admin/talks.csv` have no paging, so every request reads all talks. | `ConferenceService.listTalks` | Note only: paging would change the API that the specs and the harness use (The Hand, 2026-11-06). | none | not a defect |
+| S11 | High | The email mask in the request log takes time that grows with the square of the text length (ReDoS). An 80 KB body without `@` takes 16 s of CPU, and a stored long title costs the same on every list. Found in `9458d53` before the push. | `RequestLogFilter.java:67` at `9458d53` | `b7f1b79` | CLOSED on `b7f1b79`: 2 MB without `@` in 0.02 s |
+| S12 | Medium | A talk title has no length limit. A long title is stored and comes back in every list and in the CSV. | `ConferenceService.submitTalk` | `d8612c3` | CLOSED on `d8612c3`: 200 code points 201, 201 code points 400, also with emoji |
 
 ## Log
 
 | Date | Range | Result |
 |------|-------|--------|
 | 2026-11-06 | `d66b3df` (full review) | S1–S10 found. The exploit script finds S1–S8 OPEN on `9573d72`. |
+| 2026-11-06 | `e532240` (early run) | S1 and S7 CLOSED. S11 found in `9458d53` (not pushed): a blocker. S12 found. S2, S2b, S4, S5, S6 and S8 OPEN. |
+| 2026-11-06 | PR #5 `060ef9b` (Spring Boot 4.1.2, Java 25) | OK to merge. No hole reopened, none new: the same results as main (S1–S4, S6–S8 OPEN, S11 CLOSED). Only health and info under `/actuator`. Merge risks: `server.error.*` is now `spring.web.error.*`; the S3 limit must replace `ContentCachingRequestWrapper(request, Integer.MAX_VALUE)`; `jakarta.servlet`; keep the `USER` line. |
+| 2026-11-06 | `e532240..b7f1b79` | S1, S2, S5, S6, S7, S8 and S11 CLOSED. S2b, S3 and S4 OPEN. Low: an email with more than 64 characters before the `@` passes `Utils.isValidEmail`, and the log mask leaves its start readable. |
+| 2026-11-06 | push-candidate `c43bbaf..c4fe79c` | No blocker. S1, S2, S5, S6, S7, S8 and S11 CLOSED. S3 and S4 OPEN, accepted for this push. S2b OPEN. S5b found. |
+| 2026-11-06 | `9bbbd83` (one ratings query for a talk list) | No blocker: one array parameter with IDs from the database. S13 noted. S5b fix with Frekken. |
+| 2026-11-06 | `62eec68` (S3, S4) | S3 and S4 CLOSED. Only S2b (low) and S5b OPEN. |
+| 2026-11-06 | `d8612c3` (S12) | S12 CLOSED. Only S2b (low) and S5b OPEN. |
