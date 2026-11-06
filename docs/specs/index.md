@@ -1,5 +1,16 @@
 # cfp
 
+* [Acceptance](./acceptance/index.md)
+  * [Answers 404 for a talk that does not exist](./acceptance/answers-404-for-a-talk-that-does-not-exist.md)
+  * [R1: Takes only the three decisions as a status](./acceptance/r1-takes-only-the-three-decisions-as-a-status.md)
+  * [R2: Moves a talk to the committee's decision](./acceptance/r2-moves-a-talk-to-the-committee-s-decision.md)
+  * [R3: Accepts a talk only after two different reviewers](./acceptance/r3-accepts-a-talk-only-after-two-different-reviewers.md)
+  * [R4: Lets only the main speaker withdraw a talk](./acceptance/r4-lets-only-the-main-speaker-withdraw-a-talk.md)
+  * [R4: Withdraws a talk unless it is rejected or withdrawn](./acceptance/r4-withdraws-a-talk-unless-it-is-rejected-or-withdrawn.md)
+  * [R7: Leaves a withdrawn talk out of the talk limit](./acceptance/r7-leaves-a-withdrawn-talk-out-of-the-talk-limit.md)
+  * [R8: Takes ratings only for a talk that is still open](./acceptance/r8-takes-ratings-only-for-a-talk-that-is-still-open.md)
+  * [R9: Shows withdrawn talks after the others](./acceptance/r9-shows-withdrawn-talks-after-the-others.md)
+  * [R9: Takes only true or false to leave out withdrawn talks](./acceptance/r9-takes-only-true-or-false-to-leave-out-withdrawn-talks.md)
 * [Ratings](./ratings/index.md)
   * [R1: Accepts a reviewer from 1 to 9223372036854775807](./ratings/r1-accepts-a-reviewer-from-1-to-9223372036854775807.md)
   * [R2: Accepts only a whole number from 1 to 5 as score](./ratings/r2-accepts-only-a-whole-number-from-1-to-5-as-score.md)
