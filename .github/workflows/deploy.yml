@@ -104,7 +104,7 @@ jobs:
           java-version: "21" # the report plugin needs 21; the tests above ran on 17
       - name: TableTest report
         if: ${{ !cancelled() }}
-        run: ./mvnw -B org.tabletest:tabletest-reporter-maven-plugin:report
+        run: ./mvnw -B org.tabletest:tabletest-reporter-maven-plugin:report -Dtabletest.report.format=html -Dtabletest.report.outputDirectory=target/generated-docs/tabletest
       - uses: actions/upload-pages-artifact@v3
         if: ${{ !cancelled() }}
         with:

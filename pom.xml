@@ -20,6 +20,8 @@
         <junit.version>5.14.4</junit.version>
         <tabletest.version>1.2.2</tabletest.version>
         <tabletest-reporter.version>1.5.0</tabletest-reporter.version>
+        <tabletest.report.format>markdown</tabletest.report.format>
+        <tabletest.report.outputDirectory>${project.basedir}/docs/specs</tabletest.report.outputDirectory>
     </properties>
 
     <!-- We can't use spring-boot-starter-parent because of the old company parent pom,
@@ -103,16 +105,13 @@
         <finalName>cfp</finalName>
         <pluginManagement>
             <plugins>
-                <!-- Turns the TableTest results into the HTML report for the product owners. Not bound to a
-                     phase, because it needs JDK 21. Run it after the tests:
-                     ./mvnw org.tabletest:tabletest-reporter-maven-plugin:report -->
+                <!-- Turns the TableTest results into the report for the product owners: Markdown in
+                     docs/specs/ (the tabletest.report.* properties). Not bound to a phase, because it needs
+                     JDK 21. Run it after the tests; see workflow/process.md step 6. -->
                 <plugin>
                     <groupId>org.tabletest</groupId>
                     <artifactId>tabletest-reporter-maven-plugin</artifactId>
                     <version>${tabletest-reporter.version}</version>
-                    <configuration>
-                        <format>html</format>
-                    </configuration>
                 </plugin>
             </plugins>
         </pluginManagement>

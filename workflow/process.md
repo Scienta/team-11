@@ -12,8 +12,16 @@ An agent does the other steps.
    owner. Write each answer into the spec with the time of the answer.
 4. **Write the Hurl examples.** Put one Hurl file per feature in `examples/<feature>.hurl`. It covers
    every row in the example tables, not only the happy path.
-5. **Write the tests first.** Write JUnit tests from the example tables. See them fail.
-6. **Implement.** Make the tests pass. Commit each step that compiles and passes the tests.
+5. **Write the tests first.** Write each example table as a `@TableTest`, with the rule ID in its
+   `@DisplayName`. See it fail.
+6. **Implement.** Make the tests pass. Commit each step that compiles and passes the tests. When a
+   `@TableTest` changed, update the product owners' report in `docs/specs/` and commit it with the
+   test:
+
+   ```bash
+   JAVA_HOME=$(/usr/libexec/java_home -v 17) ./mvnw test
+   JAVA_HOME=$(/usr/libexec/java_home -v 21) ./mvnw org.tabletest:tabletest-reporter-maven-plugin:report
+   ```
 7. **Review.** A review agent compares the diff with `spec.md`, row by row. It does not see our
    reasoning, only the spec and the code. See `workflow/review-rubric.md`.
 8. **Deploy (person approves the push).** Push to `main`. Wait for the deploy workflow to go green.
