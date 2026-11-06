@@ -1,6 +1,8 @@
 package no.scienta.cfp;
 
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
@@ -24,10 +26,19 @@ public class RatingDao {
     }
 
     /**
-     * Returns {cnt, total} for one talk.
+     * The rating totals of each rated talk among the given talks, read in one query. A talk with no rating is not in
+     * the map.
      */
-    public Map<String, Object> stats(long talkId) {
-        return jdbc.queryForMap("SELECT COUNT(*) AS cnt, COALESCE(SUM(score), 0) AS total FROM rating WHERE talk_id = ?", talkId);
+    public Map<Long, RatingTotals> totalsFor(List<Long> talkIds) {
+        if (talkIds.isEmpty()) {
+            return Map.of();
+        }
+        return jdbc.query("SELECT talk_id, COUNT(*) AS cnt, SUM(score) AS total FROM rating "
+                                + "WHERE talk_id = ANY(?) GROUP BY talk_id",
+                        (rs, row) -> Map.entry(rs.getLong("talk_id"), new RatingTotals(rs.getInt("cnt"), rs.getLong("total"))),
+                        (Object) talkIds.toArray(Long[]::new))
+                .stream()
+                .collect(Collectors.toUnmodifiableMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 
     // public double average(long talkId) {
