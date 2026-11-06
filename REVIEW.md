@@ -217,6 +217,28 @@ Why it took 24 ticks:
 - The fix waited in a queue with other deploys, and later pushes cancelled two of its deploy runs.
   Deploy a fix for a FAULTY check alone, and let no other push cancel its run.
 
+**Ticks 171–178 (14:18–14:25 UTC): `co-speakers/check-1` and `check-2` were FAULTY, 8 ticks, from the first run after the claim at tick 170.**
+The third co-speakers check and the other checks stayed OK.
+
+- `check-1` failed on `DELETE /talks/{id}/co-speakers/{speakerId}` for a speaker who was not, or no
+  longer, a co-speaker. We answered 200, the talk unchanged. Our decision was "DELETE is idempotent, like
+  R5 for PUT: a double-click on remove must not fail". The harness does not accept it. The fix gives 404.
+- `check-2` failed on `PUT /talks/{id}/co-speakers/{speakerId}` with the main speaker as co-speaker. We
+  answered 409, "a conflict with the talk's state". The fix gives 400.
+- Both fixes are in one commit, `d4ef02a`, made test first by Frekken on our laptop. The guardians
+  cleared it, and it was pushed alone. It went live at 14:25:27 UTC, and tick 179 had no co-speakers
+  check FAULTY.
+- We found both with the harness timeline (`failure`: the `DELETE` and the `PUT`) and the transcripts.
+
+Why we missed it: the request gives no status codes for these two cases, so the spec chose them by
+analogy: 200 for a repeated DELETE, as for a repeated PUT, and 409 for a rule about the talk. The
+harness reads them as "nothing to remove" (404) and "a request that can never be valid" (400). Our
+review compared the code with our spec, so it could not find a status code that the spec itself
+chose. It is the same pattern as `workshop-registration/check-2` (ticks 137–160): a status code that
+our spec decided by analogy, which the harness reads another way. For a case that the request does
+not name, prefer 404 when the thing to change is not there, and 400 when the request can never be
+right, and treat 409 and an idempotent 200 as decisions that need a second look.
+
 ## 5. Reusable artifacts
 
 <!-- What's worth taking to client work: agents, skills, prompts, spec templates, gates. Give the paths. -->
