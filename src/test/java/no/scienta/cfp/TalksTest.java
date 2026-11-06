@@ -137,7 +137,7 @@ class TalksTest {
         assertEquals(201, created.statusCode(), created.body());
         JsonNode talk = JSON.readTree(created.body());
         assertEquals(List.of("id", "title", "format", "level", "speakerId", "durationMinutes", "status", "submittedAt",
-                "submittedOn", "averageRating", "ratingCount", "coSpeakerIds"), fieldNames(talk));
+                "submittedOn", "averageRating", "ratingCount", "coSpeakerIds"), JsonFields.namesOf(talk));
         assertEquals("Characterise first", talk.get("title").asText());
         assertEquals(speaker, talk.get("speakerId").asText());
         assertEquals(120, talk.get("durationMinutes").asInt());
@@ -189,12 +189,6 @@ class TalksTest {
             return null;
         }
         return Long.valueOf("registered".equals(speaker) ? newSpeaker() : speaker);
-    }
-
-    private static List<String> fieldNames(JsonNode node) {
-        List<String> names = new ArrayList<>();
-        node.fieldNames().forEachRemaining(names::add);
-        return names;
     }
 
     /** Submits one talk for a newly registered speaker. */

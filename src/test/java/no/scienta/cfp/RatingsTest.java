@@ -1,6 +1,7 @@
 package no.scienta.cfp;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.net.http.HttpResponse;
 import java.util.List;
@@ -11,6 +12,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.DynamicPropertyRegistry;
@@ -124,6 +126,48 @@ public class RatingsTest {
         JsonNode shown = JSON.readTree(api.get("/talks/" + talk).body());
         assertEquals(averageRating, averageRatingOf(shown));
         assertEquals(ratingCount, shown.get("ratingCount").asInt());
+    }
+
+    @DisplayName("R1, R2: Refuses a rating with the reason, before it looks for the talk")
+    @Description("""
+            The reason is the message field of the error body. Talk "submitted" is a newly submitted
+            talk; 999999 is no talk. A blank Score cell sends a body without "score".
+            """)
+    @TableTest("""
+        Scenario                  | Talk      | Reviewer | Score | Status? | Message?
+        Reviewer zero             | submitted | 0        | 4     | 400     | reviewerId must be positive
+        Decimal number            | submitted | 1        | 4.0   | 400     | score must be a whole number
+        No score                  | submitted | 1        |       | 400     | score must be a whole number
+        Above the scale           | submitted | 1        | 6     | 400     | score must be 1-5
+        Bad score for no talk     | 999999    | 1        | 6     | 400     | score must be 1-5
+        Good score for no talk    | 999999    | 1        | 4     | 404     | talk not found
+        """)
+    void refusesARatingWithTheReason(String talkCell, String reviewer, String score, int status, String message)
+            throws Exception {
+        String talkId = "submitted".equals(talkCell) ? talk : talkCell;
+        HttpResponse<String> res = api.send("PUT", "/talks/" + talkId + "/ratings/" + reviewer, ratingBody(score));
+        assertEquals(status, res.statusCode(), res.body());
+        assertEquals(message, JSON.readTree(res.body()).get("message").asText());
+    }
+
+    @Test
+    void answersWithTheRatingAndWhenItWasGiven() throws Exception {
+        HttpResponse<String> res = api.send("PUT", "/talks/" + talk + "/ratings/7", "{\"score\":5}");
+        assertEquals(200, res.statusCode(), res.body());
+        JsonNode rating = JSON.readTree(res.body());
+        assertEquals(List.of("talkId", "reviewerId", "score", "ratedAtDisplay"), JsonFields.namesOf(rating));
+        assertEquals(talk, rating.get("talkId").asText());
+        assertEquals(7, rating.get("reviewerId").asLong());
+        assertEquals(5, rating.get("score").asInt());
+        String ratedAt = rating.get("ratedAtDisplay").asText();
+        assertTrue(ratedAt.matches("(1[0-2]|[1-9])/([1-9]|[12]\\d|3[01])/\\d{2}, (1[0-2]|[1-9]):[0-5]\\d [AP]M"), ratedAt);
+    }
+
+    @Test
+    void refusesASortOtherThanRatingWithTheReason() throws Exception {
+        HttpResponse<String> res = api.get("/talks?sort=bogus");
+        assertEquals(400, res.statusCode(), res.body());
+        assertEquals("sort must be 'rating'", JSON.readTree(res.body()).get("message").asText());
     }
 
     /** The talk's averageRating, or null when the response has JSON null. */
