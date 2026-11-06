@@ -76,3 +76,4 @@ Kristian's team. Co-speakers is reviewed by Carl Kristian's team.
 | 2026-11-06 | PR #9 `3ca19dd` (with main `7bdf99a` merged) | OK to merge. `schema.sql`: token ALTER, then the R11 block last. Migration from a `7bdf99a` database: only the orphans deleted, keys validated, the token hash and programme kept, the old token still works. Script: only S2b OPEN. |
 | 2026-11-06 | origin/main `dfd57c9` (PR #9 merged) | Nothing reopened. Everything CLOSED except S2b (low), also S3b with `--big`. |
 | 2026-11-06 | `05ac2c5` (scheduling hotfix, check-1) | No blocker (static review). Only 400 → 404 for a room or slot outside the list; the enum parse still comes first. |
+| 2026-11-06 | `d4ef02a` (co-speakers hotfix, check-1 and check-2) | No blocker (static review). The R12 403 still comes first; the new 404 comes after it, on the locked talk; no SQL change; the limit of 2 untouched. |
