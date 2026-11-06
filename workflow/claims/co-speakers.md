@@ -4,10 +4,11 @@ The rows come from [`../claim-checklist.md`](../claim-checklist.md). A person cl
 row says "waiting" or "gap". The product owner reads a claim request in three sections: security,
 architecture and functionality.
 
-Claim: **waiting for Carl Kristian's team**, who request this claim. Deployed commit: `3318bf1` (`GET /health` at 13:41:50Z and 13:42:00Z). It has the R4 and R9 Hurl rows (`c8e30de`, the pushed copy of `ec38273`) and the ratings-query fix `88e5d86`.
+Claim: **claimed at harness tick 170** by Nils Christian. Carl Kristian's team prepared the claim request; our Hurl run and our guardians are part of the evidence. Deployed at the claim: `05ac2c5` (`GET /health`), which has the co-speakers code and Carl Kristian's PR #9 (`dfd57c9`, with the R12 Hurl rows `0355402`). Our team-URL run below was on `3318bf1`.
 Co-speakers came from Carl Kristian's team (PR #4, merged in `b729a5e`).
 
-PO approval: **waiting**.
+PO approval: **approved by Stein himself.** «Godkjent» at 15:15:20 CET at the top level of Slack #team-11, and
+«Godkjent» at 15:15:41 CET in Carl Kristian's claim thread (ts `1793974427.385909`).
 
 `TEAM_URL=https://fagsem-h2026-team-11.scienta.cloud`
 
@@ -41,5 +42,7 @@ withdrawn or rejected talk.
 | The base features still pass their examples | `ratings.hurl` from `3318bf1` 8/8 at 13:41:50Z. `speakers.hurl`, `talks.hurl`, `our-speakers.hurl` (18) and `our-ratings.hurl` passed on the same deploy at 13:39:51Z–13:40:45Z. | done |
 | No FAULTY check on the harness for this feature or the base features | `workflow/harness.sh feedback` at tick 133: all 20 checks OK (speakers 4, talks 6, ratings 5, acceptance 5), 550.05 points. The harness has no checks for co-speakers until it is claimed. | done for the claimed features |
 | Claim risk: response times on the team URL | Closed by `88e5d86` on `3318bf1`: in the 13:41:50Z run, an unfiltered `GET /talks` took 418 ms and `GET /talks?sort=rating` 284 ms (before: 12–17 s). | closed |
+
+| After the claim: the co-speakers checks on the harness | `workflow/harness.sh feedback` at tick 170: check-1 to check-3 not run yet (status `null`). | **waiting**: the first results; we watch them |
 
 When the person has claimed, copy the evidence into the claim log in `REVIEW.md` section 3.
