@@ -173,10 +173,10 @@ PUT {{base_url}}/talks/{{presentation}}/status
 {"status": "ACCEPTED"}
 HTTP 200
 
-# R2: an accepted LIGHTNING_10 is not a workshop
+# R2: an accepted LIGHTNING_10 is not a workshop: it refuses a registration (409) and has no list (404)
 POST {{base_url}}/workshops/{{lightning_10}}/registrations
 {"name": "Ada Lovelace", "email": "ada@example.com"}
-HTTP 404
+HTTP 409
 
 GET {{base_url}}/workshops/{{lightning_10}}/registrations
 HTTP 404
@@ -184,7 +184,7 @@ HTTP 404
 # R2: an accepted LIGHTNING_20 is not a workshop
 POST {{base_url}}/workshops/{{lightning_20}}/registrations
 {"name": "Ada Lovelace", "email": "ada@example.com"}
-HTTP 404
+HTTP 409
 
 GET {{base_url}}/workshops/{{lightning_20}}/registrations
 HTTP 404
@@ -192,7 +192,7 @@ HTTP 404
 # R2: an accepted PRESENTATION is not a workshop
 POST {{base_url}}/workshops/{{presentation}}/registrations
 {"name": "Ada Lovelace", "email": "ada@example.com"}
-HTTP 404
+HTTP 409
 
 GET {{base_url}}/workshops/{{presentation}}/registrations
 HTTP 404
