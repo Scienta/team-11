@@ -13,7 +13,7 @@ out="$root/docs/status.md"
 
 [[ -f "$specs/index.md" ]] || { echo "No report in $specs: run the reporter first" >&2; exit 1; }
 
-sections="Foredragsholdere Foredrag Karakterer Godkjenning Oppstart Annet"
+sections="Foredragsholdere Foredrag Karakterer Godkjenning Workshoper Oppstart Annet"
 
 section_of() {
   case "$1" in
@@ -21,6 +21,7 @@ section_of() {
     talks) echo Foredrag ;;
     ratings | ratings-*) echo Karakterer ;;
     acceptance) echo Godkjenning ;;
+    workshop-registration) echo Workshoper ;;
     warm-up | warm-up-*) echo Oppstart ;;
     *) echo Annet ;;
   esac
@@ -63,7 +64,7 @@ examples() {
 rule_line() {
   local page="$1" file="$specs/$1.md" title id text pass fail icon count
   title="$(sed -n 's/^## //p' "$file" | head -1)"
-  id="$(printf '%s' "$title" | sed -n 's/^\(R[0-9][0-9]*\):.*/\1/p')"
+  id="$(printf '%s' "$title" | sed -n 's/^\(R[0-9][0-9]*\(, R[0-9][0-9]*\)*\):.*/\1/p')"
   text="$(rule_text "$page")"
   if [[ -z "$text" ]]; then
     echo "No Norwegian text for $page in $rules" >&2

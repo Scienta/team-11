@@ -32,6 +32,15 @@ acceptance/r8-takes-ratings-only-for-a-talk-that-is-still-open	Et foredrag får 
 acceptance/r9-shows-withdrawn-talks-after-the-others	Trukne foredrag kommer sist i listene.
 acceptance/r9-takes-only-true-or-false-to-leave-out-withdrawn-talks	Man kan velge å skjule trukne foredrag. Valget er ja eller nei.
 acceptance/answers-404-for-a-talk-that-does-not-exist	Vi sier tydelig fra når et foredrag ikke finnes.
+workshop-registration/r1-registers-an-attendee-only-with-a-name-and-a-real-email	En påmelding må ha et navn og en gyldig e-postadresse.
+workshop-registration/r2-takes-registrations-only-for-a-workshop	Bare workshoper tar imot påmeldinger.
+workshop-registration/r3-takes-registrations-only-for-an-accepted-workshop	Man kan bare melde seg på en workshop som komiteen har godtatt.
+workshop-registration/r4-keeps-the-attendees-of-a-withdrawn-workshop	Når en workshop trekkes, står de påmeldte fortsatt på listen.
+workshop-registration/r5-takes-at-most-20-attendees-for-a-workshop	En workshop har plass til høyst 20 deltakere.
+workshop-registration/r5-keeps-20-seats-when-many-register-at-the-same-time	Også når mange melder seg på samtidig, får bare 20 plass.
+workshop-registration/r6-r7-registers-an-email-once-for-each-workshop	En e-postadresse kan bare meldes på én gang per workshop, uansett store eller små bokstaver. Samme person kan melde seg på flere workshoper.
+workshop-registration/r6-registers-one-of-the-same-email-sent-at-the-same-time	Kommer samme påmelding flere ganger samtidig, teller den bare én gang.
+workshop-registration/r8-lists-the-attendees-in-the-order-they-registered	Arrangørene ser deltakerne i den rekkefølgen de meldte seg på.
 warm-up/r1-sends-each-warm-up-request-through-the-http-port	Ved oppstart varmer tjenesten seg opp med de samme forespørslene som brukerne sender.
 warm-up/r2-leaves-every-table-as-empty-as-it-found-it	Oppvarmingen etterlater ingen data.
 warm-up/r3-writes-the-number-of-requests-when-the-warm-up-ends	Tjenesten skriver i loggen hvor mange forespørsler oppvarmingen sendte.
