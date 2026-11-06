@@ -27,19 +27,21 @@ case "${1:-}" in
   *) sed -n '2,10p' "$0" >&2; exit 2 ;;
 esac
 
-headers="$(mktemp)" body="$(mktemp)"
-trap 'rm -f "$headers" "$body"' EXIT
+# No temp files: curl appends a last line with the status and the Retry-After header (curl 7.84+).
 for attempt in 1 2 3 4 5; do
-  code="$(curl -sS -o "$body" -D "$headers" -w '%{http_code}' \
+  response="$(curl -sS -w '\n%{http_code} %header{retry-after}' \
     -H "Authorization: Bearer $(cat "$token_file")" "$harness$path")"
+  meta="${response##*$'\n'}"
+  body="${response%$'\n'*}"
+  code="${meta%% *}"
+  retry_after="${meta#* }"
   case "$code" in
-    2??) cat "$body"; exit 0 ;;
+    2??) printf '%s\n' "$body"; exit 0 ;;
     429)
-      wait="$(awk 'tolower($1)=="retry-after:" {print $2+0}' "$headers")"
-      echo "429, waiting ${wait:-2} s (attempt $attempt)" >&2
-      sleep "${wait:-2}"
+      echo "429, waiting ${retry_after:-2} s (attempt $attempt)" >&2
+      sleep "${retry_after:-2}"
       ;;
-    *) echo "HTTP $code for $path" >&2; cat "$body" >&2; exit 1 ;;
+    *) echo "HTTP $code for $path" >&2; printf '%s\n' "$body" >&2; exit 1 ;;
   esac
 done
 exit 1
