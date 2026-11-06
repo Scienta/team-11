@@ -61,8 +61,9 @@ public class WorkshopRegistrationService {
     @Transactional(readOnly = true)
     public AttendeesOutcome attendees(long workshopId) {
         return dao.findTalk(workshopId)
-                .filter(WorkshopTalk::isWorkshop)
-                .<AttendeesOutcome>map(workshop -> new AttendeesOutcome.Attendees(dao.registrations(workshopId)))
-                .orElseGet(AttendeesOutcome.NotAWorkshop::new);
+                .<AttendeesOutcome>map(talk -> talk.isWorkshop()
+                        ? new AttendeesOutcome.Attendees(dao.registrations(workshopId))
+                        : new AttendeesOutcome.NotAWorkshop())
+                .orElseGet(AttendeesOutcome.NoSuchTalk::new);
     }
 }
