@@ -2,7 +2,8 @@
 
 Speakers R7 names /speakers/ and /speakers/{id}/. Spring Boot 2.7 matched the slash on
 every path, so every path keeps doing so. $speaker and $talk are a registered speaker
-and their talk, $other another registered speaker and $email a new address.
+and their talk, $coTalk another talk of theirs with the co-speaker $coSpeaker, $other
+another registered speaker and $email a new address.
 
 
 | Result | Scenario | Method | Path | Body | Status? |
@@ -19,4 +20,4 @@ and their talk, $other another registered speaker and $email a new address.
 | ✅ passes | Decide on a talk | PUT | /talks/$talk/status/ | {"status":"WAITLISTED"} | 200 |
 | ✅ passes | Withdraw a talk | POST | /talks/$talk/withdraw/ | {"speakerId":$speaker} | 200 |
 | ✅ passes | Add a co-speaker | PUT | /talks/$talk/co-speakers/$other/ |  | 200 |
-| ✅ passes | Remove a co-speaker | DELETE | /talks/$talk/co-speakers/$other/ |  | 200 |
+| ✅ passes | Remove a co-speaker | DELETE | /talks/$coTalk/co-speakers/$coSpeaker/ |  | 200 |

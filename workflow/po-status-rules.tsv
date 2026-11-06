@@ -83,3 +83,9 @@ programme-scheduling/r5-keeps-one-talk-per-place-and-each-talk-once	Det er ett f
 programme-scheduling/r6-keeps-each-speaker-in-one-room-at-a-time	Ingen foredragsholder eller medforedragsholder skal være i to rom på samme tidspunkt.
 programme-scheduling/r7-leaves-the-programme-as-it-is-when-a-talk-changes	Når et foredrag endres etterpå, for eksempel trekkes, står programmet som før. Komiteen kan ta det ut.
 programme-scheduling/r8-keeps-the-rules-when-requests-come-at-the-same-time	Også når flere i komiteen endrer programmet samtidig, holder reglene.
+spring-boot-4-upgrade/r1-runs-on-spring-boot-4-and-java-25	Tjenesten kjører på Spring Boot 4 og Java 25.
+spring-boot-4-upgrade/r2-answers-a-path-with-a-trailing-slash-like-the-path-without-it	En nettadresse med skråstrek til slutt virker som uten, også etter oppgraderingen.
+spring-boot-4-upgrade/r2-answers-every-error-as-json-in-utf-8-with-the-boot-error-body	Feilsvar kommer som JSON i UTF-8, med de samme feltene som før.
+spring-boot-4-upgrade/r2-limits-the-request-body-on-a-path-with-a-trailing-slash-too	Grensen på 1 MB for en forespørsel gjelder også med skråstrek til slutt i nettadressen.
+spring-boot-4-upgrade/r2-reads-request-bodies-as-leniently-as-before	Tjenesten leser forespørsler like romslig som før oppgraderingen.
+spring-boot-4-upgrade/r2-takes-only-a-json-whole-number-as-a-score	En karakter må fortsatt være et helt tall.
