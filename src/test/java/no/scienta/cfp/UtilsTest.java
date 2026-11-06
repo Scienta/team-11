@@ -69,4 +69,16 @@ class UtilsTest {
     void acceptsOnlyARealEmailAddress(String email, boolean valid) {
         assertEquals(valid, Utils.isValidEmail(email));
     }
+
+    // Ratings R8: the same on every JDK; Java 20+ puts a narrow no-break space before AM in the locale's short style
+    @ParameterizedTest(name = "{0} -> {1}")
+    @CsvSource({
+            "2026-11-04 13:05:00, '11/4/26, 1:05 PM'",
+            "2026-11-04 00:00:00, '11/4/26, 12:00 AM'",
+            "2026-12-31 12:00:59, '12/31/26, 12:00 PM'",
+            "2026-01-09 09:30:00, '1/9/26, 9:30 AM'",
+    })
+    void showsTheRatingTimeInTheUsShortFormat(String utcTime, String shown) {
+        assertEquals(shown, Utils.usShort(Utils.parse(utcTime)));
+    }
 }

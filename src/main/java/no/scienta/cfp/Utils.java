@@ -49,10 +49,11 @@ public class Utils {
     }
 
     /**
-     * "11/4/26, 1:05 PM", what the reviewer UI shows.
+     * "11/4/26, 1:05 PM", what the reviewer UI shows. An explicit pattern, not the locale's SHORT style: from Java 20
+     * the SHORT style puts a narrow no-break space before AM/PM, and the UI needs an ordinary space.
      */
     public static String usShort(Date d) {
-        DateFormat f = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT, Locale.US);
+        SimpleDateFormat f = new SimpleDateFormat("M/d/yy, h:mm a", Locale.US);
         f.setTimeZone(UTC);
         return f.format(d);
     }
