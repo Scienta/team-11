@@ -161,7 +161,7 @@ public class ConferenceService {
         if (talk == null) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "talk not found");
         }
-        addRatings(talk);
+        addRatings(List.of(talk));
         return talk;
     }
 
@@ -171,9 +171,7 @@ public class ConferenceService {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "speaker not found");
         }
         List<TalkDto> talks = talkDao.findBySpeaker(speakerId);
-        for (TalkDto t : talks) {
-            addRatings(t);
-        }
+        addRatings(talks);
         return talks;
     }
 
@@ -204,9 +202,7 @@ public class ConferenceService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "sort must be 'rating'");
         }
         List<TalkDto> talks = speakerId == null ? talkDao.findAll() : talkDao.findBySpeaker(speakerId);
-        for (TalkDto t : talks) {
-            addRatings(t);
-        }
+        addRatings(talks);
         if ("rating".equals(sort)) {
             List<TalkDto> rated = new ArrayList<>();
             List<TalkDto> unrated = new ArrayList<>();
@@ -234,12 +230,15 @@ public class ConferenceService {
         return talks;
     }
 
-    private void addRatings(TalkDto talk) {
-        Map<String, Object> stats = ratingDao.stats(talk.id);
-        int count = ((Number) stats.get("cnt")).intValue();
-        long total = ((Number) stats.get("total")).longValue();
-        talk.ratingCount = count;
-        talk.averageRating = count == 0 ? null : calculateAverage(total, count);
+    /** Adds the rating count and the average to each talk, with one query for all the talks. */
+    private void addRatings(List<TalkDto> talks) {
+        Map<Long, RatingTotals> totals = ratingDao.totalsFor(talks.stream().map(talk -> talk.id).collect(Collectors.toList()));
+        talks.forEach(talk -> addRatings(talk, totals.getOrDefault(talk.id, RatingTotals.NONE)));
+    }
+
+    private void addRatings(TalkDto talk, RatingTotals totals) {
+        talk.ratingCount = totals.count();
+        talk.averageRating = totals.count() == 0 ? null : calculateAverage(totals.sum(), totals.count());
     }
 
     // 1 decimal, half up (4.25 -> 4.3)

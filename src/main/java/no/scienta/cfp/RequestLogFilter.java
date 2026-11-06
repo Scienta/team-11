@@ -11,6 +11,8 @@ import jakarta.servlet.http.HttpServletResponse;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.util.ContentCachingRequestWrapper;
@@ -22,6 +24,7 @@ import org.springframework.web.util.ContentCachingResponseWrapper;
  * The harness checks show up in the container logs only through these lines.
  */
 @Component
+@Order(Ordered.LOWEST_PRECEDENCE - 1)
 public class RequestLogFilter extends OncePerRequestFilter {
 
     static final int MAX_BODY_CHARS = 2000;

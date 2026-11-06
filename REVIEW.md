@@ -72,6 +72,7 @@ claimed or skipped, at which tick, and the evidence you held before claiming. Fo
 | Feature | Claimed or skipped | Tick | Evidence before claiming |
 |---|---|---|---|
 | Speakers, talks, ratings | claimed by the organisers | 0 | Base features. At 12:25 all 15 checks were OK. Our own review then found 3 gaps against the specs (email, bio length, reviewer range), fixed in `336589f`, `fa1480e`, `dbe89fc`. |
+| Acceptance | claimed (Nils Christian), after the product owner's «Godkjent» at 14:30:30 CET | 124 | Deployed `c43bbaf`. **Security:** the security guardian's report (`workflow/security-review.md`). **Architecture:** the design review found nothing before the claim, and the architecture guardian's report (`workflow/architecture-review.md`). **Functionality:** rules R1–R9 each have an example table. CI and deploy run 42224526394 green. `our-acceptance.hurl` 189/189 and the base examples passed on the team URL at 13:27:33Z. The 15 base checks were OK at tick 121. Known risk: an unfiltered `GET /talks` took 12–17 s. Details: `workflow/claims/acceptance.md`. After the claim: the 5 acceptance checks were OK at tick 125. |
 
 ## 4. What the harness caught that we didn't
 

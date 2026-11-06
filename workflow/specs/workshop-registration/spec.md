@@ -19,19 +19,19 @@ the product owner left the technical design to us.
 | R7 | The same person can register for several workshops. |
 | R8 | The organisers see the attendees of a workshop, in the order they registered. |
 | R9 | An attendee can unregister after registering, so that the seat goes to someone else. |
-| R10 | To unregister, the request gives the email of the registration. Without the right email, nothing is unregistered. |
+| R10 | To unregister, the request gives the cancellation token that the registration's 201 response returned. Without the right token, nothing is unregistered. Only the attendee who registered sees the token. |
 
 ## API
 
 | Method | Path | Request body | Success status | Response body |
 |--------|------|--------------|----------------|---------------|
-| POST | `/workshops/{id}/registrations` | `{name, email}` | 201 | Registration |
+| POST | `/workshops/{id}/registrations` | `{name, email}` | 201 | Registration with `cancellationToken` |
 | GET | `/workshops/{id}/registrations` | | 200 | list of Registration, oldest first |
-| DELETE | `/workshops/{id}/registrations/{registrationId}` | `{email}` | 204 | none |
+| DELETE | `/workshops/{id}/registrations/{registrationId}` | `{token}` | 204 | none |
 
 `{id}` is the workshop's talk ID, and `{registrationId}` is the `id` of a Registration. A Registration
 is `{id, workshopId, name, email}`. `email` is the
-email as the attendee typed it.
+email as the attendee typed it. Only the 201 of POST adds `cancellationToken` to the Registration (R10).
 
 ## Our decisions
 
@@ -60,10 +60,14 @@ email as the attendee typed it.
 | Unregister from a `WITHDRAWN` workshop | 204 | R4 keeps the others on the list; an attendee may still leave it. |
 | The freed seat (R9) | Free at once: on a full workshop, the next registration after an unregistration gets 201. | The PO: "so that the seat goes to someone else". |
 | Register again after unregistering (R6, R9) | 201 | The email is no longer on the list. |
-| Who can unregister (R10) | Whoever gives the registration ID and the registration's email in a JSON body: `{"email": "..."}`. The email is compared without letter case, as in R6. | A body like the `speakerId` of `POST /talks/{id}/withdraw`. A query parameter would put the email in URLs and in our request log. |
-| Wrong email, or a body without `email` (R10) | 404, nothing is unregistered | The same answer as for an unknown registration, so the answer does not tell whether a registration ID exists. |
+| Who can unregister (R10) | Whoever gives the registration ID and the registration's cancellation token in a JSON body: `{"token": "..."}`. The token is compared exactly, letter case included. | Security review S5b: the public list (R8) shows every email, so an email is no proof. Only the attendee gets the token, in the 201 of their own registration. A body, not a query parameter, keeps the token out of URLs. |
+| Wrong token, a body without `token`, or a `token` that is not a string (R10) | 404, nothing is unregistered | The same answer as for an unknown registration, so the answer does not tell whether a registration ID exists. |
 | No body, or a body that is not JSON (R10) | 400 | Same as POST. The body is checked before the registration is looked up. |
-| What the email proof protects (R10) | It stops someone who guesses registration IDs blindly, and nothing more. | `GET /workshops/{id}/registrations` is public and shows every attendee's ID and email (R8, and the Registration schema of the request), so anyone can read the proof from the list. Hiding the emails would change the request's API. A real fix needs authentication, and no spec asks for it. Coordinator's decision, 2026-11-06. |
+| The cancellation token (R10) | 32 random bytes from `SecureRandom`, in URL-safe Base64 without padding: 43 characters. A new token for each registration. | 256 bits cannot be guessed. A random UUID has only 122 random bits, under the 128 bits that we require. |
+| Where the token shows (R10) | Once, as `cancellationToken` in the 201 of POST. Never in `GET /workshops/{id}/registrations`, never in another response. | The list is public (R8). |
+| How the token is stored (R10) | Only its SHA-256 hash, in the new column `workshop_registration.cancellation_token_hash`. The check compares hashes in constant time. | A copy of the database does not give anyone a token. |
+| The token in our request log (R10) | Masked: the log shows `"cancellationToken":"***"` and `"token":"***"`. | `RequestLogFilter` logs the request and response bodies, and the container logs are not secret. |
+| Registrations from before the token (R10) | They have no token hash, so no token unregisters them: 404. They stay on the list. | The new column is added with `ALTER TABLE … ADD COLUMN IF NOT EXISTS`, and old rows get `NULL`. Nobody received a token for them. Coordinator's decision, security review S5b, 2026-11-06. |
 
 ## Examples
 
@@ -142,23 +146,41 @@ email as the attendee typed it.
 | no registration with this ID | unregister it | 404 |
 | Ada and Grace registered, then the workshop is withdrawn | unregister Ada | 204; the list shows only Grace |
 
-### R10: unregister with the registration's email
+### R10: unregister with the registration's cancellation token
 
-| Registered email | Body of the DELETE | Status |
-|------------------|--------------------|--------|
-| `ada@example.com` | `{"email": "ada@example.com"}` | 204 |
-| `ada@example.com` | `{"email": "ADA@Example.com"}` | 204 |
-| `ada@example.com` | `{"email": "grace@example.com"}` | 404 |
-| `ada@example.com` | `{}` | 404 |
-| `ada@example.com` | no body | 400 |
-| `ada@example.com` | `{"email":` (not JSON) | 400 |
+Ada and Grace are registered for the same workshop. Each 201 gave a token. Every request unregisters Ada.
 
-The R9 examples send the registration's own email.
+| Body of the DELETE | Status |
+|--------------------|--------|
+| `{"token": "<Ada's token>"}` | 204 |
+| `{"token": "<Grace's token>"}` | 404 |
+| `{"token": "<Ada's token in capitals>"}` | 404 |
+| `{"email": "ada@example.com"}` | 404 |
+| `{}` | 404 |
+| `{"token": 42}` | 404 |
+| no body | 400 |
+| `{"token":` (not JSON) | 400 |
+
+| Given | Body of the DELETE | Status |
+|-------|--------------------|--------|
+| a registration saved before the token existed | any token | 404 |
+
+### R10: where the token shows
+
+| Request | Has `cancellationToken`? |
+|---------|--------------------------|
+| POST, 201 | yes, 43 characters |
+| GET the list | no |
+| the request log line of the POST and of the DELETE | no, masked as `***` |
+
+The R9 examples send the registration's own token.
 
 ## Effect on existing features
 
 - Talks and Acceptance: no change. A registration reads the talk's format and status and changes
   neither. A withdrawal does not delete registrations (R4).
+- POST `/workshops/{id}/registrations`: the 201 body has one more field, `cancellationToken` (R10). The
+  fields of the request's Registration schema do not change.
 - `/admin/stats` and the CSV export: no change. Registrations are not part of them. The PO's answer
   about withdrawn talks in the statistics (a separate line) is not about registrations.
 

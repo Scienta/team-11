@@ -36,6 +36,8 @@
   * [R5: Lists all talks oldest first, or the talks of one speaker](./ratings-talk-lists/r5-lists-all-talks-oldest-first-or-the-talks-of-one-speaker.md)
   * [R6: Ranks talks by shown average, then rating count, then age](./ratings-talk-lists/r6-ranks-talks-by-shown-average-then-rating-count-then-age.md)
   * [Ranks talks only for the sort order rating](./ratings-talk-lists/ranks-talks-only-for-the-sort-order-rating.md)
+* [Request limits](./request-limits/index.md)
+  * [Refuses a request body larger than 1 MB](./request-limits/refuses-a-request-body-larger-than-1-mb.md)
 * [Request Log Filter Test](./request-log-filter-test/index.md)
   * [Logs a large body in a short time](./request-log-filter-test/logs-a-large-body-in-a-short-time.md)
   * [Masks each email in the logged bodies](./request-log-filter-test/masks-each-email-in-the-logged-bodies.md)

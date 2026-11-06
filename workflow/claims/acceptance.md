@@ -4,10 +4,10 @@ The rows come from [`../claim-checklist.md`](../claim-checklist.md). A person cl
 row says "waiting" or "gap". The product owner reads a claim request in three sections: security,
 architecture and functionality.
 
-Claim: **waiting for the person.** Deployed commit: `3a02708`.
+Claim: **claimed at harness tick 124** by Nils Christian. Deployed commit: `c43bbaf` (`origin/main`, `GET /health` at 13:27:14Z).
 
-PO approval: **waiting**. The product owner, Stein, approves claims. The Hand asked him at 13:59 CET (12:59:53Z)
-(Slack #team-11, ts `1793969993.259739`).
+PO approval: **approved.** Stein answered «Godkjent» at 14:30:30 CET (13:30:30Z) in Slack #team-11
+(ts `1793971830.749579`). The Hand asked him at 13:59 CET (ts `1793969993.259739`).
 
 `TEAM_URL=https://fagsem-h2026-team-11.scienta.cloud`
 
@@ -33,13 +33,15 @@ withdrawn talks last in the lists.
 | Check | Evidence | State |
 |-------|----------|-------|
 | Every rule in `spec.md` has at least one example row | Rules R1–R9. The R5 example table came in `6146f98`. Open questions: none, the product owner answered in Slack #team-11. | done |
-| Every example row has a Hurl request | `examples/our-acceptance.hurl` in `3f64c98`, 189 requests. The run against the team URL (below) passed the committed file. | done |
-| The JUnit tests pass in CI | [Actions run 42220804835](https://github.com/Scienta/team-11/actions/runs/42220804835), commit `3e7a9b7` | done |
-| The deploy workflow is green for the commit | [Actions run 42220804835](https://github.com/Scienta/team-11/actions/runs/42220804835) for `3e7a9b7`, then [run 42221404330](https://github.com/Scienta/team-11/actions/runs/42221404330) for `3a02708` (docs only) | done |
-| `GET /health` on the team URL shows that SHA as `version` | `curl -s "$TEAM_URL/health"`: `version` `3a027087` at 12:57:50Z | done |
-| `examples/run.sh "$TEAM_URL"` passes, all files | 6/6 files, 236/236 requests, 0 failures (Ferdinand, 12:57:50Z) | done |
+| Every example row has a Hurl request | `examples/our-acceptance.hurl`, 189 requests, the same file on `origin/main` and in the working tree. The run against the team URL (below) passed it. | done |
+| The JUnit tests pass in CI | [Actions run 42224526394](https://github.com/Scienta/team-11/actions/runs/42224526394), commit `c43bbaf`: job `tests`, step "Unit tests" success | done |
+| The deploy workflow is green for the commit | [Actions run 42224526394](https://github.com/Scienta/team-11/actions/runs/42224526394) for `c43bbaf`: job `deploy` success | done |
+| `GET /health` on the team URL shows that SHA as `version` | `curl -s "$TEAM_URL/health"`: `version` `c43bbaffad4d…` at 13:27:14Z | done |
+| `examples/run.sh "$TEAM_URL"` passes, all files | One run at 13:27:33Z on `c43bbaf` (Fuglen): `our-acceptance.hurl` 189/189. 7 of 8 files passed, 278 requests. The one failure is `our-workshop-registration.hurl`: workshop registration is not deployed yet (404 at its first registration). | done for this feature |
 | The spec review found no open defect | Spec review by Fiffi (`review-rubric.md` items 1–7): no code defect. 4 test gaps, closed in `6146f98` and checked again. | done |
-| The base features still pass their examples | The same run: `speakers.hurl`, `talks.hurl` and `ratings.hurl` are 3 of the 6 files. | done |
-| No FAULTY check on the harness for this feature or the base features | `workflow/harness.sh feedback`: tick 91, all 15 checks OK, 364.55 points. The 15 checks are the base features only (speakers 4, talks 6, ratings 5). Acceptance has no checks until it is claimed. | done for the base features |
+| The base features still pass their examples | The same run: `speakers.hurl`, `talks.hurl`, `ratings.hurl`, `our-speakers.hurl` and `our-ratings.hurl` passed. | done |
+| No FAULTY check on the harness for this feature or the base features | `workflow/harness.sh feedback`: tick 121, all 15 checks OK, 484.05 points. The 15 checks are the base features only (speakers 4, talks 6, ratings 5). The harness has no checks for acceptance until it is claimed: the timeline for `acceptance/check-1` answers 404 "No such check among your claimed features". | done for the base features |
+| Claim risk: response times on the team URL | An unfiltered `GET /talks` takes 12–17 s on `c43bbaf` (4017 talks, 1.1 MB; request log 13:27–13:28Z). After the claim, a harness check that lists all talks without a filter can time out. Frekken's ratings query fixes it in the next push. | **risk**: until that push is deployed |
+| After the claim: the acceptance checks on the harness | `workflow/harness.sh feedback` at tick 125: acceptance check-1 to check-5 all OK, and the 15 base checks OK. 502.05 points. | OK at tick 125; we watch them |
 
 When the person has claimed, copy the evidence into the claim log in `REVIEW.md` section 3.

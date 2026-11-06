@@ -7,11 +7,14 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.TimeZone;
+import java.util.regex.Pattern;
 
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.converter.ConvertWith;
+import org.junit.jupiter.params.converter.SimpleArgumentConverter;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.tabletest.junit.Description;
 import org.tabletest.junit.TableTest;
@@ -73,8 +76,12 @@ public class UtilsTest {
             "ada lovelace@example.com,            false",
             "' ada@example.com',                  false",
             "ada\u00a0lovelace@example.com,       false",
+            "(64 × a)@example.com,                true",
+            "(65 × a)@example.com,                false",
+            "ada@(251 × e).com,                   true",
+            "ada@(252 × e).com,                   false",
     })
-    void acceptsOnlyARealEmailAddress(String email, boolean valid) {
+    void acceptsOnlyARealEmailAddress(@ConvertWith(RepeatedCharacters.class) String email, boolean valid) {
         assertEquals(valid, Utils.isValidEmail(email));
     }
 
@@ -139,5 +146,15 @@ public class UtilsTest {
     }
 
     record CsvText(String value) {
+    }
+
+    /** Expands a run written as {@code (64 × a)} into the letter a written 64 times. */
+    static class RepeatedCharacters extends SimpleArgumentConverter {
+        private static final Pattern RUN = Pattern.compile("\\((\\d+) × (.)\\)");
+
+        @Override
+        protected Object convert(Object source, Class<?> targetType) {
+            return RUN.matcher((String) source).replaceAll(run -> run.group(2).repeat(Integer.parseInt(run.group(1))));
+        }
     }
 }

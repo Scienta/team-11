@@ -24,57 +24,82 @@ Java 17 has no pattern matching for `switch`, so a controller maps a sealed outc
 
 ## Log
 
+The SHAs are the ones on `push-candidate` (tip `c4fe79c`, on `origin/main` `c43bbaf`).
+
 ### 2026-11-06: acceptance design review of `6841a88` (Frikke)
 
 | # | Finding | Refactoring | Status |
 |---|---------|-------------|--------|
-| A1 | `AcceptanceService` throws `ResponseStatusException`: HTTP in the core (P2). | Replace Exception with a sealed result, mapped in `AcceptanceController` | done, `d41f940` |
-| A2 | The service parses `Map<String, Object>` bodies (P3). | Introduce Parameter Object: the records `Decision` and `Withdrawal` with `parse` | done, `097763f` |
-| A3 | `getTalk` is called only for its 404 and loads the ratings each time (command/query separation). | A lookup without ratings that returns `Optional` | done, `a78b665` |
-| A4 | `TalkDto.status` is a `String`, and the code compares enum names (P4). | Replace Type Code with Enum | done, `09dd60d` (also in `CoSpeakerService`) |
-| A5 | `TalkStatus` has a `switch` and `this ==` checks (P1). | Replace Conditional with enum constructor fields | done, `ed34210` |
-| A6 | The R7 rule and `'SUBMITTED'` are SQL literals in `TalkDao` (P1). | Move Method `TalkStatus.countsTowardLimit()`, bound parameters | done, `effe5ad` |
+| A1 | `AcceptanceService` throws `ResponseStatusException`: HTTP in the core (P2). | Replace Exception with a sealed result, mapped in `AcceptanceController` | done, `4d03267` |
+| A2 | The service parses `Map<String, Object>` bodies (P3). | Introduce Parameter Object: the records `Decision` and `Withdrawal` with `parse` | done, `6456c84` |
+| A3 | `getTalk` is called only for its 404 and loads the ratings each time (command/query separation). | A lookup without ratings that returns `Optional` | done, `b778566` |
+| A4 | `TalkDto.status` is a `String`, and the code compares enum names (P4). | Replace Type Code with Enum | done, `a030b26` (also in `CoSpeakerService`) |
+| A5 | `TalkStatus` has a `switch` and `this ==` checks (P1). | Replace Conditional with enum constructor fields | done, `5fba392` |
+| A6 | The R7 rule and `'SUBMITTED'` are SQL literals in `TalkDao` (P1). | Move Method `TalkStatus.countsTowardLimit()`, bound parameters | done, `aa01d71` |
 | A7 | Two `listTalks` overloads with a flag argument. | Replace Flag Argument with `TalkListQuery`; Extract Class `TalkListing` (D1, P8) | open: waited for the co-speakers merge, which is now in |
-| A8 | `refusal()` reads the talk again to find the reason. | Goes away with A1 | done, `d41f940` |
-| A9 | Nested `Stream.of` and `flatMap` build the SQL arguments. | Extract Method | done, `db7dd57` |
+| A8 | `refusal()` reads the talk again to find the reason. | Goes away with A1 | done, `4d03267` |
+| A9 | Nested `Stream.of` and `flatMap` build the SQL arguments. | Extract Method | done, `2039ed6` |
 
 ### 2026-11-06: workshop-registration design review of `3121e67` (Frode)
 
 | # | Finding | Refactoring | Status |
 |---|---------|-------------|--------|
-| W1 | `WorkshopTalk.status` is a `String` (P4). | Replace Type Code with Enum | done, `b6585fb` |
-| W2 | The rule "only `ACCEPTED` takes registrations" is outside `TalkStatus` (P1). | Move Method `TalkStatus.takesRegistrations()` | done, `174d35f` |
-| W3 | `refusal()` returns `Optional<RegistrationOutcome>`, so it can return `Registered`. | Extract Interface: a sealed `Refusal` subtype, also for `StatusChange` in acceptance | open (Frode, after Frikke) |
-| W4 | The controller maps every outcome that it does not list to 404. | An explicit `NotAWorkshop` case; throw for the rest | open (Frikke) |
-| W5 | `register()` mixes the lock, the counts, the rule and the insert. | Extract Method `registerIfTaken` | open (Frikke) |
-| W6 | `Optional<List<Registration>>` means "not a workshop". | A sealed result: `Attendees` or `NotAWorkshop` (P2) | open (Frikke) |
-| W7 | The DAO method `insert` returns domain data under a name for the mechanism. | Rename Method `addAttendee` | open (Frikke) |
-| W8 | Two queries differ only in `FOR UPDATE`. | Extract Constant or Parameterize Method | open (Frikke) |
-| W9 | The R5 tables have an unused "Seats" column. | Remove the column | done, `d029601` |
+| W1 | `WorkshopTalk.status` is a `String` (P4). | Replace Type Code with Enum | done, `898c422` |
+| W2 | The rule "only `ACCEPTED` takes registrations" is outside `TalkStatus` (P1). | Move Method `TalkStatus.takesRegistrations()` | done, `334c8cc` |
+| W3 | `refusal()` returns `Optional<RegistrationOutcome>`, so it can return `Registered`. | Extract Interface: a sealed `Refusal` subtype, also for `StatusChange` in acceptance | half done: the sealed `Refusal` subtypes are in (`27c49c8`, `7e284b1`), but `WorkshopTalk.refusal` still returns `Optional<RegistrationOutcome>`. Next: Change Signature to `Optional<RegistrationOutcome.Refusal>` |
+| W4 | The controller maps every outcome that it does not list to 404. | An explicit `NotAWorkshop` case; throw for the rest | done, `0f54a97` |
+| W5 | `register()` mixes the lock, the counts, the rule and the insert. | Extract Method `registerIfTaken` | done, `0322902` |
+| W6 | `Optional<List<Registration>>` means "not a workshop". | A sealed result: `Attendees` or `NotAWorkshop` (P2) | done, `39a414d` (`AttendeesOutcome`) |
+| W7 | The DAO method `insert` returns domain data under a name for the mechanism. | Rename Method `addAttendee` | done, `30170e1` |
+| W8 | Two queries differ only in `FOR UPDATE`. | Extract Constant or Parameterize Method | done, `b3176b6` and `753a7a2` |
+| W9 | The R5 tables have an unused "Seats" column. | Remove the column | done, `f348990` |
 
 ### 2026-11-06: batch `origin/main..17ba5c3` (21 commits, guardian)
 
 No blocker. The 7 acceptance refactors change no status code. In a race, the 409 message from
-`d41f940` can name the older reason.
+`4d03267` can name the older reason.
 
 | # | Finding | Refactoring | When | Status |
 |---|---------|-------------|------|--------|
-| G1 | `WorkshopTalk.status` is a `String`, but `TalkDto.status` is a `TalkStatus` (P4). The rule "takes registrations" is outside `TalkStatus` (P1). | Replace Type Code with Enum; Move Field into `TalkStatus` | tidy after | done: W1 `b6585fb`, W2 `174d35f` |
+| G1 | `WorkshopTalk.status` is a `String`, but `TalkDto.status` is a `TalkStatus` (P4). The rule "takes registrations" is outside `TalkStatus` (P1). | Replace Type Code with Enum; Move Field into `TalkStatus` | tidy after | done: W1 `898c422`, W2 `334c8cc` |
 | G2 | `CoSpeakerService.UNCHANGEABLE_STATUSES` is a status rule outside `TalkStatus` (P1). | Move Field into `TalkStatus` | tidy after | Co-speakers code of Carl Kristian's team: the coordinator offers it in Slack. |
 | G3 | `CoSpeakerService` throws `ResponseStatusException` (404, 409): HTTP in a service (P2). | Replace Exception with Sealed Result | tidy after | Same as G2. |
-| G4 | `TalkStatusDao.moveArguments` and `TalkDao.insertIfBelow` both build an `IN (?, ?, …)` list and its arguments. | Extract Method into one helper, or bind one array with `status <> ALL(?)` | tidy after | Our queue, after the security fixes. |
-| G5 | Three DAOs lock or read the talk row with their own SQL: `TalkStatusDao.lockStatus`, `TalkDao.findByIdForUpdate`, `WorkshopRegistrationDao.lockTalk`. | Consolidate into `TalkDao`: one locked read for each lock mode | tidy after | Our queue, after the security fixes. W8 covers the two workshop queries. |
-| G6 | `WorkshopRegistrationService.register` nests three `Optional` lambdas: more than one level of abstraction. | Extract Method `registerIn(talk, request)` | tidy after | same as W5 (Frikke) |
+| G4 | `TalkStatusDao.moveArguments` and `TalkDao.insertIfBelow` both build an `IN (?, ?, …)` list and its arguments. | Extract Method into one helper, or bind one array with `status <> ALL(?)` | tidy after | done, `95de0b5`: `status = ANY(?)` and `<> ALL(?)` with one `String[]` |
+| G5 | Three DAOs lock or read the talk row with their own SQL: `TalkStatusDao.lockStatus`, `TalkDao.findByIdForUpdate`, `WorkshopRegistrationDao.lockTalk`. | Consolidate into `TalkDao`: one locked read for each lock mode | tidy after | done, `753a7a2`: `TalkDao.lock(id, Lock.SHARE \| Lock.UPDATE)` |
+| G6 | `WorkshopRegistrationService.register` nests three `Optional` lambdas: more than one level of abstraction. | Extract Method `registerIn(talk, request)` | tidy after | done with W5, `0322902` |
 
-Risk, closed: since `09dd60d`, `TalkDao` maps each stored status with `TalkStatus.valueOf`, so one
+Risk, closed: since `a030b26`, `TalkDao` maps each stored status with `TalkStatus.valueOf`, so one
 unknown value would give 500 on every talk read. Frode checked production before the change: 2582
 talks, all with one of the 5 known values. The column is `NOT NULL` with the default `SUBMITTED`,
 and only 2 places write it.
 
+### 2026-11-06: push candidate `1613ca9..c4fe79c` (guardian)
+
+No blocker. The candidate reports 391 tests and 0 failures (`c4fe79c`). The guardian did not run the suite again.
+
+| # | Finding | Refactoring | When | Status |
+|---|---------|-------------|------|--------|
+| G7 | `AcceptanceService.decide` and `withdraw` took up to 4 pool connections one after another. The GET paths took 1 + N connections, with N the number of talks. | One `@Transactional` for each status change (`a871d15`); `@Transactional(readOnly = true)` on the GET paths (`4ffa97b`) | before the push | done |
+| G8 | `TalkDao.lock` locks the row and also returns whether the talk exists: a command that returns a query result. | none: acceptable for a lock | — | accepted |
+| G9 | The N queries for the ratings in `GET /talks` stay inside the read-only transaction. | Replace the loop with one query that joins the ratings | tidy after | open (Frekken) |
+
+### 2026-11-06: Spring Boot 4, PR #5 at `060ef9b` (guardian)
+
+OK to merge. A scratch merge with our local `main` on Java 25 found 7 fixes for the merge. After fixes 1 and 3–5, 431 tests ran and 1 failed: the row that fix 2 changes.
+
+1. `Dockerfile`: keep `eclipse-temurin:25-jre`, `RUN useradd --system app`, `USER app` and `-XX:TieredStopAtLevel=1`.
+2. `UpgradeContractTest`: the row `PUT /speakers/{id}/` becomes 405 (`59f45c9` removed the endpoint), also in the PR's `spec.md`.
+3. `DatabaseFailureAdvice`: `javax.servlet` becomes `jakarta.servlet`.
+4. `TextWithoutNulModule`: Jackson 2 becomes Jackson 3 (`tools.jackson…`, `deser.jdk.StringDeserializer`, no `IOException`).
+5. `ErrorAnswersTest`, `WorkshopRegistrationTest`: `com.fasterxml.jackson.databind` becomes `tools.jackson.databind`.
+6. `docs/specs/index.md`: make the report again.
+7. `RequestLogFilter`: keep our `MAX_CACHED_BODY_BYTES` limit, not the PR's `Integer.MAX_VALUE`.
+
+Start-up of the merged image at 0.15 CPU: 21.7 s with the JIT flag, 56.9 s without it. Keep the flag.
+
 ## Watch list
 
-- Spring Boot 4 (Java 25, draft PR #5): a full architecture review before the merge. The new
-  `Dockerfile` must keep `-XX:TieredStopAtLevel=1` in the `ENTRYPOINT`. At 0.15 CPU, start-up
-  without the flag took 58.9 s, against the 60 s deploy gate.
+- Spring Boot 4 (PR #5): after the merge, check that the 7 merge fixes above are in, the JIT flag
+  first of all.
 - Merges from Carl Kristian's laptop: check only the fit with P1–P8 and what our features rely on.
   Do not repeat his team's feature review.

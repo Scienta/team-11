@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.regex.Pattern;
 
 import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.node.ObjectNode;
@@ -74,7 +75,8 @@ public class SpeakersTest {
     @DisplayName("R3: Registers a speaker only with a real email address")
     @Description("""
             A real address has one @, a local part, and a domain of at least two labels split by dots,
-            with no spaces. A blank cell sends JSON null as the email.
+            with no spaces. The limits on length come from RFC 5321. A blank cell sends JSON null as
+            the email. A cell such as (64 × a) stands for the letter a written 64 times.
             """)
     @TableTest("""
         Scenario                        | Email                               | Status?
@@ -88,11 +90,15 @@ public class SpeakersTest {
         Two dots in a row in the domain | ada@example..com                    | 400
         Two @                           | ada@@example.com                    | 400
         Space in the local part         | ada lovelace@example.com            | 400
+        Local part of 64 characters     | (64 × a)@example.com                | 201
+        Local part of 65 characters     | (65 × a)@example.com                | 400
+        Domain of 255 characters        | ada@(251 × e).com                   | 201
+        Domain of 256 characters        | ada@(252 × e).com                   | 400
         Empty                           | ''                                  | 400
         Only spaces                     | '   '                               | 400
         No email                        |                                     | 400
         """)
-    void registersASpeakerOnlyWithARealEmail(String email, int status) throws Exception {
+    void registersASpeakerOnlyWithARealEmail(EmailAddress email, int status) throws Exception {
         assertEquals(status, register(email, null).statusCode());
     }
 
@@ -223,6 +229,22 @@ public class SpeakersTest {
     public static Bio parseBio(String cell) {
         String[] countAndCharacter = cell.split(" × ");
         return new Bio(countAndCharacter[1].repeat(Integer.parseInt(countAndCharacter[0])));
+    }
+
+    /** An email address written in a table, where {@code (64 × a)} stands for 64 letters a. */
+    record EmailAddress(String text) {
+    }
+
+    private static final Pattern REPEATED_CHARACTER = Pattern.compile("\\((\\d+) × (.)\\)");
+
+    @TypeConverter
+    public static EmailAddress parseEmailAddress(String cell) {
+        return new EmailAddress(REPEATED_CHARACTER.matcher(cell)
+                .replaceAll(run -> run.group(2).repeat(Integer.parseInt(run.group(1)))));
+    }
+
+    private HttpResponse<String> register(EmailAddress email, Bio bio) throws Exception {
+        return register(email == null ? null : email.text(), bio);
     }
 
     private HttpResponse<String> register(String email, Bio bio) throws Exception {
