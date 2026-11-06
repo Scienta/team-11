@@ -41,7 +41,7 @@ The feature request does not give these. We decide them and write down why.
 | Error bodies | The Boot error body, not RFC 9457 Problem Details: `timestamp`, `status`, `error`, `message`, `path`, plus `errors` for a `@Valid` failure. Our own messages unchanged. | R2. `include-message` and `include-binding-errors` stay `always`. |
 | Error messages written by Spring or Jackson (malformed JSON, a path variable that is not a number, an unknown path, a wrong method) | Same status; the wording changes | The text names library classes (`com.fasterxml.jackson…`, "nested exception is …") that do not exist in Spring 7 and Jackson 3. No spec defines it. Examples: an unknown path says `No static resource nope.` instead of `No message available`; `DELETE /speakers` says `Method 'DELETE' is not supported.` instead of `Request method 'DELETE' not supported`. |
 | `Content-Type` of a success | `application/json;charset=UTF-8`, as on Boot 2.7 | R2. The forced UTF-8 encoding moves to the Boot 4 property name. |
-| `Content-Type` of an error body | `application/json`, without `;charset=UTF-8` | Spring 7 and Tomcat 11 reset the response before the error page, so the forced charset is lost. JSON is UTF-8 by definition (RFC 8259 defines no charset parameter), so no client reads it differently. Restoring it would need our own filter on the error dispatch. A person decides whether that is worth it (open question). |
+| `Content-Type` of an error body (400, 403, 404, 405, 409, 500) | `application/json;charset=UTF-8`, as on Boot 2.7 | R2. Carl Kristian decided (2026-11-06). Spring 7 resets the response before the error page, which drops the forced charset, so `ErrorCharsetConfig` sets UTF-8 again on the error dispatch only. |
 | `ratedAtDisplay` | `M/d/yy, h:mm AM` with an ordinary space before AM/PM, on Java 25 | Ratings R8. The explicit pattern in `Utils.usShort` does not use the locale's SHORT style. |
 | `GET /health` | Unchanged: 200 `{"status":"ok","version":"<GIT_SHA>"}`, 503 `db-unavailable` within 5 s | Deploy contract. `HealthTest` covers it. |
 
@@ -95,6 +95,23 @@ The feature request does not give these. We decide them and write down why.
 | talk with `"speakerId": "<id>"` | 201 | |
 | talk with `"title": 5` | 201 | |
 
+### R2: every error is JSON in UTF-8
+
+Each row answers `Content-Type: application/json;charset=UTF-8` and the Boot error body.
+
+| Request | Status |
+|---------|--------|
+| `POST /speakers` with email `not-an-email` | 400 |
+| `POST /speakers` with an empty name (`@Valid`) | 400 |
+| `POST /speakers` with malformed JSON | 400 |
+| `GET /speakers/abc` | 400 |
+| `POST /talks/{id}/withdraw` by another speaker | 403 |
+| `GET /speakers/999999` | 404 |
+| `GET /nope` | 404 |
+| `DELETE /speakers` | 405 |
+| `POST /speakers` with a taken email | 409 |
+| `GET /speakers/search?q='` (tech-debt B1) | 500 |
+
 ### R3: the versions are the real ones
 
 | Field on `/actuator/info` | Equals |
@@ -111,4 +128,4 @@ from the `Dockerfile`.
 
 ## Open questions for the product owner
 
-- [ ] For the team, not the product owner: is `application/json` without `;charset=UTF-8` on error bodies acceptable? We think so (see "Our decisions").
+- [x] For the team, not the product owner: is `application/json` without `;charset=UTF-8` on error bodies acceptable? No. Carl Kristian (2026-11-06): error bodies keep `;charset=UTF-8`, as on Boot 2.7.

@@ -83,6 +83,34 @@ class UpgradeContractTest {
         assertEquals(status, res.statusCode(), res.body());
     }
 
+    @DisplayName("R2: Answers every error as JSON in UTF-8, with the Boot error body")
+    @Description("""
+            As on Boot 2.7, an error has Content-Type application/json;charset=UTF-8, like a success,
+            and the fields timestamp, status, error, message and path. $speaker and $talk are a
+            registered speaker and their talk, $email a new address and $taken the speaker's address.
+            The 500 comes from the unescaped search (tech-debt B1); when B1 is fixed, drop that row.
+            """)
+    @TableTest("""
+        Scenario                   | Method | Path                   | Body                                    | Status?
+        Our own 400                | POST   | /speakers              | '{"name":"Ada","email":"not-an-email"}' | 400
+        Validation error           | POST   | /speakers              | '{"name":"","email":"$email"}'          | 400
+        Malformed JSON             | POST   | /speakers              | '{not json'                             | 400
+        Path variable not a number | GET    | /speakers/abc          |                                         | 400
+        Not the main speaker       | POST   | /talks/$talk/withdraw  | '{"speakerId":999999}'                  | 403
+        Unknown speaker            | GET    | /speakers/999999       |                                         | 404
+        Unknown path               | GET    | /nope                  |                                         | 404
+        Wrong method               | DELETE | /speakers              |                                         | 405
+        Email taken                | POST   | /speakers              | '{"name":"Ada","email":"$taken"}'       | 409
+        Server error               | GET    | /speakers/search?q=%27 |                                         | 500
+        """)
+    void answersEveryErrorAsJsonInUtf8(String method, String path, String body, int status) throws Exception {
+        HttpResponse<String> res = send(method, filledIn(path), body == null ? null : filledIn(body));
+        assertEquals(status, res.statusCode(), res.body());
+        assertEquals(JSON_UTF8, res.headers().firstValue("Content-Type").orElse(""));
+        assertMatches("\\{\"timestamp\":\"" + TIMESTAMP + "\",\"status\":" + status + ",\"error\":\"[^\"]+\","
+                + "\"message\":\".*\",(\"errors\":\\[.*],)?\"path\":\"[^\"]+\"}", res.body());
+    }
+
     @Test
     @DisplayName("R2: Shows the same speaker with and without a trailing slash")
     void showsTheSameSpeakerWithATrailingSlash() throws Exception {
@@ -129,7 +157,7 @@ class UpgradeContractTest {
     void answersAnErrorWithTheBootErrorBody() throws Exception {
         HttpResponse<String> res = send("GET", "/speakers/999999", null);
         assertEquals(404, res.statusCode());
-        assertTrue(res.headers().firstValue("Content-Type").orElse("").startsWith("application/json"));
+        assertEquals(JSON_UTF8, res.headers().firstValue("Content-Type").orElse(""));
         assertMatches("\\{\"timestamp\":\"" + TIMESTAMP + "\",\"status\":404,\"error\":\"Not Found\","
                 + "\"message\":\"speaker not found\",\"path\":\"/speakers/999999\"}", res.body());
     }
