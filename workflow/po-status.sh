@@ -13,7 +13,7 @@ out="$root/docs/status.md"
 
 [[ -f "$specs/index.md" ]] || { echo "No report in $specs: run the reporter first" >&2; exit 1; }
 
-sections="Foredragsholdere Foredrag Karakterer Godkjenning Workshoper Oppstart Annet"
+sections="Foredragsholdere Foredrag Karakterer Godkjenning Workshoper Program Oppstart Annet"
 
 section_of() {
   case "$1" in
@@ -23,6 +23,7 @@ section_of() {
     ratings | ratings-*) echo Karakterer ;;
     acceptance) echo Godkjenning ;;
     workshop-registration) echo Workshoper ;;
+    programme-scheduling) echo Program ;;
     warm-up | warm-up-*) echo Oppstart ;;
     *) echo Annet ;;
   esac
@@ -36,6 +37,7 @@ feature_name() {
     acceptance) echo Godkjenning ;;
     co-speakers) echo Medforedragsholdere ;;
     workshop-registration) echo "Påmelding til workshop" ;;
+    scheduling) echo Programplanlegging ;;
     spring-boot-4) echo "Teknisk oppgradering" ;;
     *) echo "$1" ;;
   esac

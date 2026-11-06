@@ -67,3 +67,13 @@ utils-test/exports-a-value-that-starts-like-a-formula-as-text	I eksporten til re
 utils-test/quotes-a-value-with-a-semicolon-or-a-line-break	I eksporten til regneark får en verdi med semikolon eller linjeskift anførselstegn rundt seg.
 request-limits/refuses-a-request-body-larger-than-1-mb	Tjenesten avviser en forespørsel som er større enn 1 MB.
 request-log-filter-test/logs-a-large-body-in-a-short-time	Loggen skriver også en stor forespørsel raskt.
+programme-scheduling/r1-gives-each-slot-its-fixed-start-and-end	Programmet har tre rom med de samme fem tidspunktene i hvert rom. Start og slutt er faste.
+programme-scheduling/r1-refuses-a-room-or-slot-outside-the-venue	Bare rommene og tidspunktene som finnes, kan brukes. Andre avvises.
+programme-scheduling/r2-puts-a-talk-in-a-place-looks-it-up-takes-it-out	Komiteen kan sette et foredrag i et rom på et tidspunkt, se hva som står der, og ta det ut igjen.
+programme-scheduling/r2-puts-a-talk-only-for-a-body-with-a-talk-id	For å sette et foredrag på programmet må komiteen oppgi et foredrag som finnes.
+programme-scheduling/r3-puts-only-an-accepted-talk-on-the-programme	Bare godtatte foredrag kommer på programmet.
+programme-scheduling/r4-puts-a-workshop-only-in-the-long-slot	En workshop må ligge på det lange tidspunktet, fra 13:30 til 15:30. Andre foredrag passer på alle tidspunkter.
+programme-scheduling/r5-keeps-one-talk-per-place-and-each-talk-once	Det er ett foredrag per rom og tidspunkt, og et foredrag står bare én gang på programmet. For å flytte et foredrag tar man det ut først.
+programme-scheduling/r6-keeps-each-speaker-in-one-room-at-a-time	Ingen foredragsholder eller medforedragsholder skal være i to rom på samme tidspunkt.
+programme-scheduling/r7-leaves-the-programme-as-it-is-when-a-talk-changes	Når et foredrag endres etterpå, for eksempel trekkes, står programmet som før. Komiteen kan ta det ut.
+programme-scheduling/r8-keeps-the-rules-when-requests-come-at-the-same-time	Også når flere i komiteen endrer programmet samtidig, holder reglene.
