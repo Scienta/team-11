@@ -30,6 +30,7 @@ public class ConferenceService {
     private static final Logger log = LoggerFactory.getLogger(ConferenceService.class);
 
     private static final int MAX_BIO_CHARACTERS = 500;
+    private static final int MAX_TITLE_CHARACTERS = 200;
 
     private static final Map<String, Integer> DURATIONS = new HashMap<>();
 
@@ -109,6 +110,10 @@ public class ConferenceService {
     public TalkDto submitTalk(TalkForm form) {
         if (form.title == null || form.title.trim().isEmpty()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "title is required");
+        }
+        if (form.title.codePointCount(0, form.title.length()) > MAX_TITLE_CHARACTERS) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "title is longer than " + MAX_TITLE_CHARACTERS + " characters");
         }
         if (form.format == null || !DURATIONS.containsKey(form.format)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "format must be one of " + DURATIONS.keySet());
