@@ -909,8 +909,15 @@ HTTP 201
 [Captures]
 b4: jsonpath "$.id"
 
+POST {{base_url}}/speakers
+{"name": "Grace Hopper", "email": "hopper-{{newUuid}}@example.com"}
+HTTP 201
+[Captures]
+g4b: jsonpath "$.id"
+
+# Setup: a second "Grace Hopper" owns this talk, so the first stays under the limit of 3 when she co-speaks (submission-cap-cr)
 POST {{base_url}}/talks
-{"title": "Legacy is a feeling", "format": "PRESENTATION", "level": "BEGINNER", "speakerId": {{g4}}}
+{"title": "Legacy is a feeling", "format": "PRESENTATION", "level": "BEGINNER", "speakerId": {{g4b}}}
 HTTP 201
 [Captures]
 alone: jsonpath "$.id"
