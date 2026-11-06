@@ -1,6 +1,7 @@
 package no.scienta.cfp;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 import java.io.ByteArrayInputStream;
 import java.net.URI;
@@ -13,9 +14,11 @@ import java.util.function.Function;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.ApplicationContext;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
@@ -24,7 +27,8 @@ import org.tabletest.junit.TableTest;
 import org.tabletest.junit.TypeConverter;
 
 /**
- * Limits on what a request can make the service do (security review, 2026-11-06): the size of a request body. Runs the real app on a random port with a throwaway database, emptied before each test.
+ * Limits on what a request can make the service do (security review, 2026-11-06): the size of a request body, and
+ * no multipart parsing. Runs the real app on a random port with a throwaway database, emptied before each test.
  */
 @DisplayName("Request limits")
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -40,6 +44,9 @@ public class RequestLimitsTest {
 
     @Autowired
     JdbcTemplate jdbc;
+
+    @Autowired
+    ApplicationContext context;
 
     private final HttpClient http = HttpClient.newHttpClient();
 
@@ -65,6 +72,12 @@ public class RequestLimitsTest {
         """)
     void refusesARequestBodyLargerThan1Mb(int bodySize, Transfer transfer, int status) throws Exception {
         assertEquals(status, send(transfer, "PUT", "/talks/1/status", decisionOfSize(bodySize)).statusCode());
+    }
+
+    @DisplayName("Leaves multipart bodies unparsed")
+    @Test
+    void leavesMultipartBodiesUnparsed() {
+        assertFalse(context.containsBean("multipartResolver"), "a multipart resolver parses multipart bodies");
     }
 
     /** How the client sends the body: with a Content-Length, or in chunks without one. */
