@@ -2,9 +2,6 @@ package no.scienta.cfp;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
@@ -27,21 +24,14 @@ public class TalkStatusDao {
      * rated it. Returns whether the talk moved. A reviewer has one rating row per talk, so the rows count reviewers.
      */
     public boolean moveTo(long talkId, TalkStatus next) {
-        List<String> from = next.reachableFrom().stream().map(Enum::name).collect(Collectors.toList());
-        if (from.isEmpty()) {
+        String[] from = next.reachableFrom().stream().map(Enum::name).toArray(String[]::new);
+        if (from.length == 0) {
             return false;
         }
-        String placeholders = from.stream().map(status -> "?").collect(Collectors.joining(", "));
-        int moved = jdbc.update("UPDATE talk SET status = ? WHERE id = ? AND status IN (" + placeholders + ") "
-                + "AND (SELECT COUNT(*) FROM rating WHERE talk_id = ?) >= ?", moveArguments(talkId, next, from));
+        int moved = jdbc.update("UPDATE talk SET status = ? WHERE id = ? AND status = ANY(?) "
+                        + "AND (SELECT COUNT(*) FROM rating WHERE talk_id = ?) >= ?",
+                next.name(), talkId, from, talkId, next.reviewersNeeded());
         return moved == 1;
-    }
-
-    /** The values for the placeholders of the move, in the order of the statement in {@link #moveTo}. */
-    private static Object[] moveArguments(long talkId, TalkStatus next, List<String> from) {
-        return Stream.of(Stream.of(next.name(), talkId), from.stream(), Stream.of(talkId, next.reviewersNeeded()))
-                .flatMap(Function.identity())
-                .toArray();
     }
 
     /**
