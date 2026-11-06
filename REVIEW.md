@@ -16,6 +16,23 @@
 
 <!-- The steps you actually ran, from spec to claim. Link to the files in workflow/ and .claude/. -->
 
+Draft from 12:30. We update it when the steps change.
+
+1. Fetch the feature request with [`workflow/harness.sh`](workflow/harness.sh). Write our spec
+   from [`workflow/spec-template.md`](workflow/spec-template.md): rules with IDs, our decisions on
+   status codes and edge cases, and an example table for each rule.
+2. A person takes the open questions to the product owner.
+3. Hurl examples and JUnit tests come from the example tables, before the code.
+4. A review agent checks the diff against the spec with
+   [`workflow/review-rubric.md`](workflow/review-rubric.md).
+5. A person approves the push. We verify on the team URL with the Hurl examples, the request log
+   (`RequestLogFilter`, read with `.github/fagdag/logs.sh`) and the harness feedback.
+6. A person claims only after [`workflow/claim-checklist.md`](workflow/claim-checklist.md) has
+   evidence on every line.
+
+The full steps are in [`workflow/process.md`](workflow/process.md). The agent rules are in
+[`.claude/rules/team-workflow.md`](.claude/rules/team-workflow.md).
+
 ## 2. How we reviewed agent output
 
 <!-- Who or what reviewed the agents' work (people, review agents, tests, Hurl examples, gates in
