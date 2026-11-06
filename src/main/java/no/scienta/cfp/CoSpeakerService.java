@@ -55,8 +55,8 @@ public class CoSpeakerService {
         if (talk.coSpeakerIds.size() >= MAX_CO_SPEAKERS) {
             return new CoSpeakerChange.Full(MAX_CO_SPEAKERS);
         }
-        if (talkDao.lockSpeakerAndCountTalksTowardLimit(speakerId) >= ConferenceService.MAX_TALKS_PER_SPEAKER) {
-            return new CoSpeakerChange.SpeakerAtLimit(ConferenceService.MAX_TALKS_PER_SPEAKER);
+        if (talkDao.lockSpeakerAndCountTalksTowardLimit(speakerId) >= TalkLimit.PER_SPEAKER) {
+            return new CoSpeakerChange.SpeakerAtLimit(TalkLimit.PER_SPEAKER);
         }
         coSpeakerDao.add(talk.id, speakerId);
         return changed(talk);
