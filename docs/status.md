@@ -1,10 +1,10 @@
 # Teststatus
 
-Laget 6. november 2026 kl. 15:15 fra versjon [ab19e7a](https://github.com/Scienta/team-11/commit/ab19e7a8ee1cbba34e09201a832e033a4601a893).
+Laget 6. november 2026 kl. 15:18 fra versjon [2355a81](https://github.com/Scienta/team-11/commit/2355a811272b3e9dab7280fe69186c6ee430c0c6).
 
 ✅ Våre tester: alle 83 regler er i orden (364 av 364 eksempler).
 
-❌ Arrangørenes kontroller: 1 av 30 er ikke i orden (Programplanlegging).
+❌ Arrangørenes kontroller: 2 av 33 er ikke i orden (Medforedragsholdere).
 
 Hver linje er en regel vi tester. Et eksempel er ett konkret tilfelle av regelen.
 Arrangørenes kontroller sjekker tjenesten som kjører nå, og bare funksjoner vi har meldt ferdige.
