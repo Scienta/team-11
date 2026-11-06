@@ -87,6 +87,22 @@ Why we missed it: our tests, the Hurl files and the deploy gate all run one requ
 deploy gate waits only for `/health` with the new SHA. Nothing measured the first burst of traffic on a
 cold JVM. Each deploy, and each start after scale-to-zero, can cost a FAULTY tick.
 
+**Tick 67 (12:34): `speakers/check-1` and `speakers/check-3` were FAULTY on `POST /speakers`.**
+The cause was the same: the cold start after the deploy of `0a95814`. Both checks were OK again at
+the next tick. The harness alert went to Slack #team-11 from our log and harness watches.
+
+The fix is a warm-up at start-up (`workflow/specs/warm-up/spec.md`, `c03799a`, deploy run
+42219441079). After the start, the service sends 6 requests to its own port. The requests change no
+data. The first warm-up request now gets the cold cost (2677 ms), not the harness.
+
+| First harness burst after a start | Of the first 35 requests, 1 s or more | Slowest |
+|---|---|---|
+| Before: containers 00009, 00010, 00011 | 25, 27, 21 | 3.6 s, 3.4 s, 3.9 s |
+| After: container 00012 | 0 | 782 ms |
+
+Ticks 68–78 were all OK after the fix, and we lost no more points. We check this (R5) in the request
+log after each deploy, because a JUnit test runs on a JVM that is already warm.
+
 ## 5. Reusable artifacts
 
 <!-- What's worth taking to client work: agents, skills, prompts, spec templates, gates. Give the paths. -->
