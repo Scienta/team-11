@@ -35,8 +35,16 @@ other's way, and give the person one place to look.
   holds only your own files, whatever other sessions have staged. Never leave changes staged.
   Reason: at 13:45 one session ran `rm -rf docs/specs` and staged the deletion. The next commit of
   another session took the deletion from the shared index (`6841a88`, repaired in `5eff9ac`).
+- Never stage a partial hunk through the shared index (`git add -p`, `git apply --cached`).
+  Another session can commit the index at the same moment. When another session has uncommitted
+  changes in a file that you need, wait until it commits.
 - Never `rm -rf` a shared path in the main working tree. It can delete the uncommitted work of
   another session.
+- Run tests in your own `git worktree` of `HEAD`, with your changed files copied in. Reason:
+  another session's Maven run can rebuild the shared `target/` during yours (Frikke got a
+  `ClassNotFoundException`).
+- Before you commit from the main tree, check that each file is byte-equal to the file you
+  tested: `cmp <path> <worktree>/<path>`.
 - One owner at a time for a shared file, for example `docs/specs/` and `REVIEW.md`. The Hand
   says who the owner is.
 - Make reports, such as the TableTest report (`docs/specs/`), in a separate `git worktree` of
