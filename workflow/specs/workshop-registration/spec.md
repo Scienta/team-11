@@ -5,7 +5,8 @@ Source: `request.md` in this folder (the feature request from the harness, not e
 ## Rules
 
 R1–R8 come from the feature request. R9 comes from the product owner's answer in Slack #team-11
-on 2026-11-06 at 14:01.
+on 2026-11-06 at 14:01. R10 is our answer to the product owner's wish that unregistering is secure;
+the product owner left the technical design to us.
 
 | ID | Rule |
 |----|------|
@@ -18,6 +19,7 @@ on 2026-11-06 at 14:01.
 | R7 | The same person can register for several workshops. |
 | R8 | The organisers see the attendees of a workshop, in the order they registered. |
 | R9 | An attendee can unregister after registering, so that the seat goes to someone else. |
+| R10 | To unregister, the request gives the email of the registration. Without the right email, nothing is unregistered. |
 
 ## API
 
@@ -25,7 +27,7 @@ on 2026-11-06 at 14:01.
 |--------|------|--------------|----------------|---------------|
 | POST | `/workshops/{id}/registrations` | `{name, email}` | 201 | Registration |
 | GET | `/workshops/{id}/registrations` | | 200 | list of Registration, oldest first |
-| DELETE | `/workshops/{id}/registrations/{registrationId}` | | 204 | none |
+| DELETE | `/workshops/{id}/registrations/{registrationId}` | `{email}` | 204 | none |
 
 `{id}` is the workshop's talk ID, and `{registrationId}` is the `id` of a Registration. A Registration
 is `{id, workshopId, name, email}`. `email` is the
@@ -58,7 +60,10 @@ email as the attendee typed it.
 | Unregister from a `WITHDRAWN` workshop | 204 | R4 keeps the others on the list; an attendee may still leave it. |
 | The freed seat (R9) | Free at once: on a full workshop, the next registration after an unregistration gets 201. | The PO: "so that the seat goes to someone else". |
 | Register again after unregistering (R6, R9) | 201 | The email is no longer on the list. |
-| Who can unregister | Anyone who knows the registration ID, no authentication | Same as the other endpoints today (tech debt B11). |
+| Who can unregister (R10) | Whoever gives the registration ID and the registration's email in a JSON body: `{"email": "..."}`. The email is compared without letter case, as in R6. | A body like the `speakerId` of `POST /talks/{id}/withdraw`. A query parameter would put the email in URLs and in our request log. |
+| Wrong email, or a body without `email` (R10) | 404, nothing is unregistered | The same answer as for an unknown registration, so the answer does not tell whether a registration ID exists. |
+| No body, or a body that is not JSON (R10) | 400 | Same as POST. The body is checked before the registration is looked up. |
+| What the email proof protects (R10) | It stops someone who guesses registration IDs blindly, and nothing more. | `GET /workshops/{id}/registrations` is public and shows every attendee's ID and email (R8, and the Registration schema of the request), so anyone can read the proof from the list. Hiding the emails would change the request's API. A real fix needs authentication, and no spec asks for it. Coordinator's decision, 2026-11-06. |
 
 ## Examples
 
@@ -136,6 +141,19 @@ email as the attendee typed it.
 | Ada registered for workshop 1 | `DELETE /workshops/2/registrations/<Ada's id>` | 404 |
 | no registration with this ID | unregister it | 404 |
 | Ada and Grace registered, then the workshop is withdrawn | unregister Ada | 204; the list shows only Grace |
+
+### R10: unregister with the registration's email
+
+| Registered email | Body of the DELETE | Status |
+|------------------|--------------------|--------|
+| `ada@example.com` | `{"email": "ada@example.com"}` | 204 |
+| `ada@example.com` | `{"email": "ADA@Example.com"}` | 204 |
+| `ada@example.com` | `{"email": "grace@example.com"}` | 404 |
+| `ada@example.com` | `{}` | 404 |
+| `ada@example.com` | no body | 400 |
+| `ada@example.com` | `{"email":` (not JSON) | 400 |
+
+The R9 examples send the registration's own email.
 
 ## Effect on existing features
 
