@@ -1,5 +1,8 @@
 package no.scienta.cfp;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+
 /**
  * The average rating the committee's statistics show.
  */
@@ -8,8 +11,8 @@ public final class RatingAverage {
     private RatingAverage() {
     }
 
-    /** One decimal, cut off: 4.25 shows as 4.2. */
+    /** One decimal, halves up: 4.25 shows as 4.3, as a talk's average does (Ratings R4). */
     public static double roundToOneDecimal(double average) {
-        return Math.floor(average * 10) / 10.0;
+        return BigDecimal.valueOf(average).setScale(1, RoundingMode.HALF_UP).doubleValue();
     }
 }

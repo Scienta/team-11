@@ -91,7 +91,7 @@ class ReportsTest {
         assertEquals(totalHours, JSON.readTree(api.get("/admin/stats").body()).get("totalHours").asInt());
     }
 
-    @DisplayName("Averages the talks' shown averages, cut to one decimal")
+    @DisplayName("Averages the talks' shown averages, one decimal, halves up")
     @Description("""
             One speaker submits a talk for each list of scores; each score comes from a different
             reviewer. A talk nobody rated does not count.
@@ -100,7 +100,7 @@ class ReportsTest {
         Scenario                     | Scores of each talk | Average Rating?
         No ratings                   | [[]]                |
         One talk                     | [[4, 5]]            | 4.5
-        Averages 4.0 and 4.5         | [[4], [4, 5]]       | 4.2
+        Averages 4.0 and 4.5         | [[4], [4, 5]]       | 4.3
         An unrated talk is left out  | [[4], []]           | 4.0
         """)
     void averagesTheTalksAverages(List<List<Integer>> scoresOfEachTalk, Double averageRating) throws Exception {

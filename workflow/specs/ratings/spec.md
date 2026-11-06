@@ -34,6 +34,7 @@ Source: `request.md` in this folder (the base spec from the harness, not edited)
 | Unknown talk | 404 | |
 | `sort` other than `rating` | 400 | |
 | Unknown `speakerId` in the list | 200 with an empty list | It is a filter, not a lookup. |
+| `averageRating` in `/admin/stats` (not in the spec) | The average of each rated talk's shown average, one decimal, halves up: talk averages 4.0 and 4.5 give 4.3 | R4: halves up wherever an average is shown. Product owner (Stein, #team-11, 2026-11-06 12:59 and 13:00): halves up here too, and the average of the talks' averages stays. It used to cut off (4.2). |
 
 ## Examples
 
