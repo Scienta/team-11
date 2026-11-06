@@ -1,6 +1,6 @@
 # Teststatus
 
-Laget 6. november 2026 kl. 14:33 fra versjon [84a7fab](https://github.com/Scienta/team-11/commit/84a7fabce49f72d4b2c6a6ef02e81849beba9ba9).
+Laget 6. november 2026 kl. 14:35 fra versjon [7c97c4c](https://github.com/Scienta/team-11/commit/7c97c4c5526cff61dafd7fb5f24e10f4f0e8e3c5).
 
 ✅ Våre tester: alle 65 regler er i orden (256 av 256 eksempler).
 
@@ -91,7 +91,7 @@ Alle detaljer står i [testrapporten](specs/index.md).
 - ✅ Ved en feil i databasen svarer tjenesten uten å vise tekniske detaljer. — 1 av 1 eksempel · [se eksemplene](specs/error-answers/answers-a-database-failure-without-its-details.md)
 - ✅ Tekst som inneholder et ugyldig nulltegn, avvises. — 2 av 2 eksempler · [se eksemplene](specs/error-answers/refuses-a-text-field-that-holds-a-nul-character.md)
 - ✅ E-postadresser skjules i loggen. — 7 av 7 eksempler · [se eksemplene](specs/request-log-filter-test/masks-each-email-in-the-logged-bodies.md)
+- ✅ Også en stor forespørsel blir logget raskt. — 3 av 3 eksempler · [se eksemplene](specs/request-log-filter-test/logs-a-large-body-in-a-short-time.md)
 - ✅ I eksporten til regneark blir en verdi som ligner en formel, lagret som tekst. — 6 av 6 eksempler · [se eksemplene](specs/utils-test/exports-a-value-that-starts-like-a-formula-as-text.md)
 - ✅ I eksporten til regneark får en verdi med semikolon eller linjeskift anførselstegn rundt seg. — 4 av 4 eksempler · [se eksemplene](specs/utils-test/quotes-a-value-with-a-semicolon-or-a-line-break.md)
 - ✅ Tjenesten avviser en forespørsel som er større enn 1 MB. — 3 av 3 eksempler · [se eksemplene](specs/request-limits/refuses-a-request-body-larger-than-1-mb.md)
-- ✅ Loggen skriver også en stor forespørsel raskt. — 3 av 3 eksempler · [se eksemplene](specs/request-log-filter-test/logs-a-large-body-in-a-short-time.md)
