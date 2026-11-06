@@ -125,7 +125,7 @@ public class ConferenceService {
         }
         TalkFormat format = constantNamed(TalkFormat.class, form.format).orElseThrow(() ->
                 new ResponseStatusException(HttpStatus.BAD_REQUEST, "format must be one of " + FORMATS_IN_ERROR_MESSAGE));
-        if (form.level == null || !Arrays.asList("BEGINNER", "INTERMEDIATE", "ADVANCED").contains(form.level)) {
+        if (constantNamed(TalkLevel.class, form.level).isEmpty()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "unknown level");
         }
         if (form.speakerId == null) {
