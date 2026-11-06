@@ -1,0 +1,39 @@
+# The rules in plain Norwegian for docs/status.md, the status page for the product owner.
+# One line per page in docs/specs: the page path without .md, a tab, the text.
+# The order of the lines is the order on the status page. workflow/po-status.sh reads this file.
+speakers/r3-registers-a-speaker-only-with-a-name	En foredragsholder må ha et navn.
+speakers/r3-registers-a-speaker-only-with-a-real-email-address	En foredragsholder må ha en gyldig e-postadresse.
+speakers/r4-limits-the-bio-to-500-characters	Beskrivelsen av en foredragsholder kan ha høyst 500 tegn.
+speakers/r4-applies-the-bio-limit-when-an-admin-updates-a-speaker	Grensen på 500 tegn gjelder også når en administrator endrer beskrivelsen.
+speakers/r5-refuses-a-second-speaker-with-the-same-email	To foredragsholdere kan ikke ha samme e-postadresse.
+speakers/r7-treats-a-trailing-slash-like-the-path-without-it	En nettadresse med skråstrek til slutt virker som uten.
+speakers/finds-a-registered-speaker-by-id	Vi finner en registrert foredragsholder igjen.
+talks/r3-accepts-a-talk-only-with-a-real-title	Et foredrag må ha en tittel.
+talks/r4-sets-the-duration-from-the-format	Lengden på foredraget følger av formatet. Foredragsholderen velger den ikke.
+talks/r5-accepts-only-the-four-formats-in-capitals	Et foredrag har ett av de fire formatene: lyntale på 10 eller 20 minutter, presentasjon eller workshop.
+talks/r5-accepts-only-the-three-levels-in-capitals	Et foredrag har ett av de tre nivåene: nybegynner, middels eller viderekommen.
+ratings/r1-accepts-a-reviewer-from-1-to-9223372036854775807	Hver vurderer har et nummer. Vi tar bare imot gyldige numre.
+ratings/r2-accepts-only-a-whole-number-from-1-to-5-as-score	Karakteren er et helt tall fra 1 til 5.
+ratings/r3-keeps-one-rating-per-reviewer-the-latest-score	Hver vurderer har én karakter per foredrag. Den siste karakteren gjelder.
+ratings/r4-shows-the-average-score-with-one-decimal-halves-up	Snittet vises med én desimal. En halv rundes opp.
+ratings-talk-lists/r5-lists-all-talks-oldest-first-or-the-talks-of-one-speaker	Listen viser alle foredrag med det eldste først, eller bare foredragene til én foredragsholder.
+ratings-talk-lists/r6-ranks-talks-by-shown-average-then-rating-count-then-age	Rangeringen går etter snittet, så etter antall karakterer, så etter hvor gammelt foredraget er.
+ratings-talk-lists/ranks-talks-only-for-the-sort-order-rating	Listen er bare rangert når man ber om det. Ellers kommer det eldste foredraget først.
+ratings-ratings-at-the-same-time/r7-counts-each-reviewer-once-when-ratings-arrive-together	Karakterer som kommer samtidig, telles riktig: hver vurderer én gang.
+ratings-rated-at-display/r8-shows-the-rating-time-in-utc-as-m-d-yy-h-mm-am	Tidspunktet for siste karakter vises i verdenstid, slik vurderingsverktøyet trenger det (for eksempel 11/6/26, 2:05 PM).
+acceptance/r1-takes-only-the-three-decisions-as-a-status	Komiteen kan godta, avslå eller sette et foredrag på venteliste. Andre valg avvises.
+acceptance/r2-moves-a-talk-to-the-committee-s-decision	Komiteens beslutning gir foredraget ny status.
+acceptance/r3-accepts-a-talk-only-after-two-different-reviewers	Et foredrag kan bare godtas når to forskjellige vurderere har gitt karakter.
+acceptance/r4-lets-only-the-main-speaker-withdraw-a-talk	Bare hovedforedragsholderen kan trekke et foredrag.
+acceptance/r4-withdraws-a-talk-unless-it-is-rejected-or-withdrawn	Et foredrag kan trekkes, unntatt når det er avslått eller allerede trukket.
+acceptance/r5-shows-the-current-status-wherever-the-talk-is-shown	Foredraget viser samme status overalt der det vises.
+acceptance/r7-leaves-a-withdrawn-talk-out-of-the-talk-limit	Et trukket foredrag teller ikke med i grensen for antall foredrag.
+acceptance/r8-takes-ratings-only-for-a-talk-that-is-still-open	Et foredrag får bare nye karakterer så lenge komiteen ikke har bestemt seg.
+acceptance/r9-shows-withdrawn-talks-after-the-others	Trukne foredrag kommer sist i listene.
+acceptance/r9-takes-only-true-or-false-to-leave-out-withdrawn-talks	Man kan velge å skjule trukne foredrag. Valget er ja eller nei.
+acceptance/answers-404-for-a-talk-that-does-not-exist	Vi sier tydelig fra når et foredrag ikke finnes.
+warm-up/r1-sends-each-warm-up-request-through-the-http-port	Ved oppstart varmer tjenesten seg opp med de samme forespørslene som brukerne sender.
+warm-up/r2-leaves-every-table-as-empty-as-it-found-it	Oppvarmingen etterlater ingen data.
+warm-up/r3-writes-the-number-of-requests-when-the-warm-up-ends	Tjenesten skriver i loggen hvor mange forespørsler oppvarmingen sendte.
+warm-up-http-exchange/r4-turns-a-request-without-an-answer-into-a-failure	En forespørsel som ikke får svar, regnes som en feil.
+warm-up-outcomes/r4-warns-about-an-unexpected-status-or-a-failure	Tjenesten varsler i loggen om et uventet svar eller en feil under oppvarmingen.
