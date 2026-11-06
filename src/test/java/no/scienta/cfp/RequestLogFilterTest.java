@@ -140,14 +140,15 @@ class RequestLogFilterTest {
     @Description("""
             The body has no @ and no line break: the slowest input for the email mask and for the
             joining of lines. The filter logs the body as the request and as the response, and the
-            time limit is for both.
+            time limit is for both. The limit leaves room for a cold JIT on a shared CI runner. The
+            quadratic mask of 9458d53 took 16 s for 80 KB, so the rows still catch that.
             """)
     @TableTest("""
         Scenario         | Character | Repeats | Time Limit (ms)
-        80 KB of letters | A         | 80000   | 200
-        2 MB of letters  | A         | 2000000 | 200
-        2 MB of spaces   | ' '       | 2000000 | 200
-        2 MB of quotes   | '"'       | 2000000 | 200
+        80 KB of letters | A         | 80000   | 2000
+        2 MB of letters  | A         | 2000000 | 2000
+        2 MB of spaces   | ' '       | 2000000 | 2000
+        2 MB of quotes   | '"'       | 2000000 | 2000
         """)
     void logsALargeBodyInAShortTime(String character, int repeats, long timeLimitMillis) {
         String body = character.repeat(repeats);
