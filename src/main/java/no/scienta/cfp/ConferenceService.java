@@ -209,7 +209,7 @@ public class ConferenceService {
     }
 
     private static boolean isWithdrawn(TalkDto talk) {
-        return TalkStatus.WITHDRAWN.name().equals(talk.status);
+        return talk.status == TalkStatus.WITHDRAWN;
     }
 
     private List<TalkDto> orderedTalks(String sort, Long speakerId) {
@@ -275,7 +275,7 @@ public class ConferenceService {
         for (TalkDto t : talks) {
             byFormat.put(t.format, byFormat.getOrDefault(t.format, 0) + 1);
             byLevel.put(t.level, byLevel.getOrDefault(t.level, 0) + 1);
-            byStatus.put(t.status, byStatus.getOrDefault(t.status, 0) + 1);
+            byStatus.put(t.status.name(), byStatus.getOrDefault(t.status.name(), 0) + 1);
             if (!speakersWithTalks.contains(t.speakerId) && speakerDao.findById(t.speakerId) != null) {
                 speakersWithTalks.add(t.speakerId);
             }

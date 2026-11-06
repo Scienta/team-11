@@ -28,7 +28,7 @@ public class TalkDao {
         t.format = rs.getString("format");
         t.durationMinutes = rs.getInt("duration");
         t.level = rs.getString("level");
-        t.status = rs.getString("status");
+        t.status = TalkStatus.valueOf(rs.getString("status"));
         t.speakerId = rs.getLong("speaker_id");
         long millis = rs.getLong("submitted_at");
         t.submittedAt = new Date(millis);

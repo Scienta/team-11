@@ -46,7 +46,7 @@ public class AcceptanceService {
         if (statusDao.moveTo(talk.id, next)) {
             return new StatusChange.Moved(conference.getTalk(talk.id));
         }
-        TalkStatus current = TalkStatus.valueOf(talk.status);
+        TalkStatus current = talk.status;
         return current.canMoveTo(next) ? new StatusChange.NeedsReviewers(next) : new StatusChange.NotAllowed(current, next);
     }
 

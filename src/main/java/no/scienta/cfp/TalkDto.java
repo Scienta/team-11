@@ -14,7 +14,7 @@ public class TalkDto {
     public String level;
     public Long speakerId;
     public Integer durationMinutes;
-    public String status;
+    public TalkStatus status;
     public Date submittedAt;
     public java.sql.Date submittedOn;  // the reporting tool wants a plain date
     public Double averageRating;
