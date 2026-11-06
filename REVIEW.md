@@ -23,36 +23,77 @@ Draft from 12:30. We update it when the steps change.
    status codes and edge cases, and an example table for each rule.
 2. A person takes the open questions to the product owner.
 3. Hurl examples and JUnit tests come from the example tables, before the code.
-4. A review agent checks the diff against the spec with
-   [`workflow/review-rubric.md`](workflow/review-rubric.md).
-5. A person approves the push. We verify on the team URL with the Hurl examples, the request log
-   (`RequestLogFilter`, read with `.github/fagdag/logs.sh`) and the harness feedback.
+4. Two reviews for each batch: a spec review and a design review, with
+   [`workflow/review-rubric.md`](workflow/review-rubric.md). Then the guardians review the batch
+   (below).
+5. A session builds the push candidate in its own git worktree, runs the full suite there and makes
+   the report. A person approves the push, because a push deploys. We verify on the team URL with
+   the Hurl examples, the request log (`RequestLogFilter`, read with `.github/fagdag/logs.sh`) and
+   the harness feedback.
 6. A person claims only after [`workflow/claim-checklist.md`](workflow/claim-checklist.md) has
-   evidence on every line.
+   evidence on every line, and the product owner has approved the claim.
 
 The full steps are in [`workflow/process.md`](workflow/process.md). The agent rules are in
 [`.claude/rules/team-workflow.md`](.claude/rules/team-workflow.md).
 
-Many agent sessions work on one laptop, in one working tree. One coordinator session takes all
-requests and gives each task to an agent session. The rules are in
-[`workflow/coordination.md`](workflow/coordination.md).
+**One coordinator and three guardians.** About 10 Claude sessions work on one laptop, in one working
+tree. The rules are in [`workflow/coordination.md`](workflow/coordination.md).
+
+| Role | What it does | File |
+|---|---|---|
+| Coordinator ("The Hand") | Takes all requests from the person, the agent sessions and Slack. Gives each task to an agent session. Changes no files. | [`workflow/coordination.md`](workflow/coordination.md) |
+| Security guardian (Ferdinand) | Reviews each batch before a push against checks C1–C8, and runs the exploit script against a local build. Writes no fixes. | [`workflow/security-review.md`](workflow/security-review.md) |
+| Architecture guardian | Reviews each batch against our patterns P1–P8. Writes no code. | [`workflow/architecture-review.md`](workflow/architecture-review.md) |
+| Functionality guardian | Collects the claim evidence for each feature, line by line from the claim checklist. | [`workflow/claims/`](workflow/claims/) |
+| Agent sessions | Write the specs, tests and code. Each session tests in its own git worktree and commits only its own files. | [`.claude/rules/team-workflow.md`](.claude/rules/team-workflow.md) |
+
+- **Claims in Slack.** The Hand claims each task in Slack #team-11 before it gives the task to a
+  session. Carl Kristian's laptop runs agents too, and the claim stops two laptops from doing the
+  same work.
+- **Product owner approval in three parts.** A claim request has three sections: security,
+  architecture and functionality, each with evidence that a person can check. The product owner
+  approves in Slack before a person presses claim. Example: acceptance, «Godkjent» at 14:30:30 CET,
+  in [`workflow/claims/acceptance.md`](workflow/claims/acceptance.md).
 
 ## 2. How we reviewed agent output
 
 <!-- Who or what reviewed the agents' work (people, review agents, tests, Hurl examples, gates in
 the deploy workflow), and against what (the spec, its examples, your own checks). -->
 
-Four checks, in this order. Each one checks against the spec on the harness, not against the code.
+Six checks, in this order. The functional checks compare with the spec on the harness, not with the
+code.
 
 1. **Tests first, from the example tables.** Each row in `workflow/specs/<feature>/spec.md` becomes a
    JUnit row before the code changes, and we see it fail.
-2. **A review agent with no shared context.** It gets the harness spec, our spec, the rubric
-   ([`workflow/review-rubric.md`](workflow/review-rubric.md)) and the commits. It does not get the
-   conversation that wrote the code.
-3. **Hurl examples against the real service.** `examples/our-*.hurl` cover every example row. We run
-   them against a local build first, then against the team URL after the deploy.
-4. **The request log and the harness transcripts.** `RequestLogFilter` writes one line per request,
+2. **Two reviews for each batch, by sessions with no shared context.** The spec review compares the
+   diff with `spec.md`, row by row ([`workflow/review-rubric.md`](workflow/review-rubric.md) items
+   1–7). The design review checks the code against our style and patterns (item 8). Neither session
+   gets the conversation that wrote the code.
+3. **Black-box Hurl examples.** A session that has not read the code writes
+   `examples/our-<feature>.hurl` from the spec, one request for each example row. We run them against
+   a local build first, then against the team URL after the deploy. Example: `our-acceptance.hurl`,
+   189/189 on the team URL before the claim.
+4. **The security guardian's exploit script.** Each security finding has an exploit. The guardian
+   runs all of them against a local build of each batch. Each check prints CLOSED or OPEN, and the
+   exit code is the number of OPEN checks. A finding is closed only when its exploit fails.
+5. **The merge test.** Before a merge from Carl Kristian's laptop, the architecture guardian merges in a scratch
+   worktree and runs the full suite. For Spring Boot 4 (PR #5) it found 7 fixes that the merge needs.
+6. **The request log and the harness transcripts.** `RequestLogFilter` writes one line per request,
    so we can compare our answers with what the checks sent.
+
+**Story (14:13–14:25): our own security fix had a ReDoS, and the guardian caught it before the
+push.**
+
+- `9458d53` masked the emails in the request log. The mask ran a regular expression on the whole
+  body, and the time grew with the square of the body length.
+- Ferdinand, the security guardian, ran the exploit script on the batch before the push. An 80 KB
+  body without `@` took 16 s of CPU. A 2 MB body took more than 5 minutes.
+- The fix `b7f1b79` cuts the body first, then masks, and bounds the pattern. A 2 MB body now takes
+  0.02 s. The new test rows send 80 KB and 2 MB.
+- Why it matters: a fix for one finding (emails in the logs, S7) opened a worse hole (S11). Only a
+  review that runs the exploit, not one that reads the diff, measured it.
+- It also led to two more limits: at most 64 characters before the `@` in an email (`230a439`), and
+  at most 200 characters in a talk title (`d8612c3`).
 
 Story (12:50): the Hurl run against a local build failed on `ratedAtDisplay`. The local JDK is 27,
 and from Java 20 the US short format puts U+202F, not a space, before "AM". The service runs Java
@@ -108,6 +149,18 @@ data. The first warm-up request now gets the cold cost (2677 ms), not the harnes
 Ticks 68–78 were all OK after the fix, and we lost no more points. We check this (R5) in the request
 log after each deploy, because a JUnit test runs on a JVM that is already warm.
 
+**Tick 107: a FAULTY check from a `POST /speakers` that took 2.1 s.** This time the JVM was warm. The
+container has a small share of a CPU, and in a burst the JIT compiler took CPU from the requests.
+
+- Fiffi measured the JVM flag `-XX:TieredStopAtLevel=1` (the fast C1 compiler only) on a local
+  image at 0.25 CPU: p90 from 690–1080 ms to 480–590 ms, and start-up from 24–29 s to 15–17 s.
+- The hotfix `c43bbaf` sets the flag in the `Dockerfile`.
+- Filla compared the request log before and after: the share of requests of 1 s or more went from
+  25 % to 7 %.
+
+Why we missed it: no test runs with the container's CPU limit. The warm-up fixed the cold start, but
+not a burst on a warm JVM with little CPU.
+
 ## 5. Reusable artifacts
 
 <!-- What's worth taking to client work: agents, skills, prompts, spec templates, gates. Give the paths. -->
@@ -122,10 +175,14 @@ Draft. Each item works outside this repo with small changes.
 | Claim checklist | [`workflow/claim-checklist.md`](workflow/claim-checklist.md) | A person claims only when each line has evidence that another person can check. |
 | Coordination rules | [`workflow/coordination.md`](workflow/coordination.md) | One coordinator session, many agent sessions, one shared working tree. |
 | TableTest report | [`src/test/tabletest-templates/status-table.md.peb`](src/test/tabletest-templates/status-table.md.peb), output in [`docs/specs/`](docs/specs/index.md) | Turns the `@TableTest` example tables into Markdown pages for the product owners, with ✅ or ❌ on each row. |
+| Security guardian | [`workflow/security-review.md`](workflow/security-review.md) | A session that writes no fixes reviews each batch against 8 checks (SQL, authorisation, error answers, input size, personal data, limits under concurrency, exports, dependencies). Each finding has a decision, a fix and an exploit re-run. |
+| Exploit script | `exploits.sh`, kept by the security guardian (not in the repo yet) | One exploit for each finding, run against a local build. It prints CLOSED or OPEN for each, and its exit code is the number of OPEN checks. A finding is closed only when its exploit fails. |
+| Architecture guardian | [`workflow/architecture-review.md`](workflow/architecture-review.md) | Our patterns P1–P8 with an example of each, and a log of each batch review with the named refactoring and its commit. |
+| Claim evidence | [`workflow/claims/`](workflow/claims/) | One file for each feature, in three sections (security, architecture, functionality). The product owner approves from it. |
 | Start-up warm-up | [`StartupWarmUp.java`](src/main/java/no/scienta/cfp/StartupWarmUp.java), spec in [`workflow/specs/warm-up/spec.md`](workflow/specs/warm-up/spec.md) | The service sends requests to its own port after a start, so the first real traffic does not get the cold-JVM cost (section 4). |
 
 ## 6. One thing we'd do differently
 
 <!-- One thing, and why. -->
 
-(draft, the team decides) Measure the first burst of traffic after a cold start before the first deploy, not after two FAULTY ticks.
+(draft, the team decides) Measure a burst of traffic before the first deploy, on a cold start and with the container's CPU limit. We learnt both from FAULTY ticks (27, 67 and 107).
