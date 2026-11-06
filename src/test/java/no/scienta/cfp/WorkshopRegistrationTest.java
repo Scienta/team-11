@@ -153,11 +153,11 @@ public class WorkshopRegistrationTest {
             Each row registers attendees with different emails one by one, then registers one more.
             """)
     @TableTest("""
-        Scenario      | Already Registered | Seats | Status? | Listed?
-        One seat left | 19                 | 20    | 201     | 20
-        No seat left  | 20                 | 20    | 409     | 20
+        Scenario      | Already Registered | Status? | Listed?
+        One seat left | 19                 | 201     | 20
+        No seat left  | 20                 | 409     | 20
         """)
-    void takesAtMost20Attendees(int alreadyRegistered, int seats, int status, int listed) throws Exception {
+    void takesAtMost20Attendees(int alreadyRegistered, int status, int listed) throws Exception {
         long workshop = talkWith("WORKSHOP", "ACCEPTED");
         registerOneByOne(workshop, emails(alreadyRegistered));
         assertEquals(status, register(workshop, "Late Comer", "late@example.com").statusCode());
@@ -170,11 +170,11 @@ public class WorkshopRegistrationTest {
             accepted workshop with no attendees. The service uses at most 5 database connections.
             """)
     @TableTest("""
-        Scenario            | Registering At Once | Seats | Registered? | Refused? | Listed?
-        Exactly the seats   | 20                  | 20    | 20          | 0        | 20
-        More than the seats | 30                  | 20    | 20          | 10       | 20
+        Scenario            | Registering At Once | Registered? | Refused? | Listed?
+        Exactly the seats   | 20                  | 20          | 0        | 20
+        More than the seats | 30                  | 20          | 10       | 20
         """)
-    void keeps20SeatsWhenManyRegisterAtTheSameTime(int registeringAtOnce, int seats, long registered, long refused,
+    void keeps20SeatsWhenManyRegisterAtTheSameTime(int registeringAtOnce, long registered, long refused,
                                                    int listed) throws Exception {
         long workshop = talkWith("WORKSHOP", "ACCEPTED");
         Map<Integer, Long> statuses = statusCounts(atTheSameTime(workshop, emails(registeringAtOnce)));
