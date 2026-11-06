@@ -28,6 +28,8 @@ public class ConferenceService {
 
     private static final Logger log = LoggerFactory.getLogger(ConferenceService.class);
 
+    private static final int MAX_BIO_CHARACTERS = 500;
+
     private static final Map<String, Integer> DURATIONS = new HashMap<>();
 
     static {
@@ -58,6 +60,7 @@ public class ConferenceService {
         if (!Utils.isValidEmail(form.getEmail())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "invalid email");
         }
+        requireBioWithinLimit(form.getBio());
         if (speakerDao.emailTaken(form.getEmail())) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "email already registered");
         }
@@ -94,14 +97,20 @@ public class ConferenceService {
         if (!Utils.isValidEmail(email)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "invalid email");
         }
-        if (bio != null && bio.length() > 1000) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "bio too long");
-        }
+        requireBioWithinLimit(bio);
         if (!email.equalsIgnoreCase((String) existing.get("email")) && speakerDao.emailTaken(email)) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "email already registered");
         }
         speakerDao.update(id, name, email, bio);
         return getSpeaker(id);
+    }
+
+    /** A character is one Unicode code point, so an emoji counts once. */
+    private static void requireBioWithinLimit(String bio) {
+        if (bio != null && bio.codePointCount(0, bio.length()) > MAX_BIO_CHARACTERS) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "bio is longer than " + MAX_BIO_CHARACTERS + " characters");
+        }
     }
 
     public List<Map<String, Object>> searchSpeakers(String q) {

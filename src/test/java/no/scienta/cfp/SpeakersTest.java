@@ -13,6 +13,8 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.DynamicPropertyRegistry;
@@ -38,6 +40,21 @@ class SpeakersTest {
     @Test
     void rejectsARegistrationWithoutARealEmail() throws Exception {
         assertEquals(400, register("Grace Hopper", "not-an-email").statusCode());
+    }
+
+    // Speakers R4: a character is one code point, so an emoji counts once, not as two UTF-16 units
+    @ParameterizedTest(name = "{1} x {0} -> {2}")
+    @CsvSource({
+            "x,  500, 201",
+            "x,  501, 400",
+            "😀, 500, 201",
+            "😀, 501, 400",
+    })
+    void limitsTheBioTo500Characters(String character, int length, int status) throws Exception {
+        String json = "{\"name\":\"Grace Hopper\",\"email\":\"grace-" + UUID.randomUUID()
+                + "@example.com\",\"bio\":\"" + character.repeat(length) + "\"}";
+        HttpResponse<String> res = http.send(request("POST", "/speakers", json), HttpResponse.BodyHandlers.ofString());
+        assertEquals(status, res.statusCode(), res.body());
     }
 
     @Test
