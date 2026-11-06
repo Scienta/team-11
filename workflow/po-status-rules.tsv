@@ -23,6 +23,8 @@ ratings-change-request/r1-r2-r4-r6-leaves-out-one-highest-and-one-lowest-score-f
 ratings-change-request/r3-rounds-the-exact-average-to-2-decimals-ties-to-even	Snittet rundes av til to desimaler. Står det midt mellom, går det til det partallet som er nærmest (3,125 blir 3,12 og 3,375 blir 3,38).
 ratings-change-request/r1-r2-counts-a-reviewer-who-rates-again-once-with-the-latest-score	En vurderer som gir ny karakter, teller én gang, med den siste karakteren.
 ratings-change-request/r5-ranks-talks-by-the-rounded-average	Rangeringen går etter det avrundede snittet med to desimaler.
+submission-cap-change-request/r1-r2-r4-refuses-a-new-talk-from-a-speaker-with-3-talks-that-count	En foredragsholder med 3 foredrag som teller, som hovedforedragsholder eller medforedragsholder, kan ikke sende inn flere.
+submission-cap-change-request/r1-r5-refuses-a-co-speaker-with-3-talks-that-count-on-a-talk-in-the-running	En foredragsholder med 3 foredrag som teller, kan ikke bli medforedragsholder på enda et foredrag.
 ratings-talk-lists/r5-lists-all-talks-oldest-first-or-the-talks-of-one-speaker	Listen viser alle foredrag med det eldste først, eller bare foredragene til én foredragsholder.
 ratings-talk-lists/r6-ranks-talks-by-shown-average-then-rating-count-then-age	Rangeringen går etter snittet, så etter antall karakterer, så etter hvor gammelt foredraget er.
 ratings-talk-lists/ranks-talks-only-for-the-sort-order-rating	Listen er bare rangert når man ber om det. Ellers kommer det eldste foredraget først.
@@ -34,7 +36,7 @@ acceptance/r3-accepts-a-talk-only-after-two-different-reviewers	Et foredrag kan 
 acceptance/r4-lets-only-the-main-speaker-withdraw-a-talk	Bare hovedforedragsholderen kan trekke et foredrag.
 acceptance/r4-withdraws-a-talk-unless-it-is-rejected-or-withdrawn	Et foredrag kan trekkes, unntatt når det er avslått eller allerede trukket.
 acceptance/r5-shows-the-current-status-wherever-the-talk-is-shown	Foredraget viser samme status overalt der det vises.
-acceptance/r7-leaves-a-withdrawn-talk-out-of-the-talk-limit	Et trukket foredrag teller ikke med i grensen for antall foredrag.
+acceptance/r7-leaves-a-withdrawn-or-rejected-talk-out-of-the-talk-limit	Et trukket eller avslått foredrag teller ikke med i grensen for antall foredrag.
 acceptance/r8-takes-ratings-only-for-a-talk-that-is-still-open	Et foredrag får bare nye karakterer så lenge komiteen ikke har bestemt seg.
 acceptance/r9-shows-withdrawn-talks-after-the-others	Trukne foredrag kommer sist i listene.
 acceptance/r9-takes-only-true-or-false-to-leave-out-withdrawn-talks	Man kan velge å skjule trukne foredrag. Valget er ja eller nei.
@@ -70,6 +72,7 @@ co-speakers/r12-only-the-main-speaker-changes-the-co-speakers-when-the-request-s
 co-speakers/r12-who-acts-is-checked-after-the-talk-is-found-and-before-the-other-rules	Et ukjent foredrag gir fortsatt 404. Hvem som gjør endringen, sjekkes før foredragets status.
 error-answers/answers-a-database-failure-without-its-details	Ved en feil i databasen svarer tjenesten uten å vise tekniske detaljer.
 error-answers/refuses-a-text-field-that-holds-a-nul-character	Tekst som inneholder et ugyldig nulltegn, avvises.
+database-down/answers-without-details-when-the-database-is-down	Når databasen ikke svarer, svarer tjenesten uten å vise tekniske detaljer.
 request-log-filter-test/masks-each-email-in-the-logged-bodies	E-postadresser skjules i loggen.
 request-log-filter-test/masks-each-cancellation-token-in-the-logged-bodies	Avmeldingskoder skjules i loggen.
 request-log-filter-test/logs-a-large-body-in-a-short-time	Også en stor forespørsel blir logget raskt.
