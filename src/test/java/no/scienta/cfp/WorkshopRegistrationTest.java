@@ -279,7 +279,7 @@ public class WorkshopRegistrationTest {
         registerOneByOne(first, List.of("ada@example.com"));
         withdrawIf("WITHDRAWN".equals(workshopStatus), first);
         unregisterIf(unregisteredBefore, first, 1);
-        assertEquals(status, unregister(workshopId, registrationId).statusCode());
+        assertEquals(status, unregisterAs(workshopId, registrationId, "ada@example.com").statusCode());
         assertEquals(listedAfter, emailsListedFor(first));
     }
 
@@ -321,6 +321,28 @@ public class WorkshopRegistrationTest {
         assertEquals(registered, statuses.getOrDefault(201, 0L));
         assertEquals(refused, statuses.getOrDefault(409, 0L));
         assertEquals(listed, emailsListedFor(workshop).size());
+    }
+
+    @DisplayName("R10: Unregisters only with the registration's email")
+    @Description("""
+            Each row registers ada@example.com for an accepted workshop, and her registration gets
+            ID 1. Then it sends DELETE /workshops/1/registrations/1 with the body. A blank body sends
+            no body at all. The list is the workshop's list after the request.
+            """)
+    @TableTest("""
+        Scenario              | Body                                                             | Status? | Listed After?
+        Ada's email           | {'{"email": "ada@example.com"}', '{"email": "ADA@Example.com"}'} | 204     | []
+        Another email         | '{"email": "grace@example.com"}'                                 | 404     | [ada@example.com]
+        Body without email    | '{}'                                                             | 404     | [ada@example.com]
+        No body               |                                                                  | 400     | [ada@example.com]
+        Body that is not JSON | '{"email":'                                                      | 400     | [ada@example.com]
+        """)
+    void unregistersOnlyWithTheRegistrationsEmail(String body, int status, List<String> listedAfter)
+            throws Exception {
+        long workshop = talkWith("WORKSHOP", "ACCEPTED");
+        registerOneByOne(workshop, List.of("ada@example.com"));
+        assertEquals(status, unregister(workshop, 1, body).statusCode());
+        assertEquals(listedAfter, emailsListedFor(workshop));
     }
 
     // ------------------------------------------------------------------------------------------- fixture
@@ -371,22 +393,26 @@ public class WorkshopRegistrationTest {
         withdraw(new Talk(workshop, speaker));
     }
 
-    private HttpResponse<String> unregister(long workshop, long registrationId) {
-        return send("DELETE", registrationsPath(workshop) + "/" + registrationId, null).join();
+    private HttpResponse<String> unregister(long workshop, long registrationId, String body) {
+        return send("DELETE", registrationsPath(workshop) + "/" + registrationId, body).join();
     }
 
+    private HttpResponse<String> unregisterAs(long workshop, long registrationId, String email) {
+        return unregister(workshop, registrationId, JSON.createObjectNode().put("email", email).toString());
+    }
+
+    /** Unregisters Ada's registration, when the condition holds. */
     private void unregisterIf(boolean condition, long workshop, long registrationId) {
         if (condition) {
-            expect(204, unregister(workshop, registrationId));
+            expect(204, unregisterAs(workshop, registrationId, "ada@example.com"));
         }
     }
 
     /** Unregisters the attendee who registered first for the workshop, when the condition holds. */
     private void unregisterFirstIf(boolean condition, long workshop) throws Exception {
         if (condition) {
-            long first = JSON.readTree(send("GET", registrationsPath(workshop), null).join().body()).get(0)
-                    .get("id").asLong();
-            expect(204, unregister(workshop, first));
+            JsonNode first = JSON.readTree(send("GET", registrationsPath(workshop), null).join().body()).get(0);
+            expect(204, unregisterAs(workshop, first.get("id").asLong(), first.get("email").asText()));
         }
     }
 

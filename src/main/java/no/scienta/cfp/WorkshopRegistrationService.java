@@ -31,14 +31,14 @@ public class WorkshopRegistrationService {
     }
 
     /**
-     * Unregisters the attendee and frees the seat (R9). Takes the same talk row lock as {@link #register}, so a freed
-     * seat goes to one registration only.
+     * Unregisters the attendee and frees the seat (R9), if the email is the registration's email (R10). Takes the same
+     * talk row lock as {@link #register}, so a freed seat goes to one registration only.
      */
     @Transactional
-    public UnregistrationOutcome unregister(long workshopId, long registrationId) {
+    public UnregistrationOutcome unregister(long workshopId, long registrationId, String email) {
         boolean deleted = dao.lockTalk(workshopId)
                 .filter(WorkshopTalk::isWorkshop)
-                .map(workshop -> dao.delete(workshopId, registrationId))
+                .map(workshop -> dao.delete(workshopId, registrationId, email))
                 .orElse(false);
         return deleted ? new UnregistrationOutcome.Unregistered() : new UnregistrationOutcome.NoSuchRegistration();
     }

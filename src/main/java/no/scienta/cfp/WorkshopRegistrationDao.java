@@ -64,9 +64,13 @@ public class WorkshopRegistrationDao {
                 .map(id -> new Registration(id, talkId, request.name(), request.email()));
     }
 
-    /** Deletes the registration if it belongs to the workshop. Returns whether one was deleted (R9). */
-    public boolean delete(long talkId, long registrationId) {
-        return jdbc.update("DELETE FROM workshop_registration WHERE id = ? AND talk_id = ?", registrationId, talkId) == 1;
+    /**
+     * Deletes the registration if it belongs to the workshop and has this email in any letter case (R9, R10). Returns
+     * whether one was deleted.
+     */
+    public boolean delete(long talkId, long registrationId, String email) {
+        return jdbc.update("DELETE FROM workshop_registration WHERE id = ? AND talk_id = ? AND lower(email) = lower(?)",
+                registrationId, talkId, email) == 1;
     }
 
     /** The workshop's registrations in the order they were saved (R8). */

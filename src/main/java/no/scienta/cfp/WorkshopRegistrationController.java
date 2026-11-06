@@ -39,9 +39,16 @@ public class WorkshopRegistrationController {
         return service.attendees(id).orElseThrow(WorkshopRegistrationController::notAWorkshop);
     }
 
+    /**
+     * Unregisters when the body gives the registration's email (R9, R10). A wrong or missing email gets the same 404 as
+     * an unknown registration, so the answer does not tell whether the registration exists.
+     */
     @DeleteMapping("/workshops/{id}/registrations/{registrationId}")
-    public ResponseEntity<Void> unregister(@PathVariable long id, @PathVariable long registrationId) {
-        if (service.unregister(id, registrationId) instanceof UnregistrationOutcome.Unregistered) {
+    public ResponseEntity<Void> unregister(@PathVariable long id, @PathVariable long registrationId,
+                                           @RequestBody Map<String, Object> body) {
+        boolean unregistered = body.get("email") instanceof String email
+                && service.unregister(id, registrationId, email) instanceof UnregistrationOutcome.Unregistered;
+        if (unregistered) {
             return ResponseEntity.noContent().build();
         }
         throw new ResponseStatusException(HttpStatus.NOT_FOUND, "no such registration for this workshop");
