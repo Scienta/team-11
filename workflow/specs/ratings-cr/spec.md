@@ -39,7 +39,7 @@ No new endpoints. The changed field is `averageRating` on every Talk.
 | A reviewer who rates again | Counts once, with the latest score, for both the 5-rating threshold and the trim. | Ratings R3: one rating per reviewer. |
 | Mean whose third decimal is not exactly 5 (e.g. `3.1251`, `3.333…`) | Ordinary rounding to the nearest 2-decimal value (`3.13`, `3.33`). | Only an exact tie goes to the even neighbour; that is what `HALF_EVEN` does. |
 | CSV export `GET /admin/talks.csv`, column `rating` | Shows the talk's new `averageRating`, written as today (`String.valueOf` of the `Double`, comma for the point): `3,12`, `3,1`, `4,0`. | Ratings R4: a talk shows its average wherever it is shown. No harness spec covers the CSV, so we keep its format and change only the value. |
-| Statistics `GET /admin/stats`, field `averageRating` | Unchanged formula: the mean of the talks' `averageRating` values, rounded to one decimal as it is today. Its input is now the new talk averages. | It is not a talk's `averageRating`, and the request says everything else stays. No harness spec covers stats. See the open question. |
+| Statistics `GET /admin/stats`, field `averageRating` | Unchanged formula: the mean of the talks' `averageRating` values, rounded to one decimal as it is today. Its input is now the new talk averages. | It is not a talk's `averageRating`, and the request says everything else stays. No harness spec covers stats. The product owner confirmed it at 15:55 CET: «Trimmet - som nå - er ok». |
 | Acceptance's decision "Rounding of `averageRating`: half up, as before" (acceptance `spec.md`) | Replaced by R3 of this change request. | The change request comes later and names the rounding explicitly. |
 
 ## Examples
@@ -128,7 +128,9 @@ Talks are created in the order A, B, C, D (A oldest). `GET /talks?sort=rating`.
 
 ## Open questions for the product owner
 
-- [ ] The committee statistics (`GET /admin/stats`) show one conference-wide `averageRating`: the
+- [x] The committee statistics (`GET /admin/stats`) show one conference-wide `averageRating`: the
   mean of the talks' averages, with one decimal. Should it follow the new rule (the mean of the
   trimmed talk averages, as we plan), or keep using every score of every talk, and should it also
   show two decimals? It is not in any spec on the harness, so the question does not block us.
+  Answer (Stein, 15:55 CET, #team-11): «Trimmet - som nå - er ok». We asked only about trimmed or
+  untrimmed; the one decimal stays as it is now.
