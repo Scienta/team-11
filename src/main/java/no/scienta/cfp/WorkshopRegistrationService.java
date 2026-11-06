@@ -23,11 +23,16 @@ public class WorkshopRegistrationService {
     @Transactional
     public RegistrationOutcome register(long workshopId, RegistrationRequest request) {
         return dao.lockTalk(workshopId)
-                .map(talk -> talk.refusal(dao.seatsTaken(workshopId), dao.emailRegistered(workshopId, request.email()))
-                        .orElseGet(() -> dao.insert(workshopId, request)
-                                .<RegistrationOutcome>map(RegistrationOutcome.Registered::new)
-                                .orElseGet(RegistrationOutcome.AlreadyRegistered::new)))
+                .map(talk -> registerIfTaken(talk, workshopId, request))
                 .orElseGet(RegistrationOutcome.NotAWorkshop::new);
+    }
+
+    /** Registers the attendee unless the talk refuses them. Runs under the row lock that {@link #register} takes. */
+    private RegistrationOutcome registerIfTaken(WorkshopTalk talk, long workshopId, RegistrationRequest request) {
+        return talk.refusal(dao.seatsTaken(workshopId), dao.emailRegistered(workshopId, request.email()))
+                .orElseGet(() -> dao.insert(workshopId, request)
+                        .<RegistrationOutcome>map(RegistrationOutcome.Registered::new)
+                        .orElseGet(RegistrationOutcome.AlreadyRegistered::new));
     }
 
     /**
