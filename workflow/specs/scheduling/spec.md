@@ -43,7 +43,7 @@ No two slots overlap, so "at the same time" in R6 means "in the same slot".
 
 | Case | Decision | Why |
 |------|----------|-----|
-| Room or slot that is not in the list, also in lower case (`R4`, `S6`, `r1`, `s1`), on PUT, GET and DELETE | 400 | The request gives the path parameters as a fixed list. A value outside the list is a malformed request, like a talk ID that is not a number. Capitals only, as for the talk formats (Talks R5). |
+| Room or slot that is not in the list, also in lower case (`R0`, `R4`, `S6`, `r1`, `s1`), on PUT, GET and DELETE | 404 | The place does not exist, like an empty place. Capitals only, as for the talk formats (Talks R5). Changed from 400 after harness tick 163: `scheduling/check-1` was FAULTY on `PUT /programme/R0/S2` with a valid body, where we answered 400 (The Hand, 2026-11-06). |
 | Missing body or malformed JSON on PUT | 400 | Same as the base features |
 | `talkId` missing, `null`, or not a JSON integer (`"5"`, `5.0`) | 400 | Same strictness as the score in Ratings R2 |
 | `talkId` of a talk that does not exist, also 0 or negative | 400 | The ID is a field in the body, not a resource in the path, so it is a bad request, not a 404. Same as an unknown `speakerId` on `POST /talks` (Talks). |
@@ -54,7 +54,7 @@ No two slots overlap, so "at the same time" in R6 means "in the same slot".
 | The same talk in the same room and slot again | 200, the entry does not change | A double-click must not fail. PUT puts the programme in the state the client asks for, and it is in that state already. Same as adding an existing co-speaker (Co-speakers R5). |
 | The talk is already in another room or slot (R5) | 409, nothing changes | "To move a talk, take it out first." |
 | A main speaker or co-speaker of the talk is a main speaker or co-speaker of a talk in another room in the same slot (R6) | 409, nothing is saved | A conflict with the current programme. A person is one speaker ID. |
-| Order of the checks | Path (400), body (400), talk exists (400), R3, R4, same talk in the same place (200), R5 room and slot taken, R5 talk elsewhere, R6 | The most basic error first. The double-click check comes before R5, so it is not refused as "already on the programme". |
+| Order of the checks | Path (404), body (400), talk exists (400), R3, R4, same talk in the same place (200), R5 room and slot taken, R5 talk elsewhere, R6 | The most basic error first. The double-click check comes before R5, so it is not refused as "already on the programme". A missing or malformed body on PUT is the exception: Spring refuses it with 400 before the path is checked. The harness sends valid bodies (tick 163). |
 | GET or DELETE on an empty room and slot | 404 | Nothing is there. The Entry in the request always has a `talkId`. |
 | DELETE | 204 with no body. The room and slot are empty afterwards. | Same as unregistering from a workshop (workshop registration R9). |
 | DELETE twice | 204, then 404 | The second request finds nothing, as in workshop registration R9. |
@@ -81,12 +81,13 @@ from two reviewers and the committee's decision (Acceptance R2, R3).
 | `R3` | `S3` | 200 | `11:30` | `12:30` |
 | `R1` | `S4` | 200 | `13:30` | `15:30` |
 | `R2` | `S5` | 200 | `15:45` | `16:45` |
-| `R4` | `S1` | 400 | | |
-| `R1` | `S6` | 400 | | |
-| `r1` | `S1` | 400 | | |
-| `R1` | `s1` | 400 | | |
+| `R0` | `S2` | 404 | | |
+| `R4` | `S1` | 404 | | |
+| `R1` | `S6` | 404 | | |
+| `r1` | `S1` | 404 | | |
+| `R1` | `s1` | 404 | | |
 
-GET and DELETE give 400 for the same four paths that are not in the list.
+GET and DELETE give 404 for the same five paths that are not in the list.
 
 ### R2: put, look up and take out
 

@@ -53,26 +53,34 @@ public class WorkshopRegistrationDao {
     }
 
     /**
-     * Saves the registration, or saves nothing and returns empty when the email is already on the list in some letter
-     * case. The unique index decides, so this holds even without the row lock (R6). {@code ON CONFLICT} leaves the
-     * transaction usable, where a duplicate-key error would abort it.
+     * Saves the registration with the hash of its cancellation token (R10), or saves nothing and returns empty when the
+     * email is already on the list in some letter case. The unique index decides, so this holds even without the row
+     * lock (R6). {@code ON CONFLICT} leaves the transaction usable, where a duplicate-key error would abort it.
      */
-    public Optional<Registration> addAttendee(long talkId, RegistrationRequest request) {
-        return jdbc.query("INSERT INTO workshop_registration (talk_id, name, email) VALUES (?, ?, ?) "
-                        + "ON CONFLICT (talk_id, lower(email)) DO NOTHING RETURNING id",
-                        (rs, row) -> rs.getLong("id"), talkId, request.name(), request.email())
+    public Optional<Registration> addAttendee(long talkId, RegistrationRequest request, String tokenHash) {
+        return jdbc.query("INSERT INTO workshop_registration (talk_id, name, email, cancellation_token_hash) "
+                                + "VALUES (?, ?, ?, ?) ON CONFLICT (talk_id, lower(email)) DO NOTHING RETURNING id",
+                        (rs, row) -> rs.getLong("id"), talkId, request.name(), request.email(), tokenHash)
                 .stream()
                 .findFirst()
                 .map(id -> new Registration(id, talkId, request.name(), request.email()));
     }
 
     /**
-     * Deletes the registration if it belongs to the workshop and has this email in any letter case (R9, R10). Returns
-     * whether one was deleted.
+     * The hash of the registration's cancellation token (R10), or empty when the workshop has no such registration or
+     * the registration is from before the token.
      */
-    public boolean delete(long talkId, long registrationId, String email) {
-        return jdbc.update("DELETE FROM workshop_registration WHERE id = ? AND talk_id = ? AND lower(email) = lower(?)",
-                registrationId, talkId, email) == 1;
+    public Optional<String> tokenHash(long talkId, long registrationId) {
+        return jdbc.query("SELECT cancellation_token_hash FROM workshop_registration "
+                                + "WHERE id = ? AND talk_id = ? AND cancellation_token_hash IS NOT NULL",
+                        (rs, row) -> rs.getString("cancellation_token_hash"), registrationId, talkId)
+                .stream()
+                .findFirst();
+    }
+
+    /** Deletes the workshop's registration (R9). Returns whether one was deleted. */
+    public boolean delete(long talkId, long registrationId) {
+        return jdbc.update("DELETE FROM workshop_registration WHERE id = ? AND talk_id = ?", registrationId, talkId) == 1;
     }
 
     /** The workshop's registrations in the order they were saved (R8). */

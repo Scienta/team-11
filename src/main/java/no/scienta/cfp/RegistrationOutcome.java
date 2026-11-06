@@ -6,15 +6,19 @@ package no.scienta.cfp;
  */
 public sealed interface RegistrationOutcome {
 
-    /** The attendee is on the list. */
-    record Registered(Registration registration) implements RegistrationOutcome {
+    /** The attendee is on the list, and only this outcome holds the cancellation token (R10). */
+    record Registered(RegistrationConfirmation confirmation) implements RegistrationOutcome {
     }
 
     /** Every outcome in which the attendee is not on the list. */
     sealed interface Refusal extends RegistrationOutcome {
     }
 
-    /** No talk with this ID is a workshop (R2). */
+    /** No talk has this ID. */
+    record NoSuchTalk() implements Refusal {
+    }
+
+    /** The talk exists but is not a workshop, so it takes no registrations (R2). */
     record NotAWorkshop() implements Refusal {
     }
 

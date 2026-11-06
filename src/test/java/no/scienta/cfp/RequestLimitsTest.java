@@ -52,7 +52,7 @@ public class RequestLimitsTest {
 
     @BeforeEach
     void startWithOneSubmittedTalk() throws Exception {
-        jdbc.execute("TRUNCATE speaker, talk, rating RESTART IDENTITY");
+        jdbc.execute("TRUNCATE speaker, talk, rating, talk_co_speaker RESTART IDENTITY");
         send(fixedLength(), "POST", "/speakers", "{\"name\":\"Grace Hopper\",\"email\":\"grace@example.com\"}");
         send(fixedLength(), "POST", "/talks",
                 "{\"title\":\"COBOL\",\"format\":\"PRESENTATION\",\"level\":\"BEGINNER\",\"speakerId\":1}");

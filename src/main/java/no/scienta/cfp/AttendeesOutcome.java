@@ -16,7 +16,11 @@ public sealed interface AttendeesOutcome {
         }
     }
 
-    /** No talk with this ID is a workshop (R2). */
+    /** No talk has this ID. */
+    record NoSuchTalk() implements AttendeesOutcome {
+    }
+
+    /** The talk exists but is not a workshop, so nobody is registered for it (R2). */
     record NotAWorkshop() implements AttendeesOutcome {
     }
 }

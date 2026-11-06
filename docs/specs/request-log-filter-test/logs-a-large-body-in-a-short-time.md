@@ -10,3 +10,4 @@ time limit is for both.
 | ✅ passes | 80 KB of letters | A | 80000 | 200 |
 | ✅ passes | 2 MB of letters | A | 2000000 | 200 |
 | ✅ passes | 2 MB of spaces | &#x2423; | 2000000 | 200 |
+| ✅ passes | 2 MB of quotes | " | 2000000 | 200 |

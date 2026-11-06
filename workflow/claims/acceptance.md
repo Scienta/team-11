@@ -41,7 +41,7 @@ withdrawn talks last in the lists.
 | The spec review found no open defect | Spec review by Fiffi (`review-rubric.md` items 1–7): no code defect. 4 test gaps, closed in `6146f98` and checked again. | done |
 | The base features still pass their examples | The same run: `speakers.hurl`, `talks.hurl`, `ratings.hurl`, `our-speakers.hurl` and `our-ratings.hurl` passed. | done |
 | No FAULTY check on the harness for this feature or the base features | `workflow/harness.sh feedback`: tick 121, all 15 checks OK, 484.05 points. The 15 checks are the base features only (speakers 4, talks 6, ratings 5). The harness has no checks for acceptance until it is claimed: the timeline for `acceptance/check-1` answers 404 "No such check among your claimed features". | done for the base features |
-| Claim risk: response times on the team URL | An unfiltered `GET /talks` takes 12–17 s on `c43bbaf` (4017 talks, 1.1 MB; request log 13:27–13:28Z). After the claim, a harness check that lists all talks without a filter can time out. Frekken's ratings query fixes it in the next push. | **risk**: until that push is deployed |
+| Claim risk: response times on the team URL | Before the claim, an unfiltered `GET /talks` took 12–17 s on `c43bbaf`. Closed by `88e5d86` on `3318bf1`: 418 ms for `GET /talks` and 284 ms for `GET /talks?sort=rating` at 13:41:50Z. | closed |
 | After the claim: the acceptance checks on the harness | `workflow/harness.sh feedback` at tick 125: acceptance check-1 to check-5 all OK, and the 15 base checks OK. 502.05 points. | OK at tick 125; we watch them |
 
 When the person has claimed, copy the evidence into the claim log in `REVIEW.md` section 3.

@@ -7,15 +7,15 @@ import java.util.Set;
 /**
  * Where a talk is in the acceptance state machine, and which moves between the statuses the rules allow
  * (Acceptance R1–R4, R7, R8), whether a workshop with this status takes registrations (Workshop registration
- * R3), and whether a talk with this status goes on the programme (Scheduling R3). Each status is declared after the
- * statuses it can come from.
+ * R3), whether a talk with this status goes on the programme (Scheduling R3), and whether its co-speakers can change
+ * (Co-speakers R9). Each status is declared after the statuses it can come from.
  */
 public enum TalkStatus {
-    SUBMITTED(Set.of(), 0, true, true, false, false),
-    WAITLISTED(Set.of(SUBMITTED), 0, true, true, false, false),
-    ACCEPTED(Set.of(SUBMITTED, WAITLISTED), 2, false, true, true, true),
-    REJECTED(Set.of(SUBMITTED, WAITLISTED), 0, false, true, false, false),
-    WITHDRAWN(Set.of(SUBMITTED, WAITLISTED, ACCEPTED), 0, false, false, false, false);
+    SUBMITTED(Set.of(), 0, true, true, false, false, true),
+    WAITLISTED(Set.of(SUBMITTED), 0, true, true, false, false, true),
+    ACCEPTED(Set.of(SUBMITTED, WAITLISTED), 2, false, true, true, true, true),
+    REJECTED(Set.of(SUBMITTED, WAITLISTED), 0, false, true, false, false, false),
+    WITHDRAWN(Set.of(SUBMITTED, WAITLISTED, ACCEPTED), 0, false, false, false, false, false);
 
     private static final Set<TalkStatus> DECISIONS = EnumSet.of(ACCEPTED, REJECTED, WAITLISTED);
 
@@ -25,15 +25,17 @@ public enum TalkStatus {
     private final boolean countsTowardLimit;
     private final boolean takesRegistrations;
     private final boolean goesOnProgramme;
+    private final boolean openForCoSpeakerChanges;
 
     TalkStatus(Set<TalkStatus> reachableFrom, int reviewersNeeded, boolean openForRating, boolean countsTowardLimit,
-               boolean takesRegistrations, boolean goesOnProgramme) {
+               boolean takesRegistrations, boolean goesOnProgramme, boolean openForCoSpeakerChanges) {
         this.reachableFrom = reachableFrom;
         this.reviewersNeeded = reviewersNeeded;
         this.openForRating = openForRating;
         this.countsTowardLimit = countsTowardLimit;
         this.takesRegistrations = takesRegistrations;
         this.goesOnProgramme = goesOnProgramme;
+        this.openForCoSpeakerChanges = openForCoSpeakerChanges;
     }
 
     /** The statuses from which a talk can move to this status (R2, R4). */
@@ -68,6 +70,11 @@ public enum TalkStatus {
     /** Whether a talk with this status can be put on the programme (Scheduling R3). */
     public boolean goesOnProgramme() {
         return goesOnProgramme;
+    }
+
+    /** Whether a talk with this status can still get or lose co-speakers (Co-speakers R9). */
+    public boolean isOpenForCoSpeakerChanges() {
+        return openForCoSpeakerChanges;
     }
 
     /** The committee's decision from a request body value: only the three decisions of R1. */

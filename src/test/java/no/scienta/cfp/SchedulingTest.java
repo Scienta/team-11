@@ -88,14 +88,15 @@ public class SchedulingTest {
 
     @DisplayName("R1: Refuses a room or slot outside the venue")
     @Description("""
-            A PUT sends the ID of an accepted presentation. Rooms and slots are written in capitals.
+            A PUT sends the ID of an accepted presentation. Rooms and slots are written in capitals. A
+            place that is not in the venue does not exist, like an empty place (harness tick 163).
             """)
     @TableTest("""
-        Scenario           | Method             | Place | Status?
-        Room R4            | {PUT, GET, DELETE} | R4/S1 | 400
-        Slot S6            | {PUT, GET, DELETE} | R1/S6 | 400
-        Room in lower case | {PUT, GET, DELETE} | r1/S1 | 400
-        Slot in lower case | {PUT, GET, DELETE} | R1/s1 | 400
+        Scenario             | Method             | Place          | Status?
+        Room not in the list | {PUT, GET, DELETE} | {R0/S2, R4/S1} | 404
+        Slot not in the list | {PUT, GET, DELETE} | R1/S6          | 404
+        Room in lower case   | {PUT, GET, DELETE} | r1/S1          | 404
+        Slot in lower case   | {PUT, GET, DELETE} | R1/s1          | 404
         """)
     void refusesARoomOrSlotOutsideTheVenue(String method, String place, int status) throws Exception {
         assertEquals(status, send(new Request(method, Optional.of("A"), place)).statusCode());

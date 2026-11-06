@@ -47,7 +47,7 @@ public class ErrorAnswersTest {
 
     @BeforeEach
     void startWithOneSpeaker() throws Exception {
-        jdbc.execute("TRUNCATE speaker, talk, rating RESTART IDENTITY");
+        jdbc.execute("TRUNCATE speaker, talk, rating, talk_co_speaker RESTART IDENTITY");
         send("POST", "/speakers", "{\"name\":\"Grace Hopper\",\"email\":\"grace@example.com\"}");
     }
 

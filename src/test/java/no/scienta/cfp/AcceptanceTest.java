@@ -58,7 +58,7 @@ public class AcceptanceTest {
 
     @BeforeEach
     void startWithNoTalks() {
-        jdbc.execute("TRUNCATE speaker, talk, rating RESTART IDENTITY");
+        jdbc.execute("TRUNCATE speaker, talk, rating, talk_co_speaker RESTART IDENTITY");
     }
 
     @DisplayName("R2: Moves a talk to the committee's decision")
