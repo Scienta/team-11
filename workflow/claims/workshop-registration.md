@@ -4,12 +4,14 @@ The rows come from [`../claim-checklist.md`](../claim-checklist.md). A person cl
 row says "waiting" or "gap". The product owner reads a claim request in three sections: security,
 architecture and functionality.
 
-Claim: **waiting for the person.** Deployed: `c4fe79c` ([deploy run 42226345319](https://github.com/Scienta/team-11/actions/runs/42226345319), green),
+Claim: **claimed at harness tick 136** by Nils Christian. Deployed: `c4fe79c` ([deploy run 42226345319](https://github.com/Scienta/team-11/actions/runs/42226345319), green),
 then `3318bf1` from 13:39:51Z (`GET /health`; [deploy run 42226853638](https://github.com/Scienta/team-11/actions/runs/42226853638) was still running).
 Both have the same workshop code and the same `examples/our-workshop-registration.hurl`: unregistering
 with the email (R10 as of `9573d72`). The cancellation token (`b8b5077`) is not deployed.
 
-PO approval: **waiting**.
+PO approval: **approved by Ingvild Hardeng on Stein's behalf**: "Jeg godkjenner for Stein", at the top level of Slack
+#team-11, 14:42:57 CET (13:42:57Z), after the claim request (ts `1793972501.624669`). Stein himself has not
+answered in the claim thread.
 
 `TEAM_URL=https://fagsem-h2026-team-11.scienta.cloud`
 
@@ -45,5 +47,7 @@ the email. The spec now asks for a cancellation token (`b8b5077`, not deployed).
 | The review agent found no open defect | Frekken's spec review of `3121e67` against `spec.md` and `review-rubric.md` items 1–7: no open defect. 3 notes, closed in `2da3f58`, `ae718e8` and `851a206`. Frode's design review: see Architecture. | done |
 | The base features still pass their examples | The same run, files from `c4fe79c`: `speakers.hurl` 4/4, `talks.hurl` 5/5, `our-speakers.hurl` 14/14, `our-ratings.hurl` 16/16. Also `our-speakers.hurl` from `3318bf1`, 18/18, at 13:40:45Z. `ratings.hurl` did not run: it has an unfiltered `GET /talks?sort=rating`, and we limit those on the team URL. | done |
 | No FAULTY check on the harness for this feature or the base features | `workflow/harness.sh feedback` at tick 133: all 20 checks OK (speakers 4, talks 6, ratings 5, acceptance 5), 550.05 points. The harness has no checks for workshop-registration until it is claimed. | done for the claimed features |
+
+| After the claim: the workshop-registration checks on the harness | `workflow/harness.sh feedback` at tick 136: check-1 to check-4 not run yet (status `null`). The other 20 checks OK, 568.05 points. | **waiting**: the first results; we watch them |
 
 When the person has claimed, copy the evidence into the claim log in `REVIEW.md` section 3.
