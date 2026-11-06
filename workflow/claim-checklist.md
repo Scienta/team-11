@@ -17,6 +17,7 @@ Set the team URL first: `TEAM_URL=https://fagsem-h2026-team-11.scienta.cloud`
 | The security guardian (`workflow/security-review.md`) and the architecture guardian (`workflow/architecture-review.md`) report no blocker | Their reports for the commits of the feature |
 | The base features still pass their examples | Output of the run |
 | No FAULTY check on the harness for this feature or the base features | `workflow/harness.sh feedback` |
+| The product owner approved in his own words. A teammate's approval on his behalf does not count. | Link to his Slack message |
 
 If one line has no evidence, do not claim. Write "skipped" or "waiting" in the claim log, with the
 reason.
