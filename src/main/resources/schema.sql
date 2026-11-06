@@ -53,8 +53,8 @@ CREATE INDEX IF NOT EXISTS ix_talk_speaker ON talk (speaker_id);
 -- Only the first run rewrites the table; when the column is already BIGINT, Postgres does nothing.
 ALTER TABLE rating ALTER COLUMN reviewer_id TYPE BIGINT;
 
--- 2026-11 co-speakers: other registered speakers on a talk, in the order they were added. No foreign keys:
--- orphan rows from before would make start-up fail.
+-- 2026-11 co-speakers: other registered speakers on a talk, in the order they were added. No foreign keys
+-- here: orphan rows from before would make start-up fail. They are added safely below.
 CREATE TABLE IF NOT EXISTS talk_co_speaker (
     talk_id     INTEGER NOT NULL,
     speaker_id  INTEGER NOT NULL,
@@ -62,7 +62,7 @@ CREATE TABLE IF NOT EXISTS talk_co_speaker (
     PRIMARY KEY (talk_id, speaker_id)
 );
 
--- 2026-11 workshop registration (workshop-registration R1-R8). No foreign key, like the other tables.
+-- 2026-11 workshop registration (workshop-registration R1-R8). No foreign key.
 -- The unique index backs "one registration per email per workshop, whatever the letter case" (R6).
 CREATE TABLE IF NOT EXISTS workshop_registration (
     id      BIGSERIAL PRIMARY KEY,
@@ -72,7 +72,7 @@ CREATE TABLE IF NOT EXISTS workshop_registration (
 );
 CREATE UNIQUE INDEX IF NOT EXISTS ux_workshop_registration_email ON workshop_registration (talk_id, lower(email));
 
--- 2026-11 programme scheduling (scheduling R1-R8). No foreign key, like the other tables.
+-- 2026-11 programme scheduling (scheduling R1-R8). No foreign key.
 -- One fixed row per slot: a PUT or DELETE locks it with FOR UPDATE, so the changes to one slot in all three rooms
 -- take turns (R6, R8). Advisory locks are not available on the platform.
 CREATE TABLE IF NOT EXISTS programme_slot (
@@ -91,3 +91,39 @@ CREATE UNIQUE INDEX IF NOT EXISTS ux_programme_entry_talk ON programme_entry (ta
 -- 2026-11 cancellation token (workshop-registration R10): only its SHA-256 hash. Older rows keep NULL and cannot be
 -- unregistered with a token.
 ALTER TABLE workshop_registration ADD COLUMN IF NOT EXISTS cancellation_token_hash TEXT;
+
+-- 2026-11 co-speakers R11: a deleted talk or speaker takes its co-speaker links with it. talk_co_speaker already
+-- exists in production, so the foreign keys are added here, each only when it is missing. NOT VALID checks only new
+-- rows, so adding a key can't fail on old ones; once both keys are in place no new orphan link can appear, and the
+-- links to a talk or speaker that is gone are deleted before the keys are validated. If anything fails, Postgres logs
+-- a warning, start-up goes on without that step, and the next start-up tries again. The body is a quoted string
+-- rather than $$ because Spring splits this file at every ; outside quotes.
+DO '
+BEGIN
+    BEGIN
+        IF NOT EXISTS (SELECT FROM pg_constraint WHERE conrelid = ''talk_co_speaker''::regclass
+                       AND conname = ''talk_co_speaker_talk_id_fkey'') THEN
+            ALTER TABLE talk_co_speaker ADD CONSTRAINT talk_co_speaker_talk_id_fkey
+                FOREIGN KEY (talk_id) REFERENCES talk (id) ON DELETE CASCADE NOT VALID;
+        END IF;
+        IF NOT EXISTS (SELECT FROM pg_constraint WHERE conrelid = ''talk_co_speaker''::regclass
+                       AND conname = ''talk_co_speaker_speaker_id_fkey'') THEN
+            ALTER TABLE talk_co_speaker ADD CONSTRAINT talk_co_speaker_speaker_id_fkey
+                FOREIGN KEY (speaker_id) REFERENCES speaker (id) ON DELETE CASCADE NOT VALID;
+        END IF;
+    EXCEPTION WHEN OTHERS THEN
+        RAISE WARNING ''talk_co_speaker foreign keys not added: %'', SQLERRM;
+    END;
+    BEGIN
+        IF EXISTS (SELECT FROM pg_constraint WHERE conrelid = ''talk_co_speaker''::regclass
+                   AND contype = ''f'' AND NOT convalidated) THEN
+            DELETE FROM talk_co_speaker c
+                WHERE NOT EXISTS (SELECT FROM talk t WHERE t.id = c.talk_id)
+                   OR NOT EXISTS (SELECT FROM speaker s WHERE s.id = c.speaker_id);
+            ALTER TABLE talk_co_speaker VALIDATE CONSTRAINT talk_co_speaker_talk_id_fkey;
+            ALTER TABLE talk_co_speaker VALIDATE CONSTRAINT talk_co_speaker_speaker_id_fkey;
+        END IF;
+    EXCEPTION WHEN OTHERS THEN
+        RAISE WARNING ''talk_co_speaker foreign keys not validated: %'', SQLERRM;
+    END;
+END';

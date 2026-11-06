@@ -1,8 +1,8 @@
 # Teststatus
 
-Laget 6. november 2026 kl. 14:47 fra versjon [54f8f40](https://github.com/Scienta/team-11/commit/54f8f40c99318b7c7cf3878530d3237ad2921a5c).
+Laget 6. november 2026 kl. 15:03 fra versjon [6d82881](https://github.com/Scienta/team-11/commit/6d828815245d174ee163cf8dc4e6fba3ed7d1391).
 
-✅ Våre tester: alle 76 regler er i orden (323 av 323 eksempler).
+✅ Våre tester: alle 78 regler er i orden (340 av 340 eksempler).
 
 ❌ Arrangørenes kontroller: 1 av 24 er ikke i orden (Påmelding til workshop).
 
@@ -33,6 +33,8 @@ Alle detaljer står i [testrapporten](specs/index.md).
 - ✅ **R8** En medforedragsholder kan fjernes igjen. Hovedforedragsholderen kan ikke fjernes. — 7 av 7 eksempler · [se eksemplene](specs/co-speakers/r8-removes-a-co-speaker-never-the-main-speaker.md)
 - ✅ **R9** Et foredrag som er trukket eller avvist, kan ikke få nye eller færre medforedragsholdere. — 2 av 2 eksempler · [se eksemplene](specs/co-speakers/r9-a-withdrawn-or-rejected-talk-can-t-be-changed.md)
 - ✅ Et ukjent foredrag gir en tydelig feilmelding. — 4 av 4 eksempler · [se eksemplene](specs/co-speakers/answers-404-for-an-unknown-talk-and-400-for-a-talk-id-that-is-not-a-number.md)
+- ✅ **R12** Når forespørselen sier hvem som gjør endringen, kan bare hovedforedragsholderen legge til eller fjerne medforedragsholdere. — 12 av 12 eksempler · [se eksemplene](specs/co-speakers/r12-only-the-main-speaker-changes-the-co-speakers-when-the-request-says-who-acts.md)
+- ✅ **R12** Et ukjent foredrag gir fortsatt 404. Hvem som gjør endringen, sjekkes før foredragets status. — 5 av 5 eksempler · [se eksemplene](specs/co-speakers/r12-who-acts-is-checked-after-the-talk-is-found-and-before-the-other-rules.md)
 
 ## Karakterer
 

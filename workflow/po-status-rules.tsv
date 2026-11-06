@@ -59,6 +59,8 @@ co-speakers/r6-a-co-speaker-s-own-talk-list-shows-only-their-own-talks	En foredr
 co-speakers/r8-removes-a-co-speaker-never-the-main-speaker	En medforedragsholder kan fjernes igjen. Hovedforedragsholderen kan ikke fjernes.
 co-speakers/r9-a-withdrawn-or-rejected-talk-can-t-be-changed	Et foredrag som er trukket eller avvist, kan ikke få nye eller færre medforedragsholdere.
 co-speakers/answers-404-for-an-unknown-talk-and-400-for-a-talk-id-that-is-not-a-number	Et ukjent foredrag gir en tydelig feilmelding.
+co-speakers/r12-only-the-main-speaker-changes-the-co-speakers-when-the-request-says-who-acts	Når forespørselen sier hvem som gjør endringen, kan bare hovedforedragsholderen legge til eller fjerne medforedragsholdere.
+co-speakers/r12-who-acts-is-checked-after-the-talk-is-found-and-before-the-other-rules	Et ukjent foredrag gir fortsatt 404. Hvem som gjør endringen, sjekkes før foredragets status.
 error-answers/answers-a-database-failure-without-its-details	Ved en feil i databasen svarer tjenesten uten å vise tekniske detaljer.
 error-answers/refuses-a-text-field-that-holds-a-nul-character	Tekst som inneholder et ugyldig nulltegn, avvises.
 request-log-filter-test/masks-each-email-in-the-logged-bodies	E-postadresser skjules i loggen.

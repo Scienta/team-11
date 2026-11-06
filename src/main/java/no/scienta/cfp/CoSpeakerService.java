@@ -1,22 +1,18 @@
 package no.scienta.cfp;
 
-import java.util.EnumSet;
-import java.util.Set;
+import java.util.Optional;
 
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 
 /**
- * Adds and removes a talk's co-speakers. Each change locks the talk row first, so simultaneous changes to one talk
- * see each other and the limit of 2 holds.
+ * Adds and removes a talk's co-speakers, and returns the expected refusals as a {@link CoSpeakerChange}. Each change
+ * locks the talk row first, so simultaneous changes to one talk see each other and the limit of 2 holds.
  */
 @Service
 public class CoSpeakerService {
 
     private static final int MAX_CO_SPEAKERS = 2;
-    private static final Set<TalkStatus> UNCHANGEABLE_STATUSES = EnumSet.of(TalkStatus.WITHDRAWN, TalkStatus.REJECTED);
 
     private final TalkDao talkDao;
     private final SpeakerDao speakerDao;
@@ -32,53 +28,62 @@ public class CoSpeakerService {
     }
 
     @Transactional
-    public TalkDto add(long talkId, long speakerId) {
-        TalkDto talk = lockedTalk(talkId);
-        requireRegistered(speakerId);
-        requireChangeable(talk);
-        if (talk.speakerId == speakerId) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "the main speaker can't be a co-speaker");
-        }
-        if (!talk.coSpeakerIds.contains(speakerId)) {
-            if (talk.coSpeakerIds.size() >= MAX_CO_SPEAKERS) {
-                throw new ResponseStatusException(HttpStatus.CONFLICT,
-                        "a talk has at most " + MAX_CO_SPEAKERS + " co-speakers");
-            }
-            coSpeakerDao.add(talkId, speakerId);
-        }
-        return conference.getTalk(talkId);
+    public CoSpeakerChange add(long talkId, long speakerId, Optional<Long> actingSpeakerId) {
+        return lockedTalk(talkId)
+                .map(talk -> refusal(talk, speakerId, actingSpeakerId).orElseGet(() -> addTo(talk, speakerId)))
+                .orElseGet(CoSpeakerChange.TalkNotFound::new);
     }
 
     @Transactional
-    public TalkDto remove(long talkId, long speakerId) {
-        TalkDto talk = lockedTalk(talkId);
-        requireRegistered(speakerId);
-        requireChangeable(talk);
-        if (talk.speakerId == speakerId) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "the main speaker can't be removed");
+    public CoSpeakerChange remove(long talkId, long speakerId, Optional<Long> actingSpeakerId) {
+        return lockedTalk(talkId)
+                .map(talk -> refusal(talk, speakerId, actingSpeakerId).orElseGet(() -> removeFrom(talk, speakerId)))
+                .orElseGet(CoSpeakerChange.TalkNotFound::new);
+    }
+
+    /** Adds the speaker last, unless they already are a co-speaker (R5) or the talk is full (R2). */
+    private CoSpeakerChange addTo(TalkDto talk, long speakerId) {
+        if (talk.coSpeakerIds.contains(speakerId)) {
+            return changed(talk);
         }
-        coSpeakerDao.remove(talkId, speakerId);
-        return conference.getTalk(talkId);
+        if (talk.coSpeakerIds.size() >= MAX_CO_SPEAKERS) {
+            return new CoSpeakerChange.Full(MAX_CO_SPEAKERS);
+        }
+        coSpeakerDao.add(talk.id, speakerId);
+        return changed(talk);
+    }
+
+    private CoSpeakerChange removeFrom(TalkDto talk, long speakerId) {
+        coSpeakerDao.remove(talk.id, speakerId);
+        return changed(talk);
+    }
+
+    /**
+     * The refusals that adding and removing share, in the order they are checked. Who acts is checked only when the
+     * request says (R12).
+     */
+    private Optional<CoSpeakerChange> refusal(TalkDto talk, long speakerId, Optional<Long> actingSpeakerId) {
+        if (actingSpeakerId.filter(acting -> !acting.equals(talk.speakerId)).isPresent()) {
+            return Optional.of(new CoSpeakerChange.NotMainSpeaker());
+        }
+        if (!speakerDao.exists(speakerId)) {
+            return Optional.of(new CoSpeakerChange.SpeakerNotFound());
+        }
+        if (!talk.status.isOpenForCoSpeakerChanges()) {
+            return Optional.of(new CoSpeakerChange.Closed());
+        }
+        if (talk.speakerId == speakerId) {
+            return Optional.of(new CoSpeakerChange.MainSpeaker());
+        }
+        return Optional.empty();
+    }
+
+    private CoSpeakerChange changed(TalkDto talk) {
+        return new CoSpeakerChange.Changed(conference.getTalk(talk.id));
     }
 
     /** The talk, locked until the transaction ends. */
-    private TalkDto lockedTalk(long talkId) {
-        TalkDto talk = talkDao.findByIdForUpdate(talkId);
-        if (talk == null) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "talk not found");
-        }
-        return talk;
-    }
-
-    private void requireRegistered(long speakerId) {
-        if (!speakerDao.exists(speakerId)) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "speaker not found");
-        }
-    }
-
-    private static void requireChangeable(TalkDto talk) {
-        if (UNCHANGEABLE_STATUSES.contains(talk.status)) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "a withdrawn or rejected talk can't be changed");
-        }
+    private Optional<TalkDto> lockedTalk(long talkId) {
+        return Optional.ofNullable(talkDao.findByIdForUpdate(talkId));
     }
 }
