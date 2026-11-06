@@ -101,6 +101,21 @@
 
     <build>
         <finalName>cfp</finalName>
+        <pluginManagement>
+            <plugins>
+                <!-- Turns the TableTest results into the HTML report for the product owners. Not bound to a
+                     phase, because it needs JDK 21. Run it after the tests:
+                     ./mvnw org.tabletest:tabletest-reporter-maven-plugin:report -->
+                <plugin>
+                    <groupId>org.tabletest</groupId>
+                    <artifactId>tabletest-reporter-maven-plugin</artifactId>
+                    <version>${tabletest-reporter.version}</version>
+                    <configuration>
+                        <format>html</format>
+                    </configuration>
+                </plugin>
+            </plugins>
+        </pluginManagement>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
