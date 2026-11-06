@@ -40,7 +40,10 @@ public class TalkController {
     public List<TalkResponse> list(@RequestParam(required = false) String sort,
                               @RequestParam(required = false) Long speakerId,
                               @RequestParam(defaultValue = "true") String includeWithdrawn) {
-        return service.listTalks(sort, speakerId, parseIncludeWithdrawn(includeWithdrawn));
+        boolean withWithdrawn = parseIncludeWithdrawn(includeWithdrawn);
+        TalkOrder order = TalkOrder.parse(sort)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "sort must be 'rating'"));
+        return service.listTalks(order, speakerId, withWithdrawn);
     }
 
     /** Only {@code true} or {@code false}, not the other spellings that Spring takes for a boolean (Acceptance R9). */

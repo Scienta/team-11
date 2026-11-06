@@ -110,16 +110,16 @@ public class TalkService {
 
     /** The talk list without the withdrawn talks when {@code includeWithdrawn} is false (Acceptance R9). */
     @Transactional(readOnly = true)
-    public List<TalkResponse> listTalks(String sort, Long speakerId, boolean includeWithdrawn) {
-        return listTalks(sort, speakerId).stream()
+    public List<TalkResponse> listTalks(TalkOrder order, Long speakerId, boolean includeWithdrawn) {
+        return listTalks(order, speakerId).stream()
                 .filter(talk -> includeWithdrawn || !isWithdrawn(talk))
                 .collect(Collectors.toList());
     }
 
     /** The talks in the order of Ratings R5 or R6, with the withdrawn talks after the others (Acceptance R9). */
     @Transactional(readOnly = true)
-    public List<TalkResponse> listTalks(String sort, Long speakerId) {
-        Map<Boolean, List<TalkResponse>> byWithdrawn = orderedTalks(sort, speakerId).stream()
+    public List<TalkResponse> listTalks(TalkOrder order, Long speakerId) {
+        Map<Boolean, List<TalkResponse>> byWithdrawn = orderedTalks(order, speakerId).stream()
                 .collect(Collectors.partitioningBy(TalkService::isWithdrawn));
         List<TalkResponse> talks = new ArrayList<>(byWithdrawn.get(false));
         talks.addAll(byWithdrawn.get(true));
@@ -130,12 +130,9 @@ public class TalkService {
         return talk.status() == TalkStatus.WITHDRAWN;
     }
 
-    private List<TalkResponse> orderedTalks(String sort, Long speakerId) {
-        if (sort != null && !sort.equals("rating")) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "sort must be 'rating'");
-        }
+    private List<TalkResponse> orderedTalks(TalkOrder order, Long speakerId) {
         List<TalkResponse> talks = withRatings(speakerId == null ? talkDao.findAll() : talkDao.findBySpeaker(speakerId));
-        if (!"rating".equals(sort)) {
+        if (order == TalkOrder.OLDEST_FIRST) {
             return talks;
         }
         Map<Boolean, List<TalkResponse>> byRated = talks.stream()
