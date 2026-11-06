@@ -57,6 +57,22 @@ class SpeakersTest {
         assertEquals(status, res.statusCode(), res.body());
     }
 
+    // Speakers decision: the admin update has the same 500-character bio limit as registration
+    @ParameterizedTest(name = "update with {1} x {0} -> {2}")
+    @CsvSource({
+            "😀, 500, 200",
+            "x,  501, 400",
+    })
+    void limitsTheBioTo500CharactersOnUpdate(String character, int length, int status) throws Exception {
+        String email = "grace-" + UUID.randomUUID() + "@example.com";
+        HttpResponse<String> created = register("Grace Hopper", email);
+        String id = created.body().replaceAll(".*\"id\":(\\d+).*", "$1");
+        String json = "{\"name\":\"Grace Hopper\",\"email\":\"" + email + "\",\"bio\":\""
+                + character.repeat(length) + "\"}";
+        HttpResponse<String> res = http.send(request("PUT", "/speakers/" + id, json), HttpResponse.BodyHandlers.ofString());
+        assertEquals(status, res.statusCode(), res.body().substring(0, Math.min(200, res.body().length())));
+    }
+
     @Test
     void anEmailRegistersOnceRegardlessOfLetterCase() throws Exception {
         String email = "grace-" + UUID.randomUUID() + "@example.com";
