@@ -20,8 +20,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.tabletest.junit.Description;
@@ -45,6 +47,9 @@ class CoSpeakersTest {
 
     @Value("${local.server.port}")
     int port;
+
+    @Autowired
+    JdbcTemplate jdbc;
 
     private final HttpClient http = HttpClient.newHttpClient();
 
@@ -286,6 +291,25 @@ class CoSpeakersTest {
                 .toList();
         sent.stream().map(CompletableFuture::join).forEach(res -> assertEquals(200, res.statusCode(), res.body()));
         assertEquals(List.of("Ada"), coSpeakersOfTheTalk());
+    }
+
+    @Test
+    @DisplayName("R11: A deleted speaker is no longer a co-speaker and leaves room for another")
+    void aDeletedSpeakerIsNoLongerACoSpeaker() throws Exception {
+        add(List.of("Ada", "Bob"));
+        jdbc.update("DELETE FROM speaker WHERE id = ?", Long.parseLong(speakers.get("Bob")));
+        assertEquals(List.of("Ada"), coSpeakersOfTheTalk());
+        assertEquals(200, send("PUT", coSpeakerPath("Cy"), null).statusCode());
+        assertEquals(List.of("Ada", "Cy"), coSpeakersOfTheTalk());
+    }
+
+    @Test
+    @DisplayName("R11: A deleted talk leaves no co-speakers behind")
+    void aDeletedTalkLeavesNoCoSpeakersBehind() throws Exception {
+        add(List.of("Ada"));
+        jdbc.update("DELETE FROM talk WHERE id = ?", Long.parseLong(talk));
+        assertEquals(0, jdbc.queryForObject("SELECT count(*) FROM talk_co_speaker WHERE talk_id = ?", Integer.class,
+                Long.parseLong(talk)));
     }
 
     /** The status, and the error message when the row gives one. */

@@ -16,6 +16,7 @@ Source: `request.md` in this folder (the feature request from the harness, not e
 | R8 | Co-speakers can be removed again. The main speaker can't be removed. (Product owner, see below.) |
 | R9 | A talk that is withdrawn or rejected can't be changed: no co-speakers added or removed. (Product owner, see below.) |
 | R10 | Simultaneous adds and double-clicks never give a talk more than two co-speakers, and never the same co-speaker twice. |
+| R11 | A co-speaker link belongs to its talk and its speaker: when either is deleted, the link goes too. (Ours, not in the request; see below.) |
 
 ## API
 
@@ -45,6 +46,8 @@ ids), placed last.
 | Order of checks | talk 404, speaker 404, R9, R3/R8, R5, R2 | The most basic error first. R5 before R2, so re-adding a co-speaker at the limit is still 200. |
 | A co-speaker's own talk list | Unchanged: main-speaker talks only | R6. Applies to `GET /speakers/{id}/talks` and `GET /talks?speakerId=`. |
 | Request body on PUT or DELETE | Ignored | The request says no body. |
+| A talk or speaker row is deleted (R11) | Its co-speaker links are deleted with it: foreign keys `talk_id REFERENCES talk(id) ON DELETE CASCADE` and `speaker_id REFERENCES speaker(id) ON DELETE CASCADE` | No API deletes talks or speakers, but a row deleted by hand left a link behind: a deleted speaker still showed in `coSpeakerIds` (R4) and took one of the two places (R2), and a link to a deleted speaker broke R1 (co-speakers are registered speakers). Cascade rather than restrict, because a link has no meaning without its talk and speaker, and restrict would make deleting a speaker fail for a reason nobody can see in the API. |
+| Adding the R11 keys to the production table | `schema.sql` adds each key only when it is missing, `NOT VALID` first, then deletes the links to a talk or speaker that is gone, then validates. Any error is a Postgres warning, not a failed start-up; the next start-up tries again. | The table already exists in production with data, so `CREATE TABLE IF NOT EXISTS` with `REFERENCES` would add nothing, and a plain `ADD CONSTRAINT` fails on one orphan row, which stops start-up and the deploy. `NOT VALID` makes no new orphan possible before the old ones are deleted. Orphan links are deleted, not kept: they point at a talk or speaker that no longer exists. Proven by `CoSpeakerForeignKeysTest`. |
 
 ## Examples
 
@@ -117,6 +120,16 @@ unregistered speaker id.
 |-------|---------|--------|
 | a talk with no co-speakers | 10 PUTs of 10 different speakers at the same time | two 200, eight 409, two co-speakers |
 | a talk with no co-speakers | 10 PUTs of Ada at the same time | ten 200, `coSpeakerIds` [Ada] |
+
+### R11: a deleted talk or speaker takes its links with it
+
+| Given | Then |
+|-------|------|
+| [Ada, Bob] on Main's talk, Bob's speaker row deleted | `coSpeakerIds` [Ada]; PUT Cy gives 200, [Ada, Cy] |
+| [Ada] on Main's talk, the talk row deleted | no link left for the talk |
+| an existing table without keys, with links to talk 99 and speaker 99 that don't exist | start-up succeeds, deletes those two links, keeps the others, and both keys are validated and cascading |
+| the schema run twice more | nothing changes |
+| a key that can't be added (no primary key on `talk`) | the schema still runs to the end, without the keys |
 
 ## Effect on existing features
 

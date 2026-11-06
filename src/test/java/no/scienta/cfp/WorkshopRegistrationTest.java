@@ -55,7 +55,7 @@ public class WorkshopRegistrationTest {
 
     @BeforeEach
     void startWithNoTalks() {
-        jdbc.execute("TRUNCATE speaker, talk, rating, workshop_registration RESTART IDENTITY");
+        jdbc.execute("TRUNCATE speaker, talk, rating, workshop_registration, talk_co_speaker RESTART IDENTITY");
     }
 
     @DisplayName("R1: Registers an attendee only with a name and a real email")

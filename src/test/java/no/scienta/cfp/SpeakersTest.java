@@ -54,7 +54,7 @@ public class SpeakersTest {
 
     @BeforeEach
     void startWithNoSpeakers() {
-        jdbc.execute("TRUNCATE speaker, talk, rating RESTART IDENTITY");
+        jdbc.execute("TRUNCATE speaker, talk, rating, talk_co_speaker RESTART IDENTITY");
     }
 
     @DisplayName("R3: Registers a speaker only with a name")
