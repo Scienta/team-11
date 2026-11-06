@@ -48,6 +48,7 @@ Kristian's team. Co-speakers is reviewed by Carl Kristian's team.
 | S10 | Low | Anybody can decide on a talk, and the `speakerId` for a withdrawal is public. | `AcceptanceController.java:26` | The spec has no auth model: a PO question | none | not a defect |
 | S13 | Low | `GET /talks` and `/admin/talks.csv` have no paging, so every request reads all talks. | `ConferenceService.listTalks` | Note only: paging would change the API that the specs and the harness use (The Hand, 2026-11-06). | none | not a defect |
 | S10b | Low | Anybody can put talks on the programme and take them out: 15 DELETEs empty it. | `ProgrammeController` | The spec has no auth model: the same PO question as S10 | none | not a defect |
+| S15 | Low | Co-speakers R12 is not access control: `actingSpeakerId` is optional, and the main speaker's ID is public in `GET /talks`. | `CoSpeakerController` (PR #9) | The spec makes the parameter optional, so that the harness keeps working: the same PO question as S10 | none | not a defect |
 | S11 | High | The email mask in the request log takes time that grows with the square of the text length (ReDoS). An 80 KB body without `@` takes 16 s of CPU, and a stored long title costs the same on every list. Found in `9458d53` before the push. | `RequestLogFilter.java:67` at `9458d53` | `b7f1b79` | CLOSED on `b7f1b79`: 2 MB without `@` in 0.02 s |
 | S12 | Medium | A talk title has no length limit. A long title is stored and comes back in every list and in the CSV. | `ConferenceService.submitTalk` | `d8612c3` | CLOSED on `d8612c3`: 200 code points 201, 201 code points 400, also with emoji |
 
@@ -68,3 +69,4 @@ Kristian's team. Co-speakers is reviewed by Carl Kristian's team.
 | 2026-11-06 | `f0f237e`, `9fa3cc4`, `e8ff81d` | No blocker. S5 and S5b stay CLOSED. S5c CLOSED. Only S2b (low) OPEN. |
 | 2026-11-06 | `a242630`, `a697884`, `54f8f40` (push candidate `3393575`) | No blocker. 409 for an accepted talk that is not a workshop, no row saved; 404 for an unknown talk. Only S2b (low) OPEN. |
 | 2026-11-06 | programme export (spec) | S14 accepted: no formula guard in `/programme.csv`. RFC 4180 quoting stays required. |
+| 2026-11-06 | PR #9 `7560729` (co-speakers R11, R12) | OK to merge. The R11 migration deletes only orphan links, validates both keys, and is idempotent. R12 gives 403 before other checks. S15 noted. Condition: the merge must keep both new blocks in `schema.sql`. |
