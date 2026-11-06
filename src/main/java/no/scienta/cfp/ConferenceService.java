@@ -73,7 +73,7 @@ public class ConferenceService {
         } catch (DuplicateKeyException e) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "email already registered");
         }
-        log.info("registered speaker " + id + " (" + form.getEmail() + ")");
+        log.info("registered speaker " + id);
         notifications.speakerRegistered(form.getEmail(), form.getName());
         Map<String, Object> speaker = new LinkedHashMap<>();
         speaker.put("id", id);
