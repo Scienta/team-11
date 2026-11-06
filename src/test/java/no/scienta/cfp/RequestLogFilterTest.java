@@ -11,6 +11,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.boot.test.system.CapturedOutput;
@@ -19,6 +20,9 @@ import org.springframework.mock.web.MockFilterChain;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.util.StreamUtils;
+import org.tabletest.junit.Description;
+import org.tabletest.junit.Scenario;
+import org.tabletest.junit.TableTest;
 
 /**
  * The request log: one line per request in the container logs, so we can see what the harness sends.
@@ -59,6 +63,29 @@ class RequestLogFilterTest {
 
         assertTrue(output.getOut().contains("…(+500 chars)"), output.getOut());
         assertFalse(output.getOut().contains(longTitle), "logged the whole body");
+    }
+
+    @DisplayName("Masks each email in the logged bodies")
+    @Description("""
+            Each row sends the body as the request and gets the same body as the response. Both logged
+            bodies must show the masked form. The mask keeps the first character and the domain, so a
+            person can still match a log line with a harness transcript.
+            """)
+    @TableTest("""
+        Scenario                | Body                                                          | Logged Body?
+        One email               | '{"email":"ada@example.com"}'                                 | '{"email":"a***@example.com"}'
+        Email in capitals       | '{"email":"ADA@Example.com"}'                                 | '{"email":"A***@Example.com"}'
+        One letter before the @ | '{"email":"a@example.com"}'                                   | '{"email":"a***@example.com"}'
+        Two emails              | '[{"email":"ada@example.com"},{"email":"grace@example.org"}]' | '[{"email":"a***@example.com"},{"email":"g***@example.org"}]'
+        Domain without a dot    | '{"email":"ada@example"}'                                     | '{"email":"a***@example"}'
+        No @                    | '{"email":"not-an-email"}'                                    | '{"email":"not-an-email"}'
+        Nothing before the @    | '{"email":"@example.com"}'                                    | '{"email":"@example.com"}'
+        """)
+    void masksEachEmailInTheLoggedBodies(@Scenario String scenario, String body, String loggedBody,
+                                         CapturedOutput output) throws Exception {
+        filter.doFilter(jsonRequest("POST", "/speakers", body), new MockHttpServletResponse(), chainAnswering(201, body));
+
+        assertTrue(output.getOut().contains("request=" + loggedBody + " response=" + loggedBody), output.getOut());
     }
 
     private static MockHttpServletRequest jsonRequest(String method, String uri, String body) {

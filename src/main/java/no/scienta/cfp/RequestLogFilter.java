@@ -2,6 +2,7 @@ package no.scienta.cfp;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.regex.Pattern;
 
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
@@ -16,7 +17,8 @@ import org.springframework.web.util.ContentCachingRequestWrapper;
 import org.springframework.web.util.ContentCachingResponseWrapper;
 
 /**
- * Writes one log line per HTTP request: method, path and query, status, duration, and both bodies (shortened).
+ * Writes one log line per HTTP request: method, path and query, status, duration, and both bodies (shortened, with
+ * each email masked).
  * The harness checks show up in the container logs only through these lines.
  */
 @Component
@@ -25,6 +27,9 @@ public class RequestLogFilter extends OncePerRequestFilter {
     static final int MAX_BODY_CHARS = 2000;
 
     private static final Logger log = LoggerFactory.getLogger(RequestLogFilter.class);
+    private static final String NOT_IN_AN_EMAIL = "[^\\s@\"'\\\\,;:<>()\\[\\]{}]";
+    private static final Pattern EMAIL = Pattern.compile(
+            "(" + NOT_IN_AN_EMAIL + ")" + NOT_IN_AN_EMAIL + "*@(" + NOT_IN_AN_EMAIL + "+)");
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
@@ -50,10 +55,15 @@ public class RequestLogFilter extends OncePerRequestFilter {
     }
 
     private static String shortened(byte[] body) {
-        String text = new String(body, StandardCharsets.UTF_8).replaceAll("\\s*[\\r\\n]+\\s*", " ");
+        String text = withMaskedEmails(new String(body, StandardCharsets.UTF_8)).replaceAll("\\s*[\\r\\n]+\\s*", " ");
         if (text.length() <= MAX_BODY_CHARS) {
             return text;
         }
         return text.substring(0, MAX_BODY_CHARS) + "…(+" + (text.length() - MAX_BODY_CHARS) + " chars)";
+    }
+
+    /** Keeps the first character and the domain of each email: "ada@example.com" becomes "a***@example.com". */
+    private static String withMaskedEmails(String text) {
+        return EMAIL.matcher(text).replaceAll("$1***@$2");
     }
 }
