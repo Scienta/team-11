@@ -1,8 +1,8 @@
 # Teststatus
 
-Laget 6. november 2026 kl. 14:20 fra versjon [b966832](https://github.com/Scienta/team-11/commit/b96683226ef72e5403b4807be9747c98c03c2cbf).
+Laget 6. november 2026 kl. 14:29 fra versjon [ac85ae4](https://github.com/Scienta/team-11/commit/ac85ae4cae06e7913dffcb3cdece2673d577bc9c).
 
-✅ Våre tester: alle 63 regler er i orden (246 av 246 eksempler).
+✅ Våre tester: alle 64 regler er i orden (249 av 249 eksempler).
 
 ✅ Arrangørenes kontroller: alle 15 er i orden (Foredragsholdere, Foredrag, Karakterer).
 
@@ -91,5 +91,6 @@ Alle detaljer står i [testrapporten](specs/index.md).
 - ✅ Ved en feil i databasen svarer tjenesten uten å vise tekniske detaljer. — 1 av 1 eksempel · [se eksemplene](specs/error-answers/answers-a-database-failure-without-its-details.md)
 - ✅ Tekst som inneholder et ugyldig nulltegn, avvises. — 2 av 2 eksempler · [se eksemplene](specs/error-answers/refuses-a-text-field-that-holds-a-nul-character.md)
 - ✅ E-postadresser skjules i loggen. — 7 av 7 eksempler · [se eksemplene](specs/request-log-filter-test/masks-each-email-in-the-logged-bodies.md)
+- ✅ Også en stor forespørsel blir logget raskt. — 3 av 3 eksempler · [se eksemplene](specs/request-log-filter-test/logs-a-large-body-in-a-short-time.md)
 - ✅ I eksporten til regneark blir en verdi som ligner en formel, lagret som tekst. — 6 av 6 eksempler · [se eksemplene](specs/utils-test/exports-a-value-that-starts-like-a-formula-as-text.md)
 - ✅ I eksporten til regneark får en verdi med semikolon eller linjeskift anførselstegn rundt seg. — 4 av 4 eksempler · [se eksemplene](specs/utils-test/quotes-a-value-with-a-semicolon-or-a-line-break.md)

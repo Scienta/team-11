@@ -62,5 +62,6 @@ co-speakers/answers-404-for-an-unknown-talk-and-400-for-a-talk-id-that-is-not-a-
 error-answers/answers-a-database-failure-without-its-details	Ved en feil i databasen svarer tjenesten uten å vise tekniske detaljer.
 error-answers/refuses-a-text-field-that-holds-a-nul-character	Tekst som inneholder et ugyldig nulltegn, avvises.
 request-log-filter-test/masks-each-email-in-the-logged-bodies	E-postadresser skjules i loggen.
+request-log-filter-test/logs-a-large-body-in-a-short-time	Også en stor forespørsel blir logget raskt.
 utils-test/exports-a-value-that-starts-like-a-formula-as-text	I eksporten til regneark blir en verdi som ligner en formel, lagret som tekst.
 utils-test/quotes-a-value-with-a-semicolon-or-a-line-break	I eksporten til regneark får en verdi med semikolon eller linjeskift anførselstegn rundt seg.
