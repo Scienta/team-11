@@ -100,11 +100,12 @@ Talks are created in the order A, B, C, D (A oldest). `GET /talks?sort=rating`.
 
 | A | B | C | D | Order |
 |---|---|---|---|-------|
-| 5, 4, 3×7, 1 (3.12, 10 ratings) | 5, 4×2, 3×15, 1 (53 / 17 = 3.1176…, shows 3.12, 19 ratings) | | | B, A (same rounded average, B has more ratings, although A's exact mean is higher) |
-| 4, 5 (4.5, 2 ratings) | 4, 5 (4.5, 2 ratings) | | | A, B (same average and count: oldest first) |
-| 5, 5, 5, 1, 1 (3.67) | 1, 5, 5, 5 (4.0) | 5, 5, 5, 5, 1 (5.0) | | C, B, A |
-| none | 4, 4, 4, 5 (4.25) | 4, 5 (4.5) | none | C, B, A, D (unrated last, oldest first) |
-| 4, 5, `WITHDRAWN` | 3 | none | | B, C, A (withdrawn after all others, Acceptance R9) |
+| 5, 4, 3×7, 1 (3.12, 10 ratings) | 5, 4×2, 3×15, 1 (53 / 17 = 3.1176…, shows 3.12, 19 ratings) | none | none | B, A, C, D (same rounded average, B has more ratings, although A's exact mean is higher) |
+| 4, 5 (4.5, 2 ratings) | 4, 5 (4.5, 2 ratings) | none | none | A, B, C, D (same average and count: oldest first) |
+| 5, 5, 5, 1, 1 (3.67) | 1, 5, 5, 5 (4.0) | 5, 5, 5, 5, 1 (5.0) | none | C, B, A, D |
+| none | 4, 4, 4, 5 (4.25) | 4, 4, 5 (4.33) | none | C, B, A, D (with one decimal both showed 4.3 and B came first on its rating count) |
+| none | 1 | none | none | B, A, C, D (unrated last, oldest first) |
+| 4, 5, then `WITHDRAWN` | 3 | none | none | B, C, D, A (withdrawn after all others, Acceptance R9) |
 
 ### R6: no ratings, no average
 
