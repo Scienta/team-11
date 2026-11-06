@@ -79,11 +79,4 @@ public class TalkDao {
                 Long.class, title, format, duration, level, speakerId, submittedAt, speakerId, max);
         return ids.isEmpty() ? null : ids.get(0);
     }
-
-    // old version, raced when the mobile app double-posted
-    // public long insert(String title, String format, int duration, String level, long speakerId) {
-    //     jdbc.update("INSERT INTO talk (title, format, duration, level, status, speaker_id) VALUES (?, ?, ?, ?, 'SUBMITTED', ?)",
-    //             title, format, duration, level, speakerId);
-    //     return jdbc.queryForObject("SELECT currval('talk_id_seq')", Long.class);
-    // }
 }

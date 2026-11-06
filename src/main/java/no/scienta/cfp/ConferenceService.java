@@ -38,7 +38,6 @@ public class ConferenceService {
         DURATIONS.put("LIGHTNING_20", 20);
         DURATIONS.put("PRESENTATION", 45);
         DURATIONS.put("WORKSHOP", 120);
-        // DURATIONS.put("KEYNOTE", 60);  // keynotes are invited, not submitted (2021)
     }
 
     private final SpeakerDao speakerDao;
@@ -258,7 +257,6 @@ public class ConferenceService {
     // 1 decimal, half up (4.25 -> 4.3)
     private Double calculateAverage(long total, int count) {
         return BigDecimal.valueOf(total).divide(BigDecimal.valueOf(count), 1, RoundingMode.HALF_UP).doubleValue();
-        // return Utils.roundRating((double) total / count);
     }
 
     // ---------------------------------------------------------------- statistics

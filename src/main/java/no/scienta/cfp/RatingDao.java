@@ -29,8 +29,4 @@ public class RatingDao {
     public Map<String, Object> stats(long talkId) {
         return jdbc.queryForMap("SELECT COUNT(*) AS cnt, COALESCE(SUM(score), 0) AS total FROM rating WHERE talk_id = ?", talkId);
     }
-
-    // public double average(long talkId) {
-    //     return jdbc.queryForObject("SELECT AVG(score) FROM rating WHERE talk_id = ?", Double.class, talkId);
-    // }
 }

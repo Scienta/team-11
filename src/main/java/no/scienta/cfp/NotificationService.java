@@ -33,14 +33,6 @@ public class NotificationService {
             log.debug("mail disabled, not sending '" + subject + "' to " + to);
             return;
         }
-        // JavaMailSender was removed with the relay
-        // MimeMessage msg = mailSender.createMimeMessage();
-        // MimeMessageHelper helper = new MimeMessageHelper(msg, "UTF-8");
-        // helper.setFrom(from);
-        // helper.setTo(to);
-        // helper.setSubject("[CFP] " + subject);
-        // helper.setText(body);
-        // mailSender.send(msg);
         log.info("MAIL from=" + from + " to=" + to + " subject=" + subject);
     }
 }

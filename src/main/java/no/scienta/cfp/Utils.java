@@ -95,18 +95,6 @@ public class Utils {
         return s == null || s.trim().length() == 0;
     }
 
-    public static boolean isNumeric(String s) {
-        if (isEmpty(s)) {
-            return false;
-        }
-        for (char c : s.toCharArray()) {
-            if (!Character.isDigit(c)) {
-                return false;
-            }
-        }
-        return true;
-    }
-
     /**
      * Rounds a rating average to one decimal.
      */
@@ -120,8 +108,4 @@ public class Utils {
         }
         return s.substring(0, 1).toUpperCase() + s.substring(1).toLowerCase();
     }
-
-    // public static String slug(String title) {
-    //     return title.toLowerCase().replaceAll("[^a-z0-9]+", "-");
-    // }
 }
