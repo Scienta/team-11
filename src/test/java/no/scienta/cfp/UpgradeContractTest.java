@@ -53,6 +53,8 @@ class UpgradeContractTest {
     private String speaker;
     private String talk;
     private String other;
+    private String coSpeaker;
+    private String coTalk;
 
     @BeforeEach
     void registerASpeakerWithATalk() throws Exception {
@@ -60,29 +62,33 @@ class UpgradeContractTest {
         speaker = created(send("POST", "/speakers", "{\"name\":\"Grace Hopper\",\"email\":\"" + speakerEmail + "\"}"));
         talk = created(send("POST", "/talks", talkJson(speaker)));
         other = created(send("POST", "/speakers", "{\"name\":\"Ada Lovelace\",\"email\":\"" + newEmail() + "\"}"));
+        coSpeaker = created(send("POST", "/speakers", "{\"name\":\"Barbara Liskov\",\"email\":\"" + newEmail() + "\"}"));
+        coTalk = created(send("POST", "/talks", talkJson(speaker)));
+        assertEquals(200, send("PUT", "/talks/" + coTalk + "/co-speakers/" + coSpeaker, null).statusCode());
     }
 
     @DisplayName("R2: Answers a path with a trailing slash like the path without it")
     @Description("""
             Speakers R7 names /speakers/ and /speakers/{id}/. Spring Boot 2.7 matched the slash on
             every path, so every path keeps doing so. $speaker and $talk are a registered speaker
-            and their talk, $other another registered speaker and $email a new address.
+            and their talk, $coTalk another talk of theirs with the co-speaker $coSpeaker, $other
+            another registered speaker and $email a new address.
             """)
     @TableTest("""
-        Scenario               | Method | Path                             | Body                                                                            | Status?
-        Register a speaker     | POST   | /speakers/                       | '{"name":"Grace Hopper","email":"$email"}'                                      | 201
-        Read a speaker         | GET    | /speakers/$speaker/              |                                                                                 | 200
-        PUT is gone            | PUT    | /speakers/$speaker/              | '{"name":"Grace Hopper","email":"$email"}'                                      | 405
-        A speaker's talks      | GET    | /speakers/$speaker/talks/        |                                                                                 | 200
-        Submit a talk          | POST   | /talks/                          | '{"title":"T","format":"PRESENTATION","level":"BEGINNER","speakerId":$speaker}' | 201
-        Read a talk            | GET    | /talks/$talk/                    |                                                                                 | 200
-        List the talks         | GET    | /talks/                          |                                                                                 | 200
-        List without withdrawn | GET    | /talks/?includeWithdrawn=false   |                                                                                 | 200
-        Rate a talk            | PUT    | /talks/$talk/ratings/7/          | '{"score":3}'                                                                   | 200
-        Decide on a talk       | PUT    | /talks/$talk/status/             | '{"status":"WAITLISTED"}'                                                       | 200
-        Withdraw a talk        | POST   | /talks/$talk/withdraw/           | '{"speakerId":$speaker}'                                                        | 200
-        Add a co-speaker       | PUT    | /talks/$talk/co-speakers/$other/ |                                                                                 | 200
-        Remove a co-speaker    | DELETE | /talks/$talk/co-speakers/$other/ |                                                                                 | 200
+        Scenario               | Method | Path                                   | Body                                                                            | Status?
+        Register a speaker     | POST   | /speakers/                             | '{"name":"Grace Hopper","email":"$email"}'                                      | 201
+        Read a speaker         | GET    | /speakers/$speaker/                    |                                                                                 | 200
+        PUT is gone            | PUT    | /speakers/$speaker/                    | '{"name":"Grace Hopper","email":"$email"}'                                      | 405
+        A speaker's talks      | GET    | /speakers/$speaker/talks/              |                                                                                 | 200
+        Submit a talk          | POST   | /talks/                                | '{"title":"T","format":"PRESENTATION","level":"BEGINNER","speakerId":$speaker}' | 201
+        Read a talk            | GET    | /talks/$talk/                          |                                                                                 | 200
+        List the talks         | GET    | /talks/                                |                                                                                 | 200
+        List without withdrawn | GET    | /talks/?includeWithdrawn=false         |                                                                                 | 200
+        Rate a talk            | PUT    | /talks/$talk/ratings/7/                | '{"score":3}'                                                                   | 200
+        Decide on a talk       | PUT    | /talks/$talk/status/                   | '{"status":"WAITLISTED"}'                                                       | 200
+        Withdraw a talk        | POST   | /talks/$talk/withdraw/                 | '{"speakerId":$speaker}'                                                        | 200
+        Add a co-speaker       | PUT    | /talks/$talk/co-speakers/$other/       |                                                                                 | 200
+        Remove a co-speaker    | DELETE | /talks/$coTalk/co-speakers/$coSpeaker/ |                                                                                 | 200
         """)
     void answersAPathWithATrailingSlash(String method, String path, String body, int status) throws Exception {
         HttpResponse<String> res = send(method, filledIn(path), body == null ? null : filledIn(body));
@@ -234,9 +240,9 @@ class UpgradeContractTest {
             $speaker a registered speaker.
             """)
     @TableTest("""
-        Scenario                   | Path      | Body                                                                                             | Status?
+        Scenario                   | Path      | Body                                                                                            | Status?
         Unknown field in a speaker | /speakers | '{"name":"Grace Hopper","email":"$email","twitter":"@grace"}'                                   | 201
-        Comment in a speaker       | /speakers | '{/* from the app */ "name":"Grace Hopper","email":"$email"}'                                    | 201
+        Comment in a speaker       | /speakers | '{/* from the app */ "name":"Grace Hopper","email":"$email"}'                                   | 201
         Unknown field in a talk    | /talks    | '{"title":"Legacy","format":"PRESENTATION","level":"BEGINNER","speakerId":$speaker,"room":"A"}' | 201
         Speaker ID as text         | /talks    | '{"title":"Legacy","format":"PRESENTATION","level":"BEGINNER","speakerId":"$speaker"}'          | 201
         Title as a number          | /talks    | '{"title":5,"format":"PRESENTATION","level":"BEGINNER","speakerId":$speaker}'                   | 201
@@ -288,6 +294,7 @@ class UpgradeContractTest {
      */
     private String filledIn(String cell) {
         return cell.replace("$speaker", speaker).replace("$talk", talk).replace("$other", other)
+                .replace("$coSpeaker", coSpeaker).replace("$coTalk", coTalk)
                 .replace("$taken", speakerEmail)
                 .replace("$email", newEmail());
     }
