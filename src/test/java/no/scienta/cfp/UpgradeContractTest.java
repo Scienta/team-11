@@ -47,12 +47,14 @@ class UpgradeContractTest {
 
     private final HttpClient http = HttpClient.newHttpClient();
 
+    private String speakerEmail;
     private String speaker;
     private String talk;
 
     @BeforeEach
     void registerASpeakerWithATalk() throws Exception {
-        speaker = created(send("POST", "/speakers", speakerJson()));
+        speakerEmail = newEmail();
+        speaker = created(send("POST", "/speakers", "{\"name\":\"Grace Hopper\",\"email\":\"" + speakerEmail + "\"}"));
         talk = created(send("POST", "/talks", talkJson(speaker)));
     }
 
@@ -60,26 +62,24 @@ class UpgradeContractTest {
     @Description("""
             Speakers R7 names /speakers/ and /speakers/{id}/. Spring Boot 2.7 matched the slash on
             every path, so every path keeps doing so. $speaker and $talk are a registered speaker
-            and their talk.
+            and their talk, $email a new address.
             """)
     @TableTest("""
-        Scenario           | Method | Path                      | Status?
-        Register a speaker | POST   | /speakers/                | 201
-        Read a speaker     | GET    | /speakers/$speaker/       | 200
-        Update a speaker   | PUT    | /speakers/$speaker/       | 200
-        A speaker's talks  | GET    | /speakers/$speaker/talks/ | 200
-        Submit a talk      | POST   | /talks/                   | 201
-        Read a talk        | GET    | /talks/$talk/             | 200
-        List the talks     | GET    | /talks/                   | 200
-        Rate a talk        | PUT    | /talks/$talk/ratings/7/   | 200
+        Scenario               | Method | Path                           | Body                                                                            | Status?
+        Register a speaker     | POST   | /speakers/                     | '{"name":"Grace Hopper","email":"$email"}'                                      | 201
+        Read a speaker         | GET    | /speakers/$speaker/            |                                                                                 | 200
+        Update a speaker       | PUT    | /speakers/$speaker/            | '{"name":"Grace Hopper","email":"$email"}'                                      | 200
+        A speaker's talks      | GET    | /speakers/$speaker/talks/      |                                                                                 | 200
+        Submit a talk          | POST   | /talks/                        | '{"title":"T","format":"PRESENTATION","level":"BEGINNER","speakerId":$speaker}' | 201
+        Read a talk            | GET    | /talks/$talk/                  |                                                                                 | 200
+        List the talks         | GET    | /talks/                        |                                                                                 | 200
+        List without withdrawn | GET    | /talks/?includeWithdrawn=false |                                                                                 | 200
+        Rate a talk            | PUT    | /talks/$talk/ratings/7/        | '{"score":3}'                                                                   | 200
+        Decide on a talk       | PUT    | /talks/$talk/status/           | '{"status":"WAITLISTED"}'                                                       | 200
+        Withdraw a talk        | POST   | /talks/$talk/withdraw/         | '{"speakerId":$speaker}'                                                        | 200
         """)
-    void answersAPathWithATrailingSlash(String method, String path, int status) throws Exception {
-        String body = switch (method) {
-            case "POST" -> path.startsWith("/speakers") ? speakerJson() : talkJson(speaker);
-            case "PUT" -> path.startsWith("/speakers") ? speakerJson() : "{\"score\":3}";
-            default -> null;
-        };
-        HttpResponse<String> res = send(method, path.replace("$speaker", speaker).replace("$talk", talk), body);
+    void answersAPathWithATrailingSlash(String method, String path, String body, int status) throws Exception {
+        HttpResponse<String> res = send(method, filledIn(path), body == null ? null : filledIn(body));
         assertEquals(status, res.statusCode(), res.body());
     }
 
@@ -220,9 +220,14 @@ class UpgradeContractTest {
         assertTrue(actual.matches(regex), actual + "\n does not match\n" + regex);
     }
 
-    /** A speaker with a new email. */
-    private static String speakerJson() {
-        return "{\"name\":\"Grace Hopper\",\"email\":\"grace-" + UUID.randomUUID() + "@example.com\"}";
+    private static String newEmail() {
+        return "grace-" + UUID.randomUUID() + "@example.com";
+    }
+
+    /** A table cell with $speaker, $talk, $taken (the speaker's address) and $email (a new address) filled in. */
+    private String filledIn(String cell) {
+        return cell.replace("$speaker", speaker).replace("$talk", talk).replace("$taken", speakerEmail)
+                .replace("$email", newEmail());
     }
 
     private static String talkJson(String speaker) {
