@@ -4,7 +4,8 @@
 # Each group registers its own speakers and submits its own workshops, so the file runs against a
 # shared database. A speaker has at most 3 talks. A workshop is ACCEPTED after ratings from two
 # reviewers and the committee's decision (Acceptance R2, R3).
-# Hurl sends the requests one at a time, so the rows "at the same time" of R5 and R6 are not here.
+# Hurl sends the requests one at a time, so the rows "at the same time" of R5 and R6 are not here
+# (WorkshopRegistrationTest has them).
 
 # ================================================================ R1: a name and a real email
 
@@ -607,3 +608,230 @@ GET {{base_url}}/workshops/{{empty_workshop}}/registrations
 HTTP 200
 [Asserts]
 jsonpath "$" count == 0
+
+# ================================================================ R9: unregister frees the seat
+
+POST {{base_url}}/speakers
+{"name": "Katherine Johnson", "email": "johnson-{{newUuid}}@example.com"}
+HTTP 201
+[Captures]
+johnson: jsonpath "$.id"
+
+POST {{base_url}}/talks
+{"title": "Orbital trajectories", "format": "WORKSHOP", "level": "ADVANCED", "speakerId": {{johnson}}}
+HTTP 201
+[Captures]
+full_workshop: jsonpath "$.id"
+
+POST {{base_url}}/talks
+{"title": "Navigation by the stars", "format": "WORKSHOP", "level": "BEGINNER", "speakerId": {{johnson}}}
+HTTP 201
+[Captures]
+twice_workshop: jsonpath "$.id"
+
+POST {{base_url}}/talks
+{"title": "Checking the computer", "format": "WORKSHOP", "level": "INTERMEDIATE", "speakerId": {{johnson}}}
+HTTP 201
+[Captures]
+other_workshop: jsonpath "$.id"
+
+PUT {{base_url}}/talks/{{full_workshop}}/ratings/1
+{"score": 5}
+HTTP 200
+
+PUT {{base_url}}/talks/{{full_workshop}}/ratings/2
+{"score": 5}
+HTTP 200
+
+PUT {{base_url}}/talks/{{full_workshop}}/status
+{"status": "ACCEPTED"}
+HTTP 200
+
+PUT {{base_url}}/talks/{{twice_workshop}}/ratings/1
+{"score": 4}
+HTTP 200
+
+PUT {{base_url}}/talks/{{twice_workshop}}/ratings/2
+{"score": 4}
+HTTP 200
+
+PUT {{base_url}}/talks/{{twice_workshop}}/status
+{"status": "ACCEPTED"}
+HTTP 200
+
+PUT {{base_url}}/talks/{{other_workshop}}/ratings/1
+{"score": 3}
+HTTP 200
+
+PUT {{base_url}}/talks/{{other_workshop}}/ratings/2
+{"score": 4}
+HTTP 200
+
+PUT {{base_url}}/talks/{{other_workshop}}/status
+{"status": "ACCEPTED"}
+HTTP 200
+
+# R5, R9: Ada and 19 other attendees fill the workshop, and Barbara gets no seat
+POST {{base_url}}/workshops/{{full_workshop}}/registrations
+{"name": "Ada Lovelace", "email": "ada@example.com"}
+HTTP 201
+[Captures]
+full_ada: jsonpath "$.id"
+
+POST {{base_url}}/workshops/{{full_workshop}}/registrations
+[Options]
+repeat: 19
+{"name": "Attendee", "email": "attendee-{{newUuid}}@example.com"}
+HTTP 201
+
+POST {{base_url}}/workshops/{{full_workshop}}/registrations
+{"name": "Barbara Liskov", "email": "barbara@example.com"}
+HTTP 409
+
+# R9: Ada unregisters from the full workshop, with no body in the response
+DELETE {{base_url}}/workshops/{{full_workshop}}/registrations/{{full_ada}}
+HTTP 204
+[Asserts]
+bytes count == 0
+
+# R9: the freed seat goes to Barbara at once
+POST {{base_url}}/workshops/{{full_workshop}}/registrations
+{"name": "Barbara Liskov", "email": "barbara@example.com"}
+HTTP 201
+
+# R5, R9: the workshop is full again
+POST {{base_url}}/workshops/{{full_workshop}}/registrations
+{"name": "Grace Hopper", "email": "grace@example.com"}
+HTTP 409
+
+GET {{base_url}}/workshops/{{full_workshop}}/registrations
+HTTP 200
+[Asserts]
+jsonpath "$" count == 20
+jsonpath "$[*].email" not contains "ada@example.com"
+jsonpath "$[*].email" contains "barbara@example.com"
+jsonpath "$[*].email" not contains "grace@example.com"
+
+POST {{base_url}}/workshops/{{twice_workshop}}/registrations
+{"name": "Ada Lovelace", "email": "ada@example.com"}
+HTTP 201
+[Captures]
+first_ada: jsonpath "$.id"
+
+POST {{base_url}}/workshops/{{twice_workshop}}/registrations
+{"name": "Grace Hopper", "email": "grace@example.com"}
+HTTP 201
+
+# R9: Ada unregisters, and the list no longer has her
+DELETE {{base_url}}/workshops/{{twice_workshop}}/registrations/{{first_ada}}
+HTTP 204
+
+GET {{base_url}}/workshops/{{twice_workshop}}/registrations
+HTTP 200
+[Asserts]
+jsonpath "$" count == 1
+jsonpath "$[0].name" == "Grace Hopper"
+
+# R9: Ada unregisters a second time, and the second request finds nothing
+DELETE {{base_url}}/workshops/{{twice_workshop}}/registrations/{{first_ada}}
+HTTP 404
+
+# R6, R9: Ada registers again after unregistering
+POST {{base_url}}/workshops/{{twice_workshop}}/registrations
+{"name": "Ada Lovelace", "email": "ADA@Example.com"}
+HTTP 201
+[Captures]
+second_ada: jsonpath "$.id"
+
+GET {{base_url}}/workshops/{{twice_workshop}}/registrations
+HTTP 200
+[Asserts]
+jsonpath "$" count == 2
+jsonpath "$[0].name" == "Grace Hopper"
+jsonpath "$[1].id" == {{second_ada}}
+jsonpath "$[1].id" != {{first_ada}}
+jsonpath "$[1].email" == "ADA@Example.com"
+
+# R9: Ada's registration is for another workshop
+DELETE {{base_url}}/workshops/{{other_workshop}}/registrations/{{second_ada}}
+HTTP 404
+
+# R9: no registration with this ID
+DELETE {{base_url}}/workshops/{{other_workshop}}/registrations/999999999
+HTTP 404
+
+# R9: none of the refused requests removed Ada from her workshop
+GET {{base_url}}/workshops/{{twice_workshop}}/registrations
+HTTP 200
+[Asserts]
+jsonpath "$" count == 2
+jsonpath "$[1].id" == {{second_ada}}
+
+# R2, R9: no talk with this ID
+DELETE {{base_url}}/workshops/999999999/registrations/{{second_ada}}
+HTTP 404
+
+# Our decisions: an ID in the path that is not a number is 400
+DELETE {{base_url}}/workshops/abc/registrations/{{second_ada}}
+HTTP 400
+
+DELETE {{base_url}}/workshops/{{twice_workshop}}/registrations/abc
+HTTP 400
+
+POST {{base_url}}/speakers
+{"name": "Dorothy Vaughan", "email": "vaughan-{{newUuid}}@example.com"}
+HTTP 201
+[Captures]
+vaughan: jsonpath "$.id"
+
+POST {{base_url}}/talks
+{"title": "FORTRAN for computers", "format": "WORKSHOP", "level": "BEGINNER", "speakerId": {{vaughan}}}
+HTTP 201
+[Captures]
+withdrawn_workshop: jsonpath "$.id"
+
+POST {{base_url}}/talks
+{"title": "From human computers to IBM", "format": "PRESENTATION", "level": "BEGINNER", "speakerId": {{vaughan}}}
+HTTP 201
+[Captures]
+not_a_workshop: jsonpath "$.id"
+
+# R2, R9: a talk that is not a workshop
+DELETE {{base_url}}/workshops/{{not_a_workshop}}/registrations/{{second_ada}}
+HTTP 404
+
+PUT {{base_url}}/talks/{{withdrawn_workshop}}/ratings/1
+{"score": 5}
+HTTP 200
+
+PUT {{base_url}}/talks/{{withdrawn_workshop}}/ratings/2
+{"score": 4}
+HTTP 200
+
+PUT {{base_url}}/talks/{{withdrawn_workshop}}/status
+{"status": "ACCEPTED"}
+HTTP 200
+
+POST {{base_url}}/workshops/{{withdrawn_workshop}}/registrations
+{"name": "Ada Lovelace", "email": "ada@example.com"}
+HTTP 201
+[Captures]
+withdrawn_ada: jsonpath "$.id"
+
+POST {{base_url}}/workshops/{{withdrawn_workshop}}/registrations
+{"name": "Grace Hopper", "email": "grace@example.com"}
+HTTP 201
+
+POST {{base_url}}/talks/{{withdrawn_workshop}}/withdraw
+{"speakerId": {{vaughan}}}
+HTTP 200
+
+# R4, R9: Ada unregisters from the withdrawn workshop, and the list shows only Grace
+DELETE {{base_url}}/workshops/{{withdrawn_workshop}}/registrations/{{withdrawn_ada}}
+HTTP 204
+
+GET {{base_url}}/workshops/{{withdrawn_workshop}}/registrations
+HTTP 200
+[Asserts]
+jsonpath "$" count == 1
+jsonpath "$[0].name" == "Grace Hopper"
