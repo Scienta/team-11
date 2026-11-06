@@ -7,7 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Registers attendees for workshops and lists them (workshop-registration R1-R8). Returns the expected refusals as a
+ * Registers attendees for workshops, unregisters them, and lists them (workshop-registration R1-R9). Returns the expected refusals as a
  * {@link RegistrationOutcome}; the rules themselves are in {@link WorkshopTalk}.
  */
 @Service
@@ -28,6 +28,19 @@ public class WorkshopRegistrationService {
                                 .<RegistrationOutcome>map(RegistrationOutcome.Registered::new)
                                 .orElseGet(RegistrationOutcome.AlreadyRegistered::new)))
                 .orElseGet(RegistrationOutcome.NotAWorkshop::new);
+    }
+
+    /**
+     * Unregisters the attendee and frees the seat (R9). Takes the same talk row lock as {@link #register}, so a freed
+     * seat goes to one registration only.
+     */
+    @Transactional
+    public UnregistrationOutcome unregister(long workshopId, long registrationId) {
+        boolean deleted = dao.lockTalk(workshopId)
+                .filter(WorkshopTalk::isWorkshop)
+                .map(workshop -> dao.delete(workshopId, registrationId))
+                .orElse(false);
+        return deleted ? new UnregistrationOutcome.Unregistered() : new UnregistrationOutcome.NoSuchRegistration();
     }
 
     /** The workshop's attendees in registration order, whatever its status (R4, R8), or empty when it is no workshop. */

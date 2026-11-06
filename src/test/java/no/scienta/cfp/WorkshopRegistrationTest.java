@@ -239,6 +239,90 @@ public class WorkshopRegistrationTest {
         assertEquals(listed, emailsListedFor(workshop));
     }
 
+    @DisplayName("R9: Frees the seat when an attendee unregisters")
+    @Description("""
+            Each row fills an accepted workshop with 20 attendees, then registers one more.
+            """)
+    @TableTest("""
+        Scenario                | Unregisters One First | Next Registration? | Listed?
+        An attendee unregisters | true                  | 201                | 20
+        Nobody unregisters      | false                 | 409                | 20
+        """)
+    void freesTheSeatWhenAnAttendeeUnregisters(boolean unregistersOneFirst, int nextRegistration, int listed)
+            throws Exception {
+        long workshop = talkWith("WORKSHOP", "ACCEPTED");
+        registerOneByOne(workshop, emails(20));
+        unregisterFirstIf(unregistersOneFirst, workshop);
+        assertEquals(nextRegistration, register(workshop, "Late Comer", "late@example.com").statusCode());
+        assertEquals(listed, emailsListedFor(workshop).size());
+    }
+
+    @DisplayName("R9: Unregisters a registration once, from its own workshop")
+    @Description("""
+            Each row has two workshops: workshop 1 in the given status, and workshop 2 accepted. Ada
+            registers for workshop 1 before it gets its status, and her registration gets ID 1. Talk
+            9 does not exist. The list is the list of workshop 1 after the request.
+            """)
+    @TableTest("""
+        Scenario               | Workshop 1 Status     | Unregistered Before | Workshop ID | Registration ID | Status? | Listed After?
+        Ada unregisters        | {ACCEPTED, WITHDRAWN} | false               | 1           | 1               | 204     | []
+        A second time          | ACCEPTED              | true                | 1           | 1               | 404     | []
+        Path of other workshop | ACCEPTED              | false               | 2           | 1               | 404     | [ada@example.com]
+        No such registration   | ACCEPTED              | false               | 1           | 2               | 404     | [ada@example.com]
+        No such workshop       | ACCEPTED              | false               | 9           | 1               | 404     | [ada@example.com]
+        """)
+    void unregistersARegistrationOnceFromItsOwnWorkshop(String workshopStatus, boolean unregisteredBefore,
+                                                        long workshopId, long registrationId, int status,
+                                                        List<String> listedAfter) throws Exception {
+        long first = talkWith("WORKSHOP", "ACCEPTED");
+        talkWith("WORKSHOP", "ACCEPTED");
+        registerOneByOne(first, List.of("ada@example.com"));
+        withdrawIf("WITHDRAWN".equals(workshopStatus), first);
+        unregisterIf(unregisteredBefore, first, 1);
+        assertEquals(status, unregister(workshopId, registrationId).statusCode());
+        assertEquals(listedAfter, emailsListedFor(first));
+    }
+
+    @DisplayName("R6, R9: Registers an email again after it unregistered")
+    @Description("""
+            Each row registers ada@example.com for an accepted workshop first, then registers the
+            same email again.
+            """)
+    @TableTest("""
+        Scenario             | Unregisters First | Status?
+        Ada unregistered     | true              | 201
+        Ada still registered | false             | 409
+        """)
+    void registersAnEmailAgainAfterItUnregistered(boolean unregistersFirst, int status) throws Exception {
+        long workshop = talkWith("WORKSHOP", "ACCEPTED");
+        registerOneByOne(workshop, List.of("ada@example.com"));
+        unregisterFirstIf(unregistersFirst, workshop);
+        assertEquals(status, register(workshop, "Ada Lovelace", "ada@example.com").statusCode());
+    }
+
+    @DisplayName("R9: Gives a freed seat to one attendee only")
+    @Description("""
+            Each row fills an accepted workshop with 20 attendees and unregisters one. Then all the
+            new registrations of the row are sent at the same time, each with a different email.
+            """)
+    @TableTest("""
+        Scenario         | Registering At Once | Registered? | Refused? | Listed?
+        Two for one seat | 2                   | 1           | 1        | 20
+        Ten for one seat | 10                  | 1           | 9        | 20
+        """)
+    void givesAFreedSeatToOneAttendeeOnly(int registeringAtOnce, long registered, long refused, int listed)
+            throws Exception {
+        long workshop = talkWith("WORKSHOP", "ACCEPTED");
+        registerOneByOne(workshop, emails(20));
+        unregisterFirstIf(true, workshop);
+        List<String> newcomers = IntStream.rangeClosed(1, registeringAtOnce)
+                .mapToObj(n -> "newcomer-" + n + "@example.com").collect(Collectors.toList());
+        Map<Integer, Long> statuses = statusCounts(atTheSameTime(workshop, newcomers));
+        assertEquals(registered, statuses.getOrDefault(201, 0L));
+        assertEquals(refused, statuses.getOrDefault(409, 0L));
+        assertEquals(listed, emailsListedFor(workshop).size());
+    }
+
     // ------------------------------------------------------------------------------------------- fixture
 
     /** Submits a talk in the format for a new speaker and brings it to the status through the acceptance API. */
@@ -285,6 +369,31 @@ public class WorkshopRegistrationTest {
     private void withdrawWorkshop(long workshop) throws Exception {
         long speaker = JSON.readTree(send("GET", "/talks/" + workshop, null).join().body()).get("speakerId").asLong();
         withdraw(new Talk(workshop, speaker));
+    }
+
+    private HttpResponse<String> unregister(long workshop, long registrationId) {
+        return send("DELETE", registrationsPath(workshop) + "/" + registrationId, null).join();
+    }
+
+    private void unregisterIf(boolean condition, long workshop, long registrationId) {
+        if (condition) {
+            expect(204, unregister(workshop, registrationId));
+        }
+    }
+
+    /** Unregisters the attendee who registered first for the workshop, when the condition holds. */
+    private void unregisterFirstIf(boolean condition, long workshop) throws Exception {
+        if (condition) {
+            long first = JSON.readTree(send("GET", registrationsPath(workshop), null).join().body()).get(0)
+                    .get("id").asLong();
+            expect(204, unregister(workshop, first));
+        }
+    }
+
+    private void withdrawIf(boolean condition, long workshop) throws Exception {
+        if (condition) {
+            withdrawWorkshop(workshop);
+        }
     }
 
     private void registerOneByOne(long workshop, List<String> emails) {

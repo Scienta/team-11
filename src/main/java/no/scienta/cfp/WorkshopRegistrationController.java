@@ -5,6 +5,7 @@ import java.util.Map;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -36,6 +37,14 @@ public class WorkshopRegistrationController {
     @GetMapping("/workshops/{id}/registrations")
     public List<Registration> attendees(@PathVariable long id) {
         return service.attendees(id).orElseThrow(WorkshopRegistrationController::notAWorkshop);
+    }
+
+    @DeleteMapping("/workshops/{id}/registrations/{registrationId}")
+    public ResponseEntity<Void> unregister(@PathVariable long id, @PathVariable long registrationId) {
+        if (service.unregister(id, registrationId) instanceof UnregistrationOutcome.Unregistered) {
+            return ResponseEntity.noContent().build();
+        }
+        throw new ResponseStatusException(HttpStatus.NOT_FOUND, "no such registration for this workshop");
     }
 
     private static ResponseEntity<Registration> created(RegistrationOutcome outcome) {
