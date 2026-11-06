@@ -1,6 +1,7 @@
 package no.scienta.cfp;
 
 import java.util.Map;
+import java.util.Optional;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -14,10 +15,12 @@ import org.springframework.web.server.ResponseStatusException;
 public class AcceptanceService {
 
     private final ConferenceService conference;
+    private final TalkDao talkDao;
     private final TalkStatusDao statusDao;
 
-    public AcceptanceService(ConferenceService conference, TalkStatusDao statusDao) {
+    public AcceptanceService(ConferenceService conference, TalkDao talkDao, TalkStatusDao statusDao) {
         this.conference = conference;
+        this.talkDao = talkDao;
         this.statusDao = statusDao;
     }
 
@@ -25,25 +28,31 @@ public class AcceptanceService {
         TalkStatus decision = TalkStatus.parseDecision(body.get("status"))
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST,
                         "status must be ACCEPTED, REJECTED or WAITLISTED"));
-        conference.getTalk(talkId);
-        return moveTo(talkId, decision);
+        return moveTo(findTalk(talkId), decision);
     }
 
     public TalkDto withdraw(long talkId, Map<String, Object> body) {
         long speakerId = speakerIdOf(body.get("speakerId"));
-        TalkDto talk = conference.getTalk(talkId);
+        TalkDto talk = findTalk(talkId);
         if (talk.speakerId != speakerId) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "only the main speaker can withdraw the talk");
         }
-        return moveTo(talkId, TalkStatus.WITHDRAWN);
+        return moveTo(talk, TalkStatus.WITHDRAWN);
     }
 
-    private TalkDto moveTo(long talkId, TalkStatus next) {
-        if (!statusDao.moveTo(talkId, next)) {
-            TalkStatus current = TalkStatus.valueOf(conference.getTalk(talkId).status);
+    /** Moves the talk and answers with the talk as the API shows it, ratings included. */
+    private TalkDto moveTo(TalkDto talk, TalkStatus next) {
+        if (!statusDao.moveTo(talk.id, next)) {
+            TalkStatus current = TalkStatus.valueOf(findTalk(talk.id).status);
             throw new ResponseStatusException(HttpStatus.CONFLICT, refusal(current, next));
         }
-        return conference.getTalk(talkId);
+        return conference.getTalk(talk.id);
+    }
+
+    /** The talk without its ratings. */
+    private TalkDto findTalk(long talkId) {
+        return Optional.ofNullable(talkDao.findById(talkId))
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "talk not found"));
     }
 
     private static String refusal(TalkStatus current, TalkStatus next) {
