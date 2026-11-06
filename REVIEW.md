@@ -171,6 +171,26 @@ container has a small share of a CPU, and in a burst the JIT compiler took CPU f
 Why we missed it: no test runs with the container's CPU limit. The warm-up fixed the cold start, but
 not a burst on a warm JVM with little CPU.
 
+**Tick 137 (13:44): `workshop-registration/check-2` was FAULTY on `POST /workshops/{id}/registrations`.**
+It was the first tick of the workshop checks after the claim at tick 136. The other three workshop
+checks and the 20 earlier checks were OK.
+
+- The check registered for a `SUBMITTED` workshop and got our 409. It went on.
+- Then it registered for an `ACCEPTED` `LIGHTNING_20` talk and got our 404 "no workshop with this id".
+  The check stopped there.
+- Our decision for R2 was 404 for a talk that is not a `WORKSHOP`: "the path names a workshop, so the
+  resource does not exist". The check overturned it. The fix gives 409 for a POST to a talk that
+  exists but is not a workshop, as for a workshop that is not accepted. An unknown ID stays 404, and a
+  GET for a talk that is not a workshop stays 404.
+- We found it with the harness timeline (`failure`: `POST /workshops/{id}/registrations`) and the
+  transcript of the faulty run. The harness does not show the status that it expects.
+
+Why we missed it: we read "only workshops" and "only accepted workshops" as two rules, and gave them
+two status codes. The request has one rule: "Only workshops … that the committee has accepted take
+registrations". Our review compared the code with our spec, and our spec already had the split, so
+the review could not find it. A decision that splits one sentence of the request into two status
+codes needs a second look against the request itself.
+
 ## 5. Reusable artifacts
 
 <!-- What's worth taking to client work: agents, skills, prompts, spec templates, gates. Give the paths. -->
