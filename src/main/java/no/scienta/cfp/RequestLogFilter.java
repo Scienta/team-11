@@ -35,8 +35,11 @@ public class RequestLogFilter extends OncePerRequestFilter {
     private static final String NOT_IN_AN_EMAIL = "[^\\s@\"'\\\\,;:<>()\\[\\]{}]";
     private static final Pattern EMAIL = Pattern.compile(
             "(" + NOT_IN_AN_EMAIL + ")" + NOT_IN_AN_EMAIL + "{0,63}@(" + NOT_IN_AN_EMAIL + "{1,255})");
-    /** A cancellation token in a JSON body (workshop-registration R10), with bounds so that each match is short. */
-    private static final Pattern TOKEN = Pattern.compile("(\"(?:cancellationToken|token)\"[ ]{0,8}:[ ]{0,8}\")[^\"]{0,256}\"");
+    /**
+     * A cancellation token in a JSON body (workshop-registration R10), with any whitespace around the colon and of any
+     * length. The possessive quantifiers never backtrack, so the work grows only with the length of the text.
+     */
+    private static final Pattern TOKEN = Pattern.compile("(\"(?:cancellationToken|token)\"\\s*+:\\s*+\")[^\"]*+\"");
     /** The longest email: 64 characters before the @, and 255 after it. */
     private static final int LONGEST_EMAIL_CHARS = 64 + 1 + 255;
 
