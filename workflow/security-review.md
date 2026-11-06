@@ -74,3 +74,4 @@ Kristian's team. Co-speakers is reviewed by Carl Kristian's team.
 | 2026-11-06 | `b700b6e` (programme export) | No blocker. RFC 4180 quoting round-trips titles and speaker names; `text/csv` for every Accept header; read-only; 7 ms. S16 (low) found. |
 | 2026-11-06 | `dc1a353` (GET hotfix, check-2) | No blocker (static review). `200 []` for a talk that is not a workshop, without reading registrations; 404 for an unknown talk; POST and DELETE unchanged. |
 | 2026-11-06 | PR #9 `3ca19dd` (with main `7bdf99a` merged) | OK to merge. `schema.sql`: token ALTER, then the R11 block last. Migration from a `7bdf99a` database: only the orphans deleted, keys validated, the token hash and programme kept, the old token still works. Script: only S2b OPEN. |
+| 2026-11-06 | origin/main `dfd57c9` (PR #9 merged) | Nothing reopened. Everything CLOSED except S2b (low), also S3b with `--big`. |
