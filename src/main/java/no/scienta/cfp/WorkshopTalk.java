@@ -6,7 +6,7 @@ import java.util.Optional;
  * A talk as a registration sees it: its format and status. Decides whether the talk takes one more registration
  * (workshop-registration R2, R3, R5, R6), as a pure function of what the database holds.
  */
-public record WorkshopTalk(String format, String status) {
+public record WorkshopTalk(String format, TalkStatus status) {
 
     /** Every workshop has room for this many attendees (R5). */
     public static final int SEATS = 20;
@@ -21,7 +21,7 @@ public record WorkshopTalk(String format, String status) {
         if (!isWorkshop()) {
             return Optional.of(new RegistrationOutcome.NotAWorkshop());
         }
-        if (!TalkStatus.ACCEPTED.name().equals(status)) {
+        if (status != TalkStatus.ACCEPTED) {
             return Optional.of(new RegistrationOutcome.Closed(status));
         }
         if (seatsTaken >= SEATS) {

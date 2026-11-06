@@ -15,7 +15,7 @@ import org.springframework.stereotype.Repository;
 public class WorkshopRegistrationDao {
 
     private static final RowMapper<WorkshopTalk> TALK =
-            (rs, row) -> new WorkshopTalk(rs.getString("format"), rs.getString("status"));
+            (rs, row) -> new WorkshopTalk(rs.getString("format"), TalkStatus.valueOf(rs.getString("status")));
     private static final RowMapper<Registration> REGISTRATION = (rs, row) -> new Registration(
             rs.getLong("id"), rs.getLong("talk_id"), rs.getString("name"), rs.getString("email"));
 

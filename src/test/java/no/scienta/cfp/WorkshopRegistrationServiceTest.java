@@ -20,7 +20,7 @@ class WorkshopRegistrationServiceTest {
     void refusesWhenTheSaveFindsTheEmailAlreadyOnTheList() {
         WorkshopRegistrationDao dao = mock(WorkshopRegistrationDao.class);
         RegistrationRequest ada = new RegistrationRequest("Ada Lovelace", "ada@example.com");
-        when(dao.lockTalk(1L)).thenReturn(Optional.of(new WorkshopTalk("WORKSHOP", "ACCEPTED")));
+        when(dao.lockTalk(1L)).thenReturn(Optional.of(new WorkshopTalk("WORKSHOP", TalkStatus.ACCEPTED)));
         when(dao.seatsTaken(1L)).thenReturn(0);
         when(dao.emailRegistered(1L, "ada@example.com")).thenReturn(false);
         when(dao.insert(1L, ada)).thenReturn(Optional.empty());

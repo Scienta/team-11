@@ -15,7 +15,7 @@ public sealed interface RegistrationOutcome {
     }
 
     /** The workshop is not accepted, so it takes no registrations (R3). */
-    record Closed(String status) implements RegistrationOutcome {
+    record Closed(TalkStatus status) implements RegistrationOutcome {
     }
 
     /** Every seat is taken (R5). */
