@@ -39,6 +39,6 @@ unrated talk has no average.
 | The JUnit tests pass in CI | [Run 42235128898](https://github.com/Scienta/team-11/actions/runs/42235128898) for `6227fcb`: job `tests` success | done |
 | The deploy workflow is green for the commit | The same run: job `deploy` success | done |
 | `GET /health` on the team URL shows that SHA as `version` | `6227fcbc8037…`, read after the claim | done |
-| No FAULTY check on the harness for this feature or the base features | At tick 195 the 4 ratings-cr checks had not run. `ratings-cr/check-4` was FAULTY at tick 197 on `PUT /talks/{id}/ratings/{reviewerId}`, with no answer recorded in the transcript, and OK again at tick 198. The cause is not known yet; a new deploy (`e18954e`) started at 14:44:26Z. | **watch**: one FAULTY tick |
+| No FAULTY check on the harness for this feature or the base features | At tick 195 the 4 ratings-cr checks had not run. `ratings-cr/check-4` was FAULTY one tick (197) under the harness's 2x load, on `PUT /talks/{id}/ratings/{reviewerId}`, and OK again at tick 198. Frode's finding: all 36 PUTs of the burst reached the app and got 200 in 13–388 ms, but 23 of them arrived about 5 s after the burst began. The wait is before the app (the platform proxy or a queue), not in our code, and not the deploy: `e18954e` switched at 14:46:18Z, after the tick. The same pattern at tick 194 (`talks/check-4`, `ratings/check-3`). | not a code defect |
 
 When the person has claimed, copy the evidence into the claim log in `REVIEW.md` section 3.
