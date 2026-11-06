@@ -17,12 +17,23 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <spring-boot.version>2.7.18</spring-boot.version>
         <testcontainers.version>1.21.4</testcontainers.version>
+        <junit.version>5.14.4</junit.version>
+        <tabletest.version>1.2.2</tabletest.version>
+        <tabletest-reporter.version>1.5.0</tabletest-reporter.version>
     </properties>
 
     <!-- We can't use spring-boot-starter-parent because of the old company parent pom,
          so the Boot BOM is imported instead. -->
     <dependencyManagement>
         <dependencies>
+            <!-- TableTest needs JUnit 5.11 or later; Boot 2.7 manages 5.8. The first import wins. -->
+            <dependency>
+                <groupId>org.junit</groupId>
+                <artifactId>junit-bom</artifactId>
+                <version>${junit.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
             <dependency>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-dependencies</artifactId>
@@ -71,6 +82,19 @@
             <groupId>org.testcontainers</groupId>
             <artifactId>postgresql</artifactId>
             <version>${testcontainers.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.tabletest</groupId>
+            <artifactId>tabletest-junit</artifactId>
+            <version>${tabletest.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <!-- Writes each @TableTest and its results for the report; registered in junit-platform.properties. -->
+        <dependency>
+            <groupId>org.tabletest</groupId>
+            <artifactId>tabletest-reporter-junit</artifactId>
+            <version>${tabletest-reporter.version}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
