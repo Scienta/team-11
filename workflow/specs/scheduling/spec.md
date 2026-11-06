@@ -63,7 +63,7 @@ No two slots overlap, so "at the same time" in R6 means "in the same slot".
 | DELETE of a talk that is no longer `ACCEPTED` | 204 | R7 keeps the entry, so the committee must be able to remove it. |
 | Concurrency (R8) | A PUT or DELETE is one transaction. It locks the slot for all three rooms with `SELECT … FOR UPDATE` on one fixed row for each slot, and reads the talk with `FOR SHARE`. Unique indexes on (room, slot) and on the talk back R5. | Advisory locks are not available on the platform. R6 compares the talks of all three rooms in the slot, so locking only one room and slot is not enough. The talk can be put in two different slots at the same time, and the unique index on the talk refuses the second one. |
 | Who can change the programme | Anyone, no authentication | Same as the other endpoints today (tech debt B11). |
-| An overview of the whole programme or of the empty places | Not built | The request does not ask for it. See the open question. |
+| An overview of the whole programme or of the empty places | Not built now | The request does not ask for it. The product owner wished for an overview of the gaps on 2026-11-06 at 13:09, but that wish is not part of this request. It is a later wish. Coordinator, 2026-11-06: do not ask the product owner. |
 
 ## Examples
 
@@ -176,6 +176,4 @@ Hurl sends one request at a time, so the R8 rows are in the JUnit test only.
 
 ## Open questions for the product owner
 
-- [ ] On 2026-11-06 at 13:09 you asked for a simple overview of the gaps in the programme. This
-  request lets the committee look up one room and slot at a time. Do you want the overview now, as a
-  list of all 15 rooms and slots that shows which are empty? We build nothing extra until you say yes.
+None.
