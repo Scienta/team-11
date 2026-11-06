@@ -65,7 +65,8 @@ public class TalkDao {
     }
 
     /**
-     * Inserts the talk only if the speaker has fewer than {@code max} talks. Returns the new id, or null.
+     * Inserts the talk only if the speaker has fewer than {@code max} talks that count. A withdrawn talk does not
+     * count (Acceptance R7). Returns the new id, or null.
      * The speaker row is locked first so two submissions for the same speaker can't both see room under the limit.
      */
     @Transactional
@@ -74,7 +75,7 @@ public class TalkDao {
         List<Long> ids = jdbc.queryForList(
                 "INSERT INTO talk (title, format, duration, level, status, speaker_id, submitted_at) "
                         + "SELECT ?, ?, ?, ?, 'SUBMITTED', ?, ? "
-                        + "WHERE (SELECT COUNT(*) FROM talk WHERE speaker_id = ?) < ? RETURNING id",
+                        + "WHERE (SELECT COUNT(*) FROM talk WHERE speaker_id = ? AND status <> 'WITHDRAWN') < ? RETURNING id",
                 Long.class, title, format, duration, level, speakerId, submittedAt, speakerId, max);
         return ids.isEmpty() ? null : ids.get(0);
     }

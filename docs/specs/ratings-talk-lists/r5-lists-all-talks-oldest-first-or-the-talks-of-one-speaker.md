@@ -4,9 +4,9 @@ Speaker 1 submits talk A, speaker 2 submits talk B, then speaker 1 submits talk 
 A blank speaker sends GET /talks without a speakerId.
 
 
-| Scenario | Speaker | Talks? |
-| --- | --- | --- |
-| All speakers |  | [A, B, C] |
-| One speaker | 1 | [A, C] |
-| Another speaker | 2 | [B] |
-| Speaker that is unknown | 3 | [] |
+| Result | Scenario | Speaker | Talks? |
+| --- | --- | --- | --- |
+| ✅ passes | All speakers |  | [A, B, C] |
+| ✅ passes | One speaker | 1 | [A, C] |
+| ✅ passes | Another speaker | 2 | [B] |
+| ✅ passes | Speaker that is unknown | 3 | [] |

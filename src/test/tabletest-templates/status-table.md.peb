@@ -1,0 +1,28 @@
+{% extends "table.md.peb" %}
+{% import "macros.md.peb" %}
+{# Adds a Status column, so the product owners see which rows pass. A row fails when a cell has
+   the 'failed' role: the same check as the built-in HTML report. Without test results, the
+   table stays as built in. #}
+{% block table %}
+{% if rowResults is empty %}
+|{% for header in headers %} {{ renderCell(header) }} |{% endfor %}
+
+|{{ ' --- |' | replicate(headers.size) | join }}
+
+{% for row in rows %}
+|{% for cell in row %} {{ renderCell(cell) }} |{% endfor %}
+
+{% endfor %}
+{% else %}
+| Result |{% for header in headers %} {{ renderCell(header) }} |{% endfor %}
+
+| --- |{{ ' --- |' | replicate(headers.size) | join }}
+
+{% for row in rows %}
+{% set rowFailed = false %}
+{% for cell in row %}{% if cell.roles is not empty and cell.roles contains 'failed' %}{% set rowFailed = true %}{% endif %}{% endfor %}
+| {{ rowFailed ? '❌ fails' : '✅ passes' }} |{% for cell in row %} {{ renderCell(cell) }} |{% endfor %}
+
+{% endfor %}
+{% endif %}
+{% endblock %}

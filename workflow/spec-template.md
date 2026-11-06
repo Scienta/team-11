@@ -29,7 +29,7 @@ The feature request does not give these. We decide them and write down why.
 
 ## Examples
 
-One table for each rule. Each row becomes a Hurl request in `examples/<feature-slug>.hurl` and a row
+One table for each rule. Each row becomes a Hurl request in `examples/our-<feature-slug>.hurl` and a row
 in a JUnit test.
 
 ### R1

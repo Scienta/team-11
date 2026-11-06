@@ -4,18 +4,18 @@ A real address has one @, a local part, and a domain of at least two labels spli
 with no spaces. A blank cell sends JSON null as the email.
 
 
-| Scenario | Email | Status? |
-| --- | --- | --- |
-| Simple address | ada@example.com | 201 |
-| Plus sign and subdomains | ada.lovelace+cfp@mail.example.co.uk | 201 |
-| No @ | not-an-email | 400 |
-| Domain with one label | ada@example | 400 |
-| No local part | @example.com | 400 |
-| Domain starts with a dot | ada@.com | 400 |
-| Domain ends with a dot | ada@example. | 400 |
-| Two dots in a row in the domain | ada@example..com | 400 |
-| Two @ | ada@@example.com | 400 |
-| Space in the local part | ada lovelace@example.com | 400 |
-| Empty | "" | 400 |
-| Only spaces | &#x2423;&#x2423;&#x2423; | 400 |
-| No email |  | 400 |
+| Result | Scenario | Email | Status? |
+| --- | --- | --- | --- |
+| ✅ passes | Simple address | ada@example.com | 201 |
+| ✅ passes | Plus sign and subdomains | ada.lovelace+cfp@mail.example.co.uk | 201 |
+| ✅ passes | No @ | not-an-email | 400 |
+| ✅ passes | Domain with one label | ada@example | 400 |
+| ✅ passes | No local part | @example.com | 400 |
+| ✅ passes | Domain starts with a dot | ada@.com | 400 |
+| ✅ passes | Domain ends with a dot | ada@example. | 400 |
+| ✅ passes | Two dots in a row in the domain | ada@example..com | 400 |
+| ✅ passes | Two @ | ada@@example.com | 400 |
+| ✅ passes | Space in the local part | ada lovelace@example.com | 400 |
+| ✅ passes | Empty | "" | 400 |
+| ✅ passes | Only spaces | &#x2423;&#x2423;&#x2423; | 400 |
+| ✅ passes | No email |  | 400 |

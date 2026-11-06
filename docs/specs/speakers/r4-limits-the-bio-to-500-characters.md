@@ -4,10 +4,10 @@ A character is one Unicode code point, so the emoji 😀 counts once, although J
 count it as two UTF-16 units. A bio is optional.
 
 
-| Scenario | Bio | Status? |
-| --- | --- | --- |
-| No bio |  | 201 |
-| At the limit | 500 × x | 201 |
-| One past the limit | 501 × x | 400 |
-| Emoji at the limit | 500 × 😀 | 201 |
-| Emoji one past the limit | 501 × 😀 | 400 |
+| Result | Scenario | Bio | Status? |
+| --- | --- | --- | --- |
+| ✅ passes | No bio |  | 201 |
+| ✅ passes | At the limit | 500 × x | 201 |
+| ✅ passes | One past the limit | 501 × x | 400 |
+| ✅ passes | Emoji at the limit | 500 × 😀 | 201 |
+| ✅ passes | Emoji one past the limit | 501 × 😀 | 400 |
