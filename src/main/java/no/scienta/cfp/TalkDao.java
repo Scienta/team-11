@@ -11,7 +11,9 @@ import org.springframework.transaction.annotation.Transactional;
 @Repository
 public class TalkDao {
 
-    private static final String COLUMNS = "id, title, format, duration, level, status, speaker_id, submitted_at";
+    private static final String COLUMNS = "id, title, format, duration, level, status, speaker_id, submitted_at, "
+            + "ARRAY(SELECT c.speaker_id::bigint FROM talk_co_speaker c WHERE c.talk_id = talk.id ORDER BY c.added_order)"
+            + " AS co_speaker_ids";
 
     private final JdbcTemplate jdbc;
 
@@ -27,6 +29,7 @@ public class TalkDao {
         long millis = rs.getLong("submitted_at");
         t.submittedAt = new Date(millis);
         t.submittedOn = Utils.toSqlDate(millis);
+        t.coSpeakerIds = List.of((Long[]) rs.getArray("co_speaker_ids").getArray());
         return t;
     };
 
@@ -37,6 +40,15 @@ public class TalkDao {
     public TalkDto findById(long id) {
         List<TalkDto> list = jdbc.query("SELECT " + COLUMNS + " FROM talk WHERE id = ?", mapper, id);
         return list.isEmpty() ? null : list.get(0);
+    }
+
+    /**
+     * Locks the talk row until the transaction ends, so changes to one talk happen one at a time. The talk is read in a
+     * second statement: one that waited for the lock still sees the co-speakers from before the wait.
+     */
+    public TalkDto findByIdForUpdate(long id) {
+        jdbc.queryForList("SELECT id FROM talk WHERE id = ? FOR UPDATE", id);
+        return findById(id);
     }
 
     public List<TalkDto> findBySpeaker(long speakerId) {

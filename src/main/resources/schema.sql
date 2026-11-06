@@ -52,3 +52,12 @@ CREATE INDEX IF NOT EXISTS ix_talk_speaker ON talk (speaker_id);
 -- 2026-11 a reviewer is any positive whole number (Ratings R1), not only up to 2147483647.
 -- Only the first run rewrites the table; when the column is already BIGINT, Postgres does nothing.
 ALTER TABLE rating ALTER COLUMN reviewer_id TYPE BIGINT;
+
+-- 2026-11 co-speakers: other registered speakers on a talk, in the order they were added. No foreign keys:
+-- orphan rows from before would make start-up fail.
+CREATE TABLE IF NOT EXISTS talk_co_speaker (
+    talk_id     INTEGER NOT NULL,
+    speaker_id  INTEGER NOT NULL,
+    added_order BIGSERIAL,
+    PRIMARY KEY (talk_id, speaker_id)
+);
