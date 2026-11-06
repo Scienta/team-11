@@ -33,9 +33,10 @@ public class RatingDao {
         if (talkIds.isEmpty()) {
             return Map.of();
         }
-        return jdbc.query("SELECT talk_id, COUNT(*) AS cnt, SUM(score) AS total FROM rating "
-                                + "WHERE talk_id = ANY(?) GROUP BY talk_id",
-                        (rs, row) -> Map.entry(rs.getLong("talk_id"), new RatingTotals(rs.getInt("cnt"), rs.getLong("total"))),
+        return jdbc.query("SELECT talk_id, COUNT(*) AS cnt, SUM(score) AS total, MIN(score) AS lowest, "
+                                + "MAX(score) AS highest FROM rating WHERE talk_id = ANY(?) GROUP BY talk_id",
+                        (rs, row) -> Map.entry(rs.getLong("talk_id"), new RatingTotals(rs.getInt("cnt"),
+                                rs.getLong("total"), rs.getInt("lowest"), rs.getInt("highest"))),
                         (Object) talkIds.toArray(Long[]::new))
                 .stream()
                 .collect(Collectors.toUnmodifiableMap(Map.Entry::getKey, Map.Entry::getValue));
