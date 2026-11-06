@@ -32,7 +32,7 @@ Recorded here until `workflow/specs/<feature>/spec.md` exists. Move them there u
 | # | Question | Answer (Stein, #team-11) |
 |---|---|---|
 | 4 | acceptance: do withdrawn or rejected talks count towards the limit of 3? | 13:07: a withdrawn talk does **not** count; a rejected talk **does** count. So a speaker who withdraws a talk can submit a new one. |
-| 5 | acceptance: rating withdrawn, rejected or accepted talks; are withdrawn talks still listed in `?sort=rating`? | Open. |
+| 5 | acceptance: rating withdrawn, rejected or accepted talks; are withdrawn talks still listed in `?sort=rating`? | 13:08: reviewers **cannot** rate a talk that is withdrawn, rejected or accepted, only `SUBMITTED` and `WAITLISTED` talks. Still open: whether withdrawn talks stay in `GET /talks` and `?sort=rating`. |
 | 6 | acceptance: may an accepted talk be withdrawn? | Open. |
 | 7 | co-speakers + acceptance: can a co-speaker withdraw a talk? | Open. |
 | 8 | co-speakers + acceptance: co-speakers on withdrawn, rejected or accepted talks | Open. |
