@@ -205,6 +205,15 @@ public class SpeakersTest {
         assertTrue(found.body().contains("\"name\":\"Ada " + name + "\""), found.body());
     }
 
+    @Test
+    void searchTreatsTheTermAsTextNotSql() throws Exception {
+        assertEquals(201, send("POST", "/speakers", speaker("Conan O'Brien", "conan@example.com", null)).statusCode());
+
+        HttpResponse<String> found = send("GET", "/speakers/search?q=O%27Brien", null);
+        assertEquals(200, found.statusCode(), found.body());
+        assertTrue(found.body().contains("\"name\":\"Conan O'Brien\""), found.body());
+    }
+
     /** A bio written in a table as a count and a character, for example {@code 500 × 😀}. */
     record Bio(String text) {
     }
