@@ -2,6 +2,7 @@ package no.scienta.cfp;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -24,6 +25,12 @@ public class TalkService {
     private static final List<TalkFormat> FORMATS_IN_ERROR_MESSAGE = List.of(
             TalkFormat.WORKSHOP, TalkFormat.PRESENTATION, TalkFormat.LIGHTNING_20, TalkFormat.LIGHTNING_10);
 
+    /** Ratings R6: the best shown average first, then the most ratings, then the oldest. */
+    private static final Comparator<TalkResponse> RANKING = Comparator
+            .comparing(TalkResponse::averageRating, Comparator.reverseOrder())
+            .thenComparing(TalkResponse::ratingCount, Comparator.reverseOrder())
+            .thenComparing(TalkResponse::id);
+
     private final SpeakerDao speakerDao;
     private final TalkDao talkDao;
     private final RatingService ratings;
@@ -38,7 +45,7 @@ public class TalkService {
     }
 
     @Transactional
-    public TalkDto submitTalk(TalkForm form) {
+    public TalkResponse submitTalk(TalkForm form) {
         if (form.title == null || form.title.trim().isEmpty()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "title is required");
         }
@@ -72,78 +79,56 @@ public class TalkService {
                 System.currentTimeMillis());
     }
 
-    public TalkDto getTalk(long id) {
-        TalkDto talk = talkDao.findById(id);
-        if (talk == null) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "talk not found");
-        }
-        ratings.addRatings(talk);
-        return talk;
+    public TalkResponse getTalk(long id) {
+        return talkDao.findById(id).map(this::withRatings)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "talk not found"));
     }
 
-    public List<TalkDto> getTalksForSpeaker(long speakerId) {
+    private TalkResponse withRatings(Talk talk) {
+        return TalkResponse.of(talk, ratings.summaryOf(talk.id()));
+    }
+
+    public List<TalkResponse> getTalksForSpeaker(long speakerId) {
         if (speakerDao.findById(speakerId).isEmpty()) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "speaker not found");
         }
-        List<TalkDto> talks = talkDao.findBySpeaker(speakerId);
-        for (TalkDto t : talks) {
-            ratings.addRatings(t);
-        }
-        return talks;
+        return talkDao.findBySpeaker(speakerId).stream().map(this::withRatings).toList();
     }
 
     /** The talk list without the withdrawn talks when {@code includeWithdrawn} is false (Acceptance R9). */
-    public List<TalkDto> listTalks(String sort, Long speakerId, boolean includeWithdrawn) {
+    public List<TalkResponse> listTalks(String sort, Long speakerId, boolean includeWithdrawn) {
         return listTalks(sort, speakerId).stream()
                 .filter(talk -> includeWithdrawn || !isWithdrawn(talk))
                 .collect(Collectors.toList());
     }
 
     /** The talks in the order of Ratings R5 or R6, with the withdrawn talks after the others (Acceptance R9). */
-    public List<TalkDto> listTalks(String sort, Long speakerId) {
-        Map<Boolean, List<TalkDto>> byWithdrawn = orderedTalks(sort, speakerId).stream()
+    public List<TalkResponse> listTalks(String sort, Long speakerId) {
+        Map<Boolean, List<TalkResponse>> byWithdrawn = orderedTalks(sort, speakerId).stream()
                 .collect(Collectors.partitioningBy(TalkService::isWithdrawn));
-        List<TalkDto> talks = new ArrayList<>(byWithdrawn.get(false));
+        List<TalkResponse> talks = new ArrayList<>(byWithdrawn.get(false));
         talks.addAll(byWithdrawn.get(true));
         return talks;
     }
 
-    private static boolean isWithdrawn(TalkDto talk) {
-        return TalkStatus.WITHDRAWN.name().equals(talk.status);
+    private static boolean isWithdrawn(TalkResponse talk) {
+        return TalkStatus.WITHDRAWN.name().equals(talk.status());
     }
 
-    private List<TalkDto> orderedTalks(String sort, Long speakerId) {
+    private List<TalkResponse> orderedTalks(String sort, Long speakerId) {
         if (sort != null && !sort.equals("rating")) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "sort must be 'rating'");
         }
-        List<TalkDto> talks = speakerId == null ? talkDao.findAll() : talkDao.findBySpeaker(speakerId);
-        for (TalkDto t : talks) {
-            ratings.addRatings(t);
+        List<TalkResponse> talks = (speakerId == null ? talkDao.findAll() : talkDao.findBySpeaker(speakerId)).stream()
+                .map(this::withRatings)
+                .toList();
+        if (!"rating".equals(sort)) {
+            return talks;
         }
-        if ("rating".equals(sort)) {
-            List<TalkDto> rated = new ArrayList<>();
-            List<TalkDto> unrated = new ArrayList<>();
-            for (TalkDto t : talks) {
-                if (t.ratingCount > 0) {
-                    rated.add(t);
-                } else {
-                    unrated.add(t);
-                }
-            }
-            rated.sort((a, b) -> {
-                int c = Double.compare(b.averageRating, a.averageRating);
-                if (c != 0) {
-                    return c;
-                }
-                c = Integer.compare(b.ratingCount, a.ratingCount);
-                if (c != 0) {
-                    return c;
-                }
-                return Long.compare(a.id, b.id);
-            });
-            rated.addAll(unrated);
-            return rated;
-        }
-        return talks;
+        Map<Boolean, List<TalkResponse>> byRated = talks.stream()
+                .collect(Collectors.partitioningBy(talk -> talk.ratingCount() > 0));
+        List<TalkResponse> ranked = new ArrayList<>(byRated.get(true).stream().sorted(RANKING).toList());
+        ranked.addAll(byRated.get(false));
+        return ranked;
     }
 }

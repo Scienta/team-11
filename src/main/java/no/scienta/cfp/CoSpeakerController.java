@@ -17,12 +17,12 @@ public class CoSpeakerController {
     }
 
     @PutMapping
-    public TalkDto add(@PathVariable Long id, @PathVariable Long speakerId) {
+    public TalkResponse add(@PathVariable Long id, @PathVariable Long speakerId) {
         return service.add(id, speakerId);
     }
 
     @DeleteMapping
-    public TalkDto remove(@PathVariable Long id, @PathVariable Long speakerId) {
+    public TalkResponse remove(@PathVariable Long id, @PathVariable Long speakerId) {
         return service.remove(id, speakerId);
     }
 }

@@ -32,15 +32,15 @@ public class CoSpeakerService {
     }
 
     @Transactional
-    public TalkDto add(long talkId, long speakerId) {
-        TalkDto talk = lockedTalk(talkId);
+    public TalkResponse add(long talkId, long speakerId) {
+        Talk talk = lockedTalk(talkId);
         requireRegistered(speakerId);
         requireChangeable(talk);
-        if (talk.speakerId == speakerId) {
+        if (talk.speakerId() == speakerId) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "the main speaker can't be a co-speaker");
         }
-        if (!talk.coSpeakerIds.contains(speakerId)) {
-            if (talk.coSpeakerIds.size() >= MAX_CO_SPEAKERS) {
+        if (!talk.coSpeakerIds().contains(speakerId)) {
+            if (talk.coSpeakerIds().size() >= MAX_CO_SPEAKERS) {
                 throw new ResponseStatusException(HttpStatus.CONFLICT,
                         "a talk has at most " + MAX_CO_SPEAKERS + " co-speakers");
             }
@@ -50,11 +50,11 @@ public class CoSpeakerService {
     }
 
     @Transactional
-    public TalkDto remove(long talkId, long speakerId) {
-        TalkDto talk = lockedTalk(talkId);
+    public TalkResponse remove(long talkId, long speakerId) {
+        Talk talk = lockedTalk(talkId);
         requireRegistered(speakerId);
         requireChangeable(talk);
-        if (talk.speakerId == speakerId) {
+        if (talk.speakerId() == speakerId) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "the main speaker can't be removed");
         }
         coSpeakerDao.remove(talkId, speakerId);
@@ -62,12 +62,9 @@ public class CoSpeakerService {
     }
 
     /** The talk, locked until the transaction ends. */
-    private TalkDto lockedTalk(long talkId) {
-        TalkDto talk = talkDao.findByIdForUpdate(talkId);
-        if (talk == null) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "talk not found");
-        }
-        return talk;
+    private Talk lockedTalk(long talkId) {
+        return talkDao.findByIdForUpdate(talkId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "talk not found"));
     }
 
     private void requireRegistered(long speakerId) {
@@ -76,8 +73,8 @@ public class CoSpeakerService {
         }
     }
 
-    private static void requireChangeable(TalkDto talk) {
-        if (UNCHANGEABLE_STATUSES.contains(TalkStatus.valueOf(talk.status))) {
+    private static void requireChangeable(Talk talk) {
+        if (UNCHANGEABLE_STATUSES.contains(TalkStatus.valueOf(talk.status()))) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "a withdrawn or rejected talk can't be changed");
         }
     }

@@ -21,7 +21,7 @@ public class AcceptanceService {
         this.statusDao = statusDao;
     }
 
-    public TalkDto decide(long talkId, Map<String, Object> body) {
+    public TalkResponse decide(long talkId, Map<String, Object> body) {
         TalkStatus decision = TalkStatus.parseDecision(body.get("status"))
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST,
                         "status must be ACCEPTED, REJECTED or WAITLISTED"));
@@ -29,18 +29,18 @@ public class AcceptanceService {
         return moveTo(talkId, decision);
     }
 
-    public TalkDto withdraw(long talkId, Map<String, Object> body) {
+    public TalkResponse withdraw(long talkId, Map<String, Object> body) {
         long speakerId = speakerIdOf(body.get("speakerId"));
-        TalkDto talk = conference.getTalk(talkId);
-        if (talk.speakerId != speakerId) {
+        TalkResponse talk = conference.getTalk(talkId);
+        if (talk.speakerId() != speakerId) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "only the main speaker can withdraw the talk");
         }
         return moveTo(talkId, TalkStatus.WITHDRAWN);
     }
 
-    private TalkDto moveTo(long talkId, TalkStatus next) {
+    private TalkResponse moveTo(long talkId, TalkStatus next) {
         if (!statusDao.moveTo(talkId, next)) {
-            TalkStatus current = TalkStatus.valueOf(conference.getTalk(talkId).status);
+            TalkStatus current = TalkStatus.valueOf(conference.getTalk(talkId).status());
             throw new ResponseStatusException(HttpStatus.CONFLICT, refusal(current, next));
         }
         return conference.getTalk(talkId);

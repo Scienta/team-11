@@ -27,17 +27,17 @@ public class TalkController {
 
     @PostMapping("/talks")
     @ResponseStatus(HttpStatus.CREATED)
-    public TalkDto submit(@RequestBody TalkForm form) {
+    public TalkResponse submit(@RequestBody TalkForm form) {
         return service.submitTalk(form);
     }
 
     @GetMapping("/talks/{id}")
-    public TalkDto get(@PathVariable Long id) {
+    public TalkResponse get(@PathVariable Long id) {
         return service.getTalk(id);
     }
 
     @GetMapping("/talks")
-    public List<TalkDto> list(@RequestParam(required = false) String sort,
+    public List<TalkResponse> list(@RequestParam(required = false) String sort,
                               @RequestParam(required = false) Long speakerId,
                               @RequestParam(defaultValue = "true") String includeWithdrawn) {
         return service.listTalks(sort, speakerId, parseIncludeWithdrawn(includeWithdrawn));

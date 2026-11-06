@@ -2,6 +2,7 @@ package no.scienta.cfp;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
@@ -17,45 +18,35 @@ public class TalkDao {
 
     private final JdbcTemplate jdbc;
 
-    private final RowMapper<TalkDto> mapper = (rs, rowNum) -> {
-        TalkDto t = new TalkDto();
-        t.id = rs.getLong("id");
-        t.title = rs.getString("title");
-        t.format = rs.getString("format");
-        t.durationMinutes = rs.getInt("duration");
-        t.level = rs.getString("level");
-        t.status = rs.getString("status");
-        t.speakerId = rs.getLong("speaker_id");
+    private final RowMapper<Talk> mapper = (rs, rowNum) -> {
         long millis = rs.getLong("submitted_at");
-        t.submittedAt = new Date(millis);
-        t.submittedOn = Utils.toSqlDate(millis);
-        t.coSpeakerIds = List.of((Long[]) rs.getArray("co_speaker_ids").getArray());
-        return t;
+        return new Talk(rs.getLong("id"), rs.getString("title"), rs.getString("format"), rs.getString("level"),
+                rs.getLong("speaker_id"), rs.getInt("duration"), rs.getString("status"), new Date(millis),
+                Utils.toSqlDate(millis), List.of((Long[]) rs.getArray("co_speaker_ids").getArray()));
     };
 
     public TalkDao(JdbcTemplate jdbc) {
         this.jdbc = jdbc;
     }
 
-    public TalkDto findById(long id) {
-        List<TalkDto> list = jdbc.query("SELECT " + COLUMNS + " FROM talk WHERE id = ?", mapper, id);
-        return list.isEmpty() ? null : list.get(0);
+    public Optional<Talk> findById(long id) {
+        return jdbc.query("SELECT " + COLUMNS + " FROM talk WHERE id = ?", mapper, id).stream().findFirst();
     }
 
     /**
      * Locks the talk row until the transaction ends, so changes to one talk happen one at a time. The talk is read in a
      * second statement: one that waited for the lock still sees the co-speakers from before the wait.
      */
-    public TalkDto findByIdForUpdate(long id) {
+    public Optional<Talk> findByIdForUpdate(long id) {
         jdbc.queryForList("SELECT id FROM talk WHERE id = ? FOR UPDATE", id);
         return findById(id);
     }
 
-    public List<TalkDto> findBySpeaker(long speakerId) {
+    public List<Talk> findBySpeaker(long speakerId) {
         return jdbc.query("SELECT " + COLUMNS + " FROM talk WHERE speaker_id = ? ORDER BY id", mapper, speakerId);
     }
 
-    public List<TalkDto> findAll() {
+    public List<Talk> findAll() {
         return jdbc.query("SELECT " + COLUMNS + " FROM talk ORDER BY id", mapper);
     }
 

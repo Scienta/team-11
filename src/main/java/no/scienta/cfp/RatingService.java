@@ -1,7 +1,5 @@
 package no.scienta.cfp;
 
-import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -53,16 +51,8 @@ public class RatingService {
         return result;
     }
 
-    public void addRatings(TalkDto talk) {
-        Map<String, Object> stats = ratingDao.stats(talk.id);
-        int count = ((Number) stats.get("cnt")).intValue();
-        long total = ((Number) stats.get("total")).longValue();
-        talk.ratingCount = count;
-        talk.averageRating = count == 0 ? null : calculateAverage(total, count);
-    }
-
-    // 1 decimal, half up (4.25 -> 4.3)
-    private Double calculateAverage(long total, int count) {
-        return BigDecimal.valueOf(total).divide(BigDecimal.valueOf(count), 1, RoundingMode.HALF_UP).doubleValue();
+    public RatingSummary summaryOf(long talkId) {
+        Map<String, Object> stats = ratingDao.stats(talkId);
+        return RatingSummary.of(((Number) stats.get("cnt")).intValue(), ((Number) stats.get("total")).longValue());
     }
 }

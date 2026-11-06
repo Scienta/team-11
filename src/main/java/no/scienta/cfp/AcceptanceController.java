@@ -21,12 +21,12 @@ public class AcceptanceController {
     }
 
     @PutMapping("/talks/{id}/status")
-    public TalkDto decide(@PathVariable Long id, @RequestBody Map<String, Object> body) {
+    public TalkResponse decide(@PathVariable Long id, @RequestBody Map<String, Object> body) {
         return service.decide(id, body);
     }
 
     @PostMapping("/talks/{id}/withdraw")
-    public TalkDto withdraw(@PathVariable Long id, @RequestBody Map<String, Object> body) {
+    public TalkResponse withdraw(@PathVariable Long id, @RequestBody Map<String, Object> body) {
         return service.withdraw(id, body);
     }
 }

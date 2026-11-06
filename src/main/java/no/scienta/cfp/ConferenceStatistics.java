@@ -22,7 +22,7 @@ public class ConferenceStatistics {
     }
 
     public Map<String, Object> statistics() {
-        List<TalkDto> talks = talkService.listTalks(null, null);
+        List<TalkResponse> talks = talkService.listTalks(null, null);
         Map<String, Integer> byFormat = new LinkedHashMap<>();
         Map<String, Integer> byLevel = new LinkedHashMap<>();
         Map<String, Integer> byStatus = new LinkedHashMap<>();
@@ -30,16 +30,16 @@ public class ConferenceStatistics {
         int minutes = 0;
         double ratingSum = 0;
         int rated = 0;
-        for (TalkDto t : talks) {
-            byFormat.put(t.format, byFormat.getOrDefault(t.format, 0) + 1);
-            byLevel.put(t.level, byLevel.getOrDefault(t.level, 0) + 1);
-            byStatus.put(t.status, byStatus.getOrDefault(t.status, 0) + 1);
-            if (!speakersWithTalks.contains(t.speakerId) && speakerDao.findById(t.speakerId).isPresent()) {
-                speakersWithTalks.add(t.speakerId);
+        for (TalkResponse t : talks) {
+            byFormat.put(t.format(), byFormat.getOrDefault(t.format(), 0) + 1);
+            byLevel.put(t.level(), byLevel.getOrDefault(t.level(), 0) + 1);
+            byStatus.put(t.status(), byStatus.getOrDefault(t.status(), 0) + 1);
+            if (!speakersWithTalks.contains(t.speakerId()) && speakerDao.findById(t.speakerId()).isPresent()) {
+                speakersWithTalks.add(t.speakerId());
             }
-            minutes += t.durationMinutes;
-            if (t.averageRating != null) {
-                ratingSum += t.averageRating;
+            minutes += t.durationMinutes();
+            if (t.averageRating() != null) {
+                ratingSum += t.averageRating();
                 rated++;
             }
         }
