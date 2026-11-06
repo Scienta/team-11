@@ -2,6 +2,13 @@
 
 The steps from feature request to claim are in `workflow/process.md`. Follow them in order.
 
+## Questions and approvals
+
+- Send every question, status, blocker and request for approval (push, PO question, scope) to The
+  Hand, the coordinator session, with SendMessage. The person follows only The Hand's session.
+- Never ask the person in your own session, and never use the AskUserQuestion form. The Hand asks
+  the person in plain chat and sends you the answer.
+
 ## Specs
 
 - Save each feature request unchanged as `workflow/specs/<feature>/request.md`. Write our spec
