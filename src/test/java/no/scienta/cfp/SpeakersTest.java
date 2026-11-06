@@ -3,9 +3,6 @@ package no.scienta.cfp;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.ArrayList;
 import java.util.List;
@@ -43,13 +40,14 @@ public class SpeakersTest {
         TestDatabase.fresh(registry);
     }
 
-    @Value("${local.server.port}")
-    int port;
-
     @Autowired
     JdbcTemplate jdbc;
 
-    private final HttpClient http = HttpClient.newHttpClient();
+    private final ApiClient api;
+
+    SpeakersTest(@Value("${local.server.port}") int port) {
+        api = new ApiClient(port);
+    }
 
     @BeforeEach
     void startWithNoSpeakers() {
@@ -68,7 +66,7 @@ public class SpeakersTest {
         No name     |              | 400
         """)
     void registersASpeakerOnlyWithAName(String name, int status) throws Exception {
-        assertEquals(status, send("POST", "/speakers", speaker(name, "grace@example.com", null)).statusCode());
+        assertEquals(status, api.send("POST", "/speakers", speaker(name, "grace@example.com", null)).statusCode());
     }
 
     @DisplayName("R3: Registers a speaker only with a real email address")
@@ -108,7 +106,7 @@ public class SpeakersTest {
         """)
     void findsARegisteredSpeakerById(String speakerId, int status) throws Exception {
         assertEquals(201, register("grace@example.com", null).statusCode());
-        assertEquals(status, send("GET", "/speakers/" + speakerId, null).statusCode());
+        assertEquals(status, api.get("/speakers/" + speakerId).statusCode());
     }
 
     @DisplayName("R7: Treats a trailing slash like the path without it")
@@ -123,7 +121,7 @@ public class SpeakersTest {
         """)
     void treatsATrailingSlashLikeThePathWithoutIt(String method, String path, int status) throws Exception {
         assertEquals(201, register("grace@example.com", null).statusCode());
-        assertEquals(status, send(method, path, speaker("ada@example.com", null)).statusCode());
+        assertEquals(status, api.send(method, path, speaker("ada@example.com", null)).statusCode());
     }
 
     @DisplayName("R4: Limits the bio to 500 characters")
@@ -156,7 +154,7 @@ public class SpeakersTest {
         """)
     void limitsTheBioTo500CharactersOnUpdate(Bio bio, int status) throws Exception {
         String id = JSON.readTree(register("grace@example.com", null).body()).get("id").asText();
-        HttpResponse<String> res = send("PUT", "/speakers/" + id, speaker("grace@example.com", bio));
+        HttpResponse<String> res = api.send("PUT", "/speakers/" + id, speaker("grace@example.com", bio));
         assertEquals(status, res.statusCode(), res.body().substring(0, Math.min(200, res.body().length())));
     }
 
@@ -180,8 +178,7 @@ public class SpeakersTest {
         List<CompletableFuture<HttpResponse<String>>> sent = new ArrayList<>();
         for (int i = 0; i < 20; i++) {
             String variant = i % 2 == 0 ? email : email.toUpperCase();
-            sent.add(http.sendAsync(request("POST", "/speakers", speaker(variant, null)),
-                    HttpResponse.BodyHandlers.ofString()));
+            sent.add(api.sendAsync("POST", "/speakers", speaker(variant, null)));
         }
         int created = 0;
         for (CompletableFuture<HttpResponse<String>> f : sent) {
@@ -197,19 +194,19 @@ public class SpeakersTest {
     @Test
     void searchMatchesNamesRegardlessOfCase() throws Exception {
         String name = "Lovelace" + UUID.randomUUID().toString().substring(0, 8);
-        assertEquals(201, send("POST", "/speakers",
+        assertEquals(201, api.send("POST", "/speakers",
                 "{\"name\":\"Ada " + name + "\",\"email\":\"ada-" + UUID.randomUUID() + "@example.com\"}").statusCode());
 
-        HttpResponse<String> found = send("GET", "/speakers/search?q=" + name.toLowerCase(), null);
+        HttpResponse<String> found = api.get("/speakers/search?q=" + name.toLowerCase());
         assertEquals(200, found.statusCode());
         assertTrue(found.body().contains("\"name\":\"Ada " + name + "\""), found.body());
     }
 
     @Test
     void searchTreatsTheTermAsTextNotSql() throws Exception {
-        assertEquals(201, send("POST", "/speakers", speaker("Conan O'Brien", "conan@example.com", null)).statusCode());
+        assertEquals(201, api.send("POST", "/speakers", speaker("Conan O'Brien", "conan@example.com", null)).statusCode());
 
-        HttpResponse<String> found = send("GET", "/speakers/search?q=O%27Brien", null);
+        HttpResponse<String> found = api.get("/speakers/search?q=O%27Brien");
         assertEquals(200, found.statusCode(), found.body());
         assertTrue(found.body().contains("\"name\":\"Conan O'Brien\""), found.body());
     }
@@ -225,7 +222,7 @@ public class SpeakersTest {
     }
 
     private HttpResponse<String> register(String email, Bio bio) throws Exception {
-        return send("POST", "/speakers", speaker(email, bio));
+        return api.send("POST", "/speakers", speaker(email, bio));
     }
 
     private static String speaker(String email, Bio bio) throws Exception {
@@ -238,16 +235,5 @@ public class SpeakersTest {
             speaker.put("bio", bio.text());
         }
         return JSON.writeValueAsString(speaker);
-    }
-
-    private HttpResponse<String> send(String method, String path, String json) throws Exception {
-        return http.send(request(method, path, json), HttpResponse.BodyHandlers.ofString());
-    }
-
-    private HttpRequest request(String method, String path, String json) {
-        return HttpRequest.newBuilder(URI.create("http://localhost:" + port + path))
-                .header("Content-Type", "application/json")
-                .method(method, json == null ? HttpRequest.BodyPublishers.noBody() : HttpRequest.BodyPublishers.ofString(json))
-                .build();
     }
 }

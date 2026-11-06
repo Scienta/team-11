@@ -3,9 +3,6 @@ package no.scienta.cfp;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
 
@@ -41,10 +38,11 @@ class HealthTest {
         POSTGRES.stop();
     }
 
-    @Value("${local.server.port}")
-    int port;
+    private final ApiClient api;
 
-    private final HttpClient http = HttpClient.newHttpClient();
+    HealthTest(@Value("${local.server.port}") int port) {
+        api = new ApiClient(port);
+    }
 
     @Test
     @Order(1)
@@ -108,10 +106,6 @@ class HealthTest {
     }
 
     private HttpResponse<String> health() throws Exception {
-        HttpRequest req = HttpRequest.newBuilder(URI.create("http://localhost:" + port + "/health"))
-                .timeout(Duration.ofSeconds(30))
-                .GET()
-                .build();
-        return http.send(req, HttpResponse.BodyHandlers.ofString());
+        return api.get("/health");
     }
 }

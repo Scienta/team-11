@@ -3,16 +3,11 @@ package no.scienta.cfp;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.DisplayName;
@@ -33,7 +28,6 @@ import org.tabletest.junit.TableTest;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class TalksTest {
 
-    private static final Pattern ID = Pattern.compile("\"id\":(\\d+)");
     private static final ObjectMapper JSON = new ObjectMapper();
 
     @DynamicPropertySource
@@ -41,10 +35,11 @@ class TalksTest {
         TestDatabase.fresh(registry);
     }
 
-    @Value("${local.server.port}")
-    int port;
+    private final ApiClient api;
 
-    private final HttpClient http = HttpClient.newHttpClient();
+    TalksTest(@Value("${local.server.port}") int port) {
+        api = new ApiClient(port);
+    }
 
     @DisplayName("R4: Sets the duration from the format")
     @Description("""
@@ -121,7 +116,7 @@ class TalksTest {
                 .put("format", format)
                 .put("level", level)
                 .put("speakerId", Long.parseLong(newSpeaker())));
-        return http.send(request("POST", "/talks", talk), HttpResponse.BodyHandlers.ofString());
+        return api.send("POST", "/talks", talk);
     }
 
     @DisplayName("R7: Keeps a speaker at 3 talks when 10 arrive at the same time")
@@ -130,9 +125,8 @@ class TalksTest {
         String speaker = newSpeaker();
         List<CompletableFuture<HttpResponse<String>>> sent = new ArrayList<>();
         for (int i = 0; i < 10; i++) {
-            sent.add(http.sendAsync(request("POST", "/talks",
-                    "{\"title\":\"Talk " + i + "\",\"format\":\"PRESENTATION\",\"level\":\"BEGINNER\",\"speakerId\":" + speaker + "}"),
-                    HttpResponse.BodyHandlers.ofString()));
+            sent.add(api.sendAsync("POST", "/talks",
+                    "{\"title\":\"Talk " + i + "\",\"format\":\"PRESENTATION\",\"level\":\"BEGINNER\",\"speakerId\":" + speaker + "}"));
         }
         int created = 0;
         for (CompletableFuture<HttpResponse<String>> f : sent) {
@@ -143,34 +137,11 @@ class TalksTest {
             }
         }
         assertEquals(3, created);
-        HttpResponse<String> talks = http.send(request("GET", "/speakers/" + speaker + "/talks", null),
-                HttpResponse.BodyHandlers.ofString());
-        assertEquals(3, count(talks.body()));
+        assertEquals(3, JSON.readTree(api.get("/speakers/" + speaker + "/talks").body()).size());
     }
 
     private String newSpeaker() throws Exception {
-        HttpResponse<String> res = http.send(request("POST", "/speakers",
-                "{\"name\":\"Grace Hopper\",\"email\":\"grace-" + UUID.randomUUID() + "@example.com\"}"),
-                HttpResponse.BodyHandlers.ofString());
-        assertEquals(201, res.statusCode(), res.body());
-        Matcher m = ID.matcher(res.body());
-        assertTrue(m.find(), res.body());
-        return m.group(1);
-    }
-
-    private static int count(String body) {
-        Matcher m = ID.matcher(body);
-        int n = 0;
-        while (m.find()) {
-            n++;
-        }
-        return n;
-    }
-
-    private HttpRequest request(String method, String path, String json) {
-        return HttpRequest.newBuilder(URI.create("http://localhost:" + port + path))
-                .header("Content-Type", "application/json")
-                .method(method, json == null ? HttpRequest.BodyPublishers.noBody() : HttpRequest.BodyPublishers.ofString(json))
-                .build();
+        return ApiClient.createdId(api.send("POST", "/speakers",
+                "{\"name\":\"Grace Hopper\",\"email\":\"grace-" + UUID.randomUUID() + "@example.com\"}"));
     }
 }
