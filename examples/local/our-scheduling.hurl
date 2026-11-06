@@ -140,49 +140,82 @@ HTTP 204
 [Asserts]
 bytes count == 0
 
-# R1: a room that is not in the list
+# R1: a place outside the venue does not exist: room R0, as the harness sent at tick 163
+PUT {{base_url}}/programme/R0/S2
+{"talkId": {{venue_talk}}}
+HTTP 404
+
+GET {{base_url}}/programme/R0/S2
+HTTP 404
+
+DELETE {{base_url}}/programme/R0/S2
+HTTP 404
+
+# R1: a place outside the venue does not exist: slot S0, as the harness sent at tick 164
+PUT {{base_url}}/programme/R3/S0
+{"talkId": {{venue_talk}}}
+HTTP 404
+
+GET {{base_url}}/programme/R3/S0
+HTTP 404
+
+DELETE {{base_url}}/programme/R3/S0
+HTTP 404
+
+# R1: a place outside the venue does not exist: slot "slot2", as the harness sent at tick 167
+PUT {{base_url}}/programme/R2/slot2
+{"talkId": {{venue_talk}}}
+HTTP 404
+
+GET {{base_url}}/programme/R2/slot2
+HTTP 404
+
+DELETE {{base_url}}/programme/R2/slot2
+HTTP 404
+
+# R1: a room that is not in the list does not exist
 PUT {{base_url}}/programme/R4/S1
 {"talkId": {{venue_talk}}}
-HTTP 400
+HTTP 404
 
 GET {{base_url}}/programme/R4/S1
-HTTP 400
+HTTP 404
 
 DELETE {{base_url}}/programme/R4/S1
-HTTP 400
+HTTP 404
 
-# R1: a slot that is not in the list
+# R1: a slot that is not in the list does not exist
 PUT {{base_url}}/programme/R1/S6
 {"talkId": {{venue_talk}}}
-HTTP 400
+HTTP 404
 
 GET {{base_url}}/programme/R1/S6
-HTTP 400
+HTTP 404
 
 DELETE {{base_url}}/programme/R1/S6
-HTTP 400
+HTTP 404
 
 # R1: a room in lower case
 PUT {{base_url}}/programme/r1/S1
 {"talkId": {{venue_talk}}}
-HTTP 400
+HTTP 404
 
 GET {{base_url}}/programme/r1/S1
-HTTP 400
+HTTP 404
 
 DELETE {{base_url}}/programme/r1/S1
-HTTP 400
+HTTP 404
 
 # R1: a slot in lower case
 PUT {{base_url}}/programme/R1/s1
 {"talkId": {{venue_talk}}}
-HTTP 400
+HTTP 404
 
 GET {{base_url}}/programme/R1/s1
-HTTP 400
+HTTP 404
 
 DELETE {{base_url}}/programme/R1/s1
-HTTP 400
+HTTP 404
 
 # ================================================================ R2: put, look up and take out
 
@@ -872,9 +905,6 @@ cy_with_ada: jsonpath "$.id"
 PUT {{base_url}}/talks/{{bob_with_ada}}/co-speakers/{{ada}}
 HTTP 200
 
-PUT {{base_url}}/talks/{{cy_with_ada}}/co-speakers/{{ada}}
-HTTP 200
-
 PUT {{base_url}}/talks/{{ada_first}}/ratings/1
 {"score": 4}
 HTTP 200
@@ -1010,6 +1040,14 @@ HTTP 200
 PUT {{base_url}}/programme/R2/S2
 {"talkId": {{ada_second}}}
 HTTP 409
+
+# Setup: Ada withdraws her second talk, so she can co-speak on a third talk (the limit of 3, submission-cap-cr)
+POST {{base_url}}/talks/{{ada_second}}/withdraw
+{"speakerId": {{ada}}}
+HTTP 200
+
+PUT {{base_url}}/talks/{{cy_with_ada}}/co-speakers/{{ada}}
+HTTP 200
 
 # R6: Ada is a co-speaker of a talk in R1 S2 and of this talk
 PUT {{base_url}}/programme/R2/S2

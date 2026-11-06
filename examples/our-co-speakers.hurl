@@ -174,7 +174,8 @@ HTTP 200
 jsonpath "$.coSpeakerIds[0]" == {{bob}}
 jsonpath "$.coSpeakerIds[1]" == {{ada}}
 
-# R7: a speaker with 3 talks of their own can still co-speak, and co-speaking doesn't count
+# Submission-cap-cr R1, R4 (replaces Co-speakers R7): Ada co-speaks on the first talk, so it counts.
+# Two talks of her own make 3, and a third of her own is 409
 POST {{base_url}}/talks
 {"title": "Ada one", "format": "LIGHTNING_10", "level": "BEGINNER", "speakerId": {{ada}}}
 HTTP 201
@@ -185,7 +186,7 @@ HTTP 201
 
 POST {{base_url}}/talks
 {"title": "Ada three", "format": "LIGHTNING_10", "level": "BEGINNER", "speakerId": {{ada}}}
-HTTP 201
+HTTP 409
 
 POST {{base_url}}/talks
 {"title": "Second pair talk", "format": "PRESENTATION", "level": "BEGINNER", "speakerId": {{main}}}
@@ -193,13 +194,25 @@ HTTP 201
 [Captures]
 second_talk: jsonpath "$.id"
 
+# Submission-cap-cr R5 (replaces Co-speakers R7): Ada has 3 talks, so she is not added as co-speaker
 PUT {{base_url}}/talks/{{second_talk}}/co-speakers/{{ada}}
+HTTP 409
+
+GET {{base_url}}/talks/{{second_talk}}
 HTTP 200
 [Asserts]
-jsonpath "$.coSpeakerIds[0]" == {{ada}}
+jsonpath "$.coSpeakerIds" count == 0
+
+# Submission-cap-cr R1: Cy has no talk in the running (the third co-speaker was refused), so Cy can co-speak
+PUT {{base_url}}/talks/{{second_talk}}/co-speakers/{{cy}}
+HTTP 200
+[Asserts]
+jsonpath "$.coSpeakerIds" count == 1
+jsonpath "$.coSpeakerIds[0]" == {{cy}}
 
 # ================================================================ R4, R9: co-speakers and the talk's status
 # Dee and Eve are main speakers. Their talks get each status through the acceptance endpoints.
+# Fay is the co-speaker here: Ada has reached the limit of 3 talks (submission-cap-cr).
 
 POST {{base_url}}/speakers
 {"name": "Dee", "email": "dee-{{newUuid}}@example.com"}
@@ -212,6 +225,12 @@ POST {{base_url}}/speakers
 HTTP 201
 [Captures]
 eve: jsonpath "$.id"
+
+POST {{base_url}}/speakers
+{"name": "Fay", "email": "fay-{{newUuid}}@example.com"}
+HTTP 201
+[Captures]
+fay: jsonpath "$.id"
 
 POST {{base_url}}/talks
 {"title": "Still submitted", "format": "PRESENTATION", "level": "BEGINNER", "speakerId": {{dee}}}
@@ -243,13 +262,13 @@ HTTP 201
 [Captures]
 withdrawn: jsonpath "$.id"
 
-PUT {{base_url}}/talks/{{waitlisted}}/co-speakers/{{ada}}
+PUT {{base_url}}/talks/{{waitlisted}}/co-speakers/{{fay}}
 HTTP 200
 
-PUT {{base_url}}/talks/{{rejected}}/co-speakers/{{ada}}
+PUT {{base_url}}/talks/{{rejected}}/co-speakers/{{fay}}
 HTTP 200
 
-PUT {{base_url}}/talks/{{withdrawn}}/co-speakers/{{ada}}
+PUT {{base_url}}/talks/{{withdrawn}}/co-speakers/{{fay}}
 HTTP 200
 
 # R4: the answer of PUT /talks/{id}/status shows the co-speakers, as the last field of the talk
@@ -259,14 +278,14 @@ HTTP 200
 [Asserts]
 jsonpath "$.status" == "WAITLISTED"
 jsonpath "$.coSpeakerIds" count == 1
-jsonpath "$.coSpeakerIds[0]" == {{ada}}
+jsonpath "$.coSpeakerIds[0]" == {{fay}}
 body matches /"coSpeakerIds":\[\d+\]\}$/
 
 PUT {{base_url}}/talks/{{rejected}}/status
 {"status": "REJECTED"}
 HTTP 200
 [Asserts]
-jsonpath "$.coSpeakerIds[0]" == {{ada}}
+jsonpath "$.coSpeakerIds[0]" == {{fay}}
 
 # R4: the answer of POST /talks/{id}/withdraw shows the co-speakers, as the last field of the talk
 POST {{base_url}}/talks/{{withdrawn}}/withdraw
@@ -275,7 +294,7 @@ HTTP 200
 [Asserts]
 jsonpath "$.status" == "WITHDRAWN"
 jsonpath "$.coSpeakerIds" count == 1
-jsonpath "$.coSpeakerIds[0]" == {{ada}}
+jsonpath "$.coSpeakerIds[0]" == {{fay}}
 body matches /"coSpeakerIds":\[\d+\]\}$/
 
 # R4: the list without withdrawn talks shows the co-speakers. Filtered on the main speaker, because
@@ -283,14 +302,14 @@ body matches /"coSpeakerIds":\[\d+\]\}$/
 GET {{base_url}}/talks?speakerId={{dee}}&includeWithdrawn=false
 HTTP 200
 [Asserts]
-jsonpath "$[?(@.id == {{waitlisted}})].coSpeakerIds[0]" == {{ada}}
+jsonpath "$[?(@.id == {{waitlisted}})].coSpeakerIds[0]" == {{fay}}
 
 GET {{base_url}}/talks?speakerId={{eve}}&includeWithdrawn=false
 HTTP 200
 [Asserts]
 jsonpath "$" count == 1
 jsonpath "$[0].id" == {{rejected}}
-jsonpath "$[0].coSpeakerIds[0]" == {{ada}}
+jsonpath "$[0].coSpeakerIds[0]" == {{fay}}
 
 PUT {{base_url}}/talks/{{accepted}}/ratings/1
 {"score": 4}
@@ -308,27 +327,27 @@ HTTP 200
 PUT {{base_url}}/talks/{{withdrawn}}/co-speakers/{{bob}}
 HTTP 409
 
-DELETE {{base_url}}/talks/{{withdrawn}}/co-speakers/{{ada}}
+DELETE {{base_url}}/talks/{{withdrawn}}/co-speakers/{{fay}}
 HTTP 409
 
 GET {{base_url}}/talks/{{withdrawn}}
 HTTP 200
 [Asserts]
 jsonpath "$.coSpeakerIds" count == 1
-jsonpath "$.coSpeakerIds[0]" == {{ada}}
+jsonpath "$.coSpeakerIds[0]" == {{fay}}
 
 # R9: a REJECTED talk gets no co-speaker, and keeps the ones it has
 PUT {{base_url}}/talks/{{rejected}}/co-speakers/{{bob}}
 HTTP 409
 
-DELETE {{base_url}}/talks/{{rejected}}/co-speakers/{{ada}}
+DELETE {{base_url}}/talks/{{rejected}}/co-speakers/{{fay}}
 HTTP 409
 
 GET {{base_url}}/talks/{{rejected}}
 HTTP 200
 [Asserts]
 jsonpath "$.coSpeakerIds" count == 1
-jsonpath "$.coSpeakerIds[0]" == {{ada}}
+jsonpath "$.coSpeakerIds[0]" == {{fay}}
 
 # R9: a SUBMITTED talk can get and lose a co-speaker
 PUT {{base_url}}/talks/{{submitted}}/co-speakers/{{bob}}
@@ -347,7 +366,7 @@ HTTP 200
 [Asserts]
 jsonpath "$.coSpeakerIds" count == 2
 
-DELETE {{base_url}}/talks/{{waitlisted}}/co-speakers/{{ada}}
+DELETE {{base_url}}/talks/{{waitlisted}}/co-speakers/{{fay}}
 HTTP 200
 [Asserts]
 jsonpath "$.coSpeakerIds" count == 1
@@ -373,7 +392,7 @@ jsonpath "$.coSpeakerIds" count == 2
 jsonpath "$.coSpeakerIds[1]" == {{bob}}
 
 # R12: a co-speaker, another speaker or an unregistered one can't, and nothing changes
-PUT {{base_url}}/talks/{{second_talk}}/co-speakers/{{cy}}?actingSpeakerId={{ada}}
+PUT {{base_url}}/talks/{{second_talk}}/co-speakers/{{cy}}?actingSpeakerId={{cy}}
 HTTP 403
 [Asserts]
 jsonpath "$.status" == 403
@@ -415,7 +434,7 @@ HTTP 403
 jsonpath "$.message" == "only the main speaker can change the co-speakers"
 
 # R12 before R9: on a WITHDRAWN talk, someone other than the main speaker gets 403, not 409
-PUT {{base_url}}/talks/{{withdrawn}}/co-speakers/{{bob}}?actingSpeakerId={{ada}}
+PUT {{base_url}}/talks/{{withdrawn}}/co-speakers/{{bob}}?actingSpeakerId={{fay}}
 HTTP 403
 [Asserts]
 jsonpath "$.message" == "only the main speaker can change the co-speakers"
@@ -434,4 +453,4 @@ DELETE {{base_url}}/talks/{{second_talk}}/co-speakers/{{bob}}?actingSpeakerId={{
 HTTP 200
 [Asserts]
 jsonpath "$.coSpeakerIds" count == 1
-jsonpath "$.coSpeakerIds[0]" == {{ada}}
+jsonpath "$.coSpeakerIds[0]" == {{cy}}
