@@ -26,7 +26,7 @@ Draft from 12:30. We update it when the steps change.
 4. Two reviews for each batch: a spec review and a design review, with
    [`workflow/review-rubric.md`](workflow/review-rubric.md). Then the guardians review the batch
    (below).
-5. A session builds the push candidate in its own git worktree, runs the full suite there and makes
+5. Frikke builds the push candidate in its own git worktree, runs the full suite there and makes
    the report. A person approves the push, because a push deploys. We verify on the team URL with
    the Hurl examples, the request log (`RequestLogFilter`, read with `.github/fagdag/logs.sh`) and
    the harness feedback.
@@ -43,8 +43,10 @@ tree. The rules are in [`workflow/coordination.md`](workflow/coordination.md).
 |---|---|---|
 | Coordinator ("The Hand") | Takes all requests from the person, the agent sessions and Slack. Gives each task to an agent session. Changes no files. | [`workflow/coordination.md`](workflow/coordination.md) |
 | Security guardian (Ferdinand) | Reviews each batch before a push against checks C1–C8, and runs the exploit script against a local build. Writes no fixes. | [`workflow/security-review.md`](workflow/security-review.md) |
-| Architecture guardian | Reviews each batch against our patterns P1–P8. Writes no code. | [`workflow/architecture-review.md`](workflow/architecture-review.md) |
-| Functionality guardian | Collects the claim evidence for each feature, line by line from the claim checklist. | [`workflow/claims/`](workflow/claims/) |
+| Architecture guardian (Fiffi) | Reviews each batch against our patterns P1–P8. Writes no code. | [`workflow/architecture-review.md`](workflow/architecture-review.md) |
+| Functionality guardian (Fuglen) | Collects the claim evidence for each feature, line by line from the claim checklist. | [`workflow/claims/`](workflow/claims/) |
+| Watchers (Filla, Foffo) | Filla watches the deploy, the request log and the harness, and posts alerts. Foffo reads Slack and reports new messages to The Hand. | [`workflow/coordination.md`](workflow/coordination.md) |
+| Push candidates (Frikke) | Builds each push candidate in its own git worktree, runs the full suite and makes the report. | [`workflow/process.md`](workflow/process.md) |
 | Agent sessions | Write the specs, tests and code. Each session tests in its own git worktree and commits only its own files. | [`.claude/rules/team-workflow.md`](.claude/rules/team-workflow.md) |
 
 - **Claims in Slack.** The Hand claims each task in Slack #team-11 before it gives the task to a
@@ -77,7 +79,7 @@ code.
    runs all of them against a local build of each batch. Each check prints CLOSED or OPEN, and the
    exit code is the number of OPEN checks. A finding is closed only when its exploit fails.
 5. **The merge test.** Before a merge from Carl Kristian's laptop, the architecture guardian merges in a scratch
-   worktree and runs the full suite. For Spring Boot 4 (PR #5) it found 7 fixes that the merge needs.
+   worktree and runs the full suite. For Spring Boot 4 (PR #5), Fiffi found 7 fixes that the merge needs.
 6. **The request log and the harness transcripts.** `RequestLogFilter` writes one line per request,
    so we can compare our answers with what the checks sent.
 
@@ -155,8 +157,13 @@ container has a small share of a CPU, and in a burst the JIT compiler took CPU f
 - Fiffi measured the JVM flag `-XX:TieredStopAtLevel=1` (the fast C1 compiler only) on a local
   image at 0.25 CPU: p90 from 690–1080 ms to 480–590 ms, and start-up from 24–29 s to 15–17 s.
 - The hotfix `c43bbaf` sets the flag in the `Dockerfile`.
-- Filla compared the request log before and after: the share of requests of 1 s or more went from
-  25 % to 7 %.
+- Filla compared the first 3 minutes after the warm-up in the request log: container 00017
+  without the flag, and container 00018 with it (deploy run 42224526394, 13:20 UTC).
+
+| First 3 minutes after the warm-up | Requests | 1 s or more | 2 s or more | Median | p90 | Slowest | Start-up |
+|---|---|---|---|---|---|---|---|
+| Before: container 00017 | 827 | 205 (25 %) | 39 | 312 ms | 1505 ms | 5197 ms | 34–40 s |
+| After: container 00018, `c43bbaf` | 842 | 57 (7 %) | 7 | 198 ms | 818 ms | 3012 ms | 21.4 s |
 
 Why we missed it: no test runs with the container's CPU limit. The warm-up fixed the cold start, but
 not a burst on a warm JVM with little CPU.
