@@ -21,8 +21,8 @@ An agent does the other steps.
 
    ```bash
    rm -rf target/junit-jupiter docs/specs
-   JAVA_HOME=$(/usr/libexec/java_home -v 17) ./mvnw test
-   JAVA_HOME=$(/usr/libexec/java_home -v 21) ./mvnw org.tabletest:tabletest-reporter-maven-plugin:report
+   JAVA_HOME=$(/usr/libexec/java_home -v 25) ./mvnw test
+   JAVA_HOME=$(/usr/libexec/java_home -v 25) ./mvnw org.tabletest:tabletest-reporter-maven-plugin:report
    ```
 7. **Review.** A review agent compares the diff with `spec.md`, row by row. It does not see our
    reasoning, only the spec and the code. See `workflow/review-rubric.md`.
