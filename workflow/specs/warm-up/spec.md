@@ -66,8 +66,8 @@ harness request.
 |-------|--------|
 | A warm-up request gets no answer in 5 s | One `WARN` line with the method and the path. The service runs, and `/health` answers 200. |
 
-We write the R4 test with the implementation, as a test of the warm-up class with a request that
-fails. It needs a seam that does not exist yet.
+`HttpWarmUpExchangeTest` sends a request to a stand-in service that does not answer, and gets a
+failure, not an exception. `WarmUpOutcomeTest` shows which outcomes give a `WARN` line.
 
 ### R5: the first burst on the deployed service
 
