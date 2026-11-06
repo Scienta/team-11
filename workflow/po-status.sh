@@ -19,6 +19,7 @@ section_of() {
   case "$1" in
     speakers) echo Foredragsholdere ;;
     talks) echo Foredrag ;;
+    co-speakers) echo Foredrag ;;
     ratings | ratings-*) echo Karakterer ;;
     acceptance) echo Godkjenning ;;
     workshop-registration) echo Workshoper ;;
