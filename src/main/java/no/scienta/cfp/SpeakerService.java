@@ -56,7 +56,7 @@ public class SpeakerService {
     @Transactional
     public Speaker updateSpeaker(long id, String name, String email, String bio) {
         Speaker existing = getSpeaker(id);
-        if (name == null || name.equals("")) {
+        if (name == null || name.trim().isEmpty()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "name is required");
         }
         if (!EmailAddress.isValid(email)) {

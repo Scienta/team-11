@@ -170,6 +170,7 @@ public class SpeakersTest {
         Another speaker's email     | 1          | Grace Hopper | ADA@example.com   | 409     | email already registered
         Not an email                | 1          | Grace Hopper | not-an-email      | 400     | invalid email
         No name                     | 1          |              | grace@example.com | 400     | name is required
+        Name of only spaces         | 1          | '   '        | grace@example.com | 400     | name is required
         Unknown speaker             | 3          | Grace Hopper | grace@example.com | 404     | speaker not found
         """)
     void updatesASpeakerByTheRulesOfRegistration(String speakerId, String name, String email, int status,
