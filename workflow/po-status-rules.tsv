@@ -37,3 +37,10 @@ warm-up/r2-leaves-every-table-as-empty-as-it-found-it	Oppvarmingen etterlater in
 warm-up/r3-writes-the-number-of-requests-when-the-warm-up-ends	Tjenesten skriver i loggen hvor mange forespørsler oppvarmingen sendte.
 warm-up-http-exchange/r4-turns-a-request-without-an-answer-into-a-failure	En forespørsel som ikke får svar, regnes som en feil.
 warm-up-outcomes/r4-warns-about-an-unexpected-status-or-a-failure	Tjenesten varsler i loggen om et uventet svar eller en feil under oppvarmingen.
+co-speakers/r1-r2-r3-r5-adds-another-registered-speaker-at-most-two	Et foredrag kan ha høyst to medforedragsholdere. De må være registrert, og hovedforedragsholderen kan ikke være en av dem.
+co-speakers/r4-shows-the-co-speakers-last-in-the-order-added-wherever-a-talk-is-shown	Alle foredrag viser medforedragsholderne i den rekkefølgen de ble lagt til.
+co-speakers/r4-shows-the-co-speakers-in-the-answers-of-the-acceptance-endpoints	Medforedragsholderne vises også når et foredrag blir godkjent, avvist, satt på venteliste eller trukket.
+co-speakers/r6-a-co-speaker-s-own-talk-list-shows-only-their-own-talks	En foredragsholders egen liste viser bare foredrag der hen er hovedforedragsholder.
+co-speakers/r8-removes-a-co-speaker-never-the-main-speaker	En medforedragsholder kan fjernes igjen. Hovedforedragsholderen kan ikke fjernes.
+co-speakers/r9-a-withdrawn-or-rejected-talk-can-t-be-changed	Et foredrag som er trukket eller avvist, kan ikke få nye eller færre medforedragsholdere.
+co-speakers/answers-404-for-an-unknown-talk-and-400-for-a-talk-id-that-is-not-a-number	Et ukjent foredrag gir en tydelig feilmelding.

@@ -12,3 +12,4 @@ Bob and then Ada are added to Main's talk; Main's second talk has no co-speakers
 | ✅ passes | The ranking | /talks?sort=rating | [Bob, Ada] | [] |
 | ✅ passes | One speaker's ranking | /talks?speakerId=:main&sort=rating | [Bob, Ada] | [] |
 | ✅ passes | The speaker's own talk list | /speakers/:main/talks | [Bob, Ada] | [] |
+| ✅ passes | Without withdrawn talks | /talks?includeWithdrawn=false | [Bob, Ada] | [] |
