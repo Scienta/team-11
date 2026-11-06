@@ -3,10 +3,12 @@ package no.scienta.cfp;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.io.ByteArrayInputStream;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -174,6 +176,31 @@ class UpgradeContractTest {
         assertMatches("\\{\"timestamp\":\"" + TIMESTAMP + "\",\"status\":400,\"error\":\"Bad Request\","
                 + "\"message\":\"Validation failed for object='speakerForm'. Error count: 1\",\"errors\":\\[.*"
                 + "\"field\":\"name\".*],\"path\":\"/speakers\"}", res.body());
+    }
+
+    @DisplayName("R2: Limits the request body on a path with a trailing slash too")
+    @Description("""
+            The trailing-slash filter runs before the 1 MB body limit, and the limit still applies.
+            Each request is PUT /talks/$talk/status/ with the decision WAITLISTED, padded with an
+            unknown field to the body size. A chunked body has no Content-Length.
+            """)
+    @TableTest("""
+        Scenario      | Body Size (bytes) | Chunked? | Status?
+        Exactly 1 MB  | 1048576           | false    | 200
+        One byte more | 1048577           | false    | 413
+        One byte more | 1048577           | true     | 413
+        """)
+    void limitsTheBodyOnAPathWithATrailingSlash(int bodySize, boolean chunked, int status) throws Exception {
+        String empty = "{\"status\":\"WAITLISTED\",\"padding\":\"\"}";
+        byte[] body = empty.replace("\"\"}", "\"" + "x".repeat(bodySize - empty.length()) + "\"}")
+                .getBytes(StandardCharsets.UTF_8);
+        HttpRequest request = HttpRequest.newBuilder(URI.create("http://localhost:" + port + "/talks/" + talk + "/status/"))
+                .header("Content-Type", "application/json")
+                .PUT(chunked
+                        ? HttpRequest.BodyPublishers.ofInputStream(() -> new ByteArrayInputStream(body))
+                        : HttpRequest.BodyPublishers.ofByteArray(body))
+                .build();
+        assertEquals(status, http.send(request, HttpResponse.BodyHandlers.ofString()).statusCode());
     }
 
     @DisplayName("R2: Takes only a JSON whole number as a score")
