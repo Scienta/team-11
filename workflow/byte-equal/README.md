@@ -1,13 +1,14 @@
 # Byte-equal check for a refactoring
 
 Use these scripts when a refactoring must not change any answer of the talk lists and the reports. They run the
-jar from before and the jar from after against the same seeded database, capture 16 answers from each, and compare
+jar from before and the jar from after against the same seeded database, capture 27 answers from each, and compare
 them byte for byte.
 
 ## What the scripts cover
 
 `seed.sh` makes 3 speakers and 7 talks: one talk in each status (`SUBMITTED`, `ACCEPTED`, `REJECTED`,
-`WAITLISTED`, `WITHDRAWN`), several ratings, and one co-speaker.
+`WAITLISTED`, `WITHDRAWN`), several ratings, one co-speaker, two registrations for an accepted workshop, and two
+talks on the programme.
 
 `capture.sh` records the status and the body of these requests:
 
@@ -15,13 +16,20 @@ them byte for byte.
 - the 400 answers for `sort=bogus` and `includeWithdrawn=yes`
 - `GET /talks/{id}`, `GET /speakers/{id}/talks`, and the 404 for an unknown speaker
 - `GET /admin/stats` and `GET /admin/talks.csv`
+- `GET /workshops/{id}/registrations` for a workshop, a talk that is not a workshop, and an unknown talk
+- `GET /programme`, `GET /programme.csv`, and `GET /programme/{room}/{slot}` for a taken place, an empty place and
+  a room outside the list
+- `POST /speakers` and `POST /talks` with an empty body (400)
+
+The stats average in the seed is 3.8 exactly, so the data does not show how the average is rounded.
 
 The script blanks the fields `"timestamp"` (error answers) and `"generated"` (stats), because they change with
 each run. Every other byte must be the same.
 
 ## Steps
 
-Run them from the repo root. Docker and Java 17 must be available, so run them outside the sandbox.
+Run them from the repo root. Docker and Java 25 or later must be available (JDK 27 works), so run them outside
+the sandbox. Build the jars with the same JDK.
 
 1. Start an empty database on port 5433, apart from the usual local one:
 
@@ -33,14 +41,14 @@ Run them from the repo root. Docker and Java 17 must be available, so run them o
 2. Build the jar from before the change, and keep a copy:
 
    ```bash
-   JAVA_HOME=$(/usr/libexec/java_home -v 17) ./mvnw -q package -DskipTests
+   JAVA_HOME=$(/usr/libexec/java_home -v 25) ./mvnw -q package -DskipTests
    mkdir -p target/byte-equal && cp target/cfp.jar target/byte-equal/before.jar
    ```
 
 3. Make the change, then build the jar from after it:
 
    ```bash
-   JAVA_HOME=$(/usr/libexec/java_home -v 17) ./mvnw -q package -DskipTests
+   JAVA_HOME=$(/usr/libexec/java_home -v 25) ./mvnw -q package -DskipTests
    cp target/cfp.jar target/byte-equal/after.jar
    ```
 
@@ -50,7 +58,7 @@ Run them from the repo root. Docker and Java 17 must be available, so run them o
    workflow/byte-equal/check.sh target/byte-equal/before.jar target/byte-equal/after.jar
    ```
 
-   It prints `byte-equal: 16 answers` and exits 0 when nothing differs. Otherwise it prints the diff.
+   It prints `byte-equal: 27 answers` and exits 0 when nothing differs. Otherwise it prints the diff.
 
 5. Stop the database: `docker stop cfp-byte-equal`.
 
@@ -61,5 +69,6 @@ For a second comparison, start a new empty database first, because `check.sh` se
 - `./mvnw clean` deletes `target/byte-equal`, the saved jars included.
 - To compare one step at a time, run `run.sh`, `capture.sh <url> <dir>` and `stop.sh` yourself for each jar, and
   `diff -r` the directories.
-- `PORT` (default 8091), `PGPORT` (default 5433) and `WORK` (default `target/byte-equal`) change the defaults.
+- `PORT` (default 8091), `PGPORT` (default 5433), `WORK` (default `target/byte-equal`) and `JAVA` (default: the java of
+  JDK 25 or later) change the defaults.
 - A change that adds a field to the talk JSON is not a refactoring: the diff shows it.

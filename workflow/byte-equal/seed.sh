@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Seeds talks in every status, with ratings and a co-speaker, through the API.
+# Seeds talks in every status, with ratings, a co-speaker, workshop registrations and programme entries, through the API.
 # Usage: workflow/byte-equal/seed.sh <base-url>     (run it once, on an empty database)
 set -euo pipefail
 b="${1:?base url, for example http://localhost:8091}"
@@ -15,3 +15,7 @@ j PUT /talks/1/status '{"status":"ACCEPTED"}'; j PUT /talks/2/status '{"status":
 j PUT /talks/5/status '{"status":"REJECTED"}'; j PUT /talks/7/status '{"status":"ACCEPTED"}'
 j POST /talks/3/withdraw '{"speakerId":1}'
 j PUT /talks/7/co-speakers/1
+j POST /workshops/7/registrations '{"name":"Attendee One","email":"a1@example.com"}'
+j POST /workshops/7/registrations '{"name":"Attendee Two","email":"a2@example.com"}'
+j PUT /programme/R1/S4 '{"talkId":7}'
+j PUT /programme/R2/S1 '{"talkId":1}'
