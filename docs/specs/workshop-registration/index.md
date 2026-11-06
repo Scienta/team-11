@@ -1,5 +1,6 @@
 # Workshop registration
 
+* [Answers 400 for a request it cannot use](./answers-400-for-a-request-it-cannot-use.md)
 * [R1: Registers an attendee only with a name and a real email](./r1-registers-an-attendee-only-with-a-name-and-a-real-email.md)
 * [R2: Takes registrations only for a workshop](./r2-takes-registrations-only-for-a-workshop.md)
 * [R3: Takes registrations only for an accepted workshop](./r3-takes-registrations-only-for-an-accepted-workshop.md)
@@ -7,5 +8,9 @@
 * [R5: Keeps 20 seats when many register at the same time](./r5-keeps-20-seats-when-many-register-at-the-same-time.md)
 * [R5: Takes at most 20 attendees for a workshop](./r5-takes-at-most-20-attendees-for-a-workshop.md)
 * [R6, R7: Registers an email once for each workshop](./r6-r7-registers-an-email-once-for-each-workshop.md)
+* [R6, R9: Registers an email again after it unregistered](./r6-r9-registers-an-email-again-after-it-unregistered.md)
 * [R6: Registers one of the same email sent at the same time](./r6-registers-one-of-the-same-email-sent-at-the-same-time.md)
 * [R8: Lists the attendees in the order they registered](./r8-lists-the-attendees-in-the-order-they-registered.md)
+* [R9: Frees the seat when an attendee unregisters](./r9-frees-the-seat-when-an-attendee-unregisters.md)
+* [R9: Gives a freed seat to one attendee only](./r9-gives-a-freed-seat-to-one-attendee-only.md)
+* [R9: Unregisters a registration once, from its own workshop](./r9-unregisters-a-registration-once-from-its-own-workshop.md)

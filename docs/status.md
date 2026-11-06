@@ -1,8 +1,8 @@
 # Teststatus
 
-Laget 6. november 2026 kl. 13:59 fra versjon [3121e67](https://github.com/Scienta/team-11/commit/3121e67a552c09d3d4e68f351d90a308a91ed751).
+Laget 6. november 2026 kl. 14:06 fra versjon [d66b3df](https://github.com/Scienta/team-11/commit/d66b3df99dab2e1d9efb1b8a488da2c9441f85bc).
 
-✅ Våre tester: alle 45 regler er i orden (169 av 169 eksempler).
+✅ Våre tester: alle 50 regler er i orden (187 av 187 eksempler).
 
 ✅ Arrangørenes kontroller: alle 15 er i orden (Foredragsholdere, Foredrag, Karakterer).
 
@@ -55,7 +55,8 @@ Alle detaljer står i [testrapporten](specs/index.md).
 
 ## Workshoper
 
-- ✅ **R1** En påmelding må ha et navn og en gyldig e-postadresse. — 7 av 7 eksempler · [se eksemplene](specs/workshop-registration/r1-registers-an-attendee-only-with-a-name-and-a-real-email.md)
+- ✅ **R1** En påmelding må ha et navn og en gyldig e-postadresse. — 9 av 9 eksempler · [se eksemplene](specs/workshop-registration/r1-registers-an-attendee-only-with-a-name-and-a-real-email.md)
+- ✅ En påmelding som ikke kan leses, avvises med en tydelig feil. — 5 av 5 eksempler · [se eksemplene](specs/workshop-registration/answers-400-for-a-request-it-cannot-use.md)
 - ✅ **R2** Bare workshoper tar imot påmeldinger. — 3 av 3 eksempler · [se eksemplene](specs/workshop-registration/r2-takes-registrations-only-for-a-workshop.md)
 - ✅ **R3** Man kan bare melde seg på en workshop som komiteen har godtatt. — 2 av 2 eksempler · [se eksemplene](specs/workshop-registration/r3-takes-registrations-only-for-an-accepted-workshop.md)
 - ✅ **R4** Når en workshop trekkes, står de påmeldte fortsatt på listen. — 2 av 2 eksempler · [se eksemplene](specs/workshop-registration/r4-keeps-the-attendees-of-a-withdrawn-workshop.md)
@@ -64,6 +65,10 @@ Alle detaljer står i [testrapporten](specs/index.md).
 - ✅ **R6, R7** En e-postadresse kan bare meldes på én gang per workshop, uansett store eller små bokstaver. Samme person kan melde seg på flere workshoper. — 3 av 3 eksempler · [se eksemplene](specs/workshop-registration/r6-r7-registers-an-email-once-for-each-workshop.md)
 - ✅ **R6** Kommer samme påmelding flere ganger samtidig, teller den bare én gang. — 2 av 2 eksempler · [se eksemplene](specs/workshop-registration/r6-registers-one-of-the-same-email-sent-at-the-same-time.md)
 - ✅ **R8** Arrangørene ser deltakerne i den rekkefølgen de meldte seg på. — 3 av 3 eksempler · [se eksemplene](specs/workshop-registration/r8-lists-the-attendees-in-the-order-they-registered.md)
+- ✅ **R9** En deltaker kan melde seg av, og plassen blir ledig for en annen. — 2 av 2 eksempler · [se eksemplene](specs/workshop-registration/r9-frees-the-seat-when-an-attendee-unregisters.md)
+- ✅ **R9** En påmelding kan bare meldes av én gang, og bare fra sin egen workshop. — 5 av 5 eksempler · [se eksemplene](specs/workshop-registration/r9-unregisters-a-registration-once-from-its-own-workshop.md)
+- ✅ **R6, R9** Den som har meldt seg av, kan melde seg på igjen. — 2 av 2 eksempler · [se eksemplene](specs/workshop-registration/r6-r9-registers-an-email-again-after-it-unregistered.md)
+- ✅ **R9** En ledig plass går til én deltaker, også når mange melder seg på samtidig. — 2 av 2 eksempler · [se eksemplene](specs/workshop-registration/r9-gives-a-freed-seat-to-one-attendee-only.md)
 
 ## Oppstart
 
