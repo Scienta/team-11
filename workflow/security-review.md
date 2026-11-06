@@ -72,3 +72,4 @@ Kristian's team. Co-speakers is reviewed by Carl Kristian's team.
 | 2026-11-06 | programme export (spec) | S14 accepted: no formula guard in `/programme.csv`. RFC 4180 quoting stays required. |
 | 2026-11-06 | PR #9 `7560729` (co-speakers R11, R12) | OK to merge. The R11 migration deletes only orphan links, validates both keys, and is idempotent. R12 gives 403 before other checks. S15 noted. Condition: the merge must keep both new blocks in `schema.sql`. |
 | 2026-11-06 | `b700b6e` (programme export) | No blocker. RFC 4180 quoting round-trips titles and speaker names; `text/csv` for every Accept header; read-only; 7 ms. S16 (low) found. |
+| 2026-11-06 | `dc1a353` (GET hotfix, check-2) | No blocker (static review). `200 []` for a talk that is not a workshop, without reading registrations; 404 for an unknown talk; POST and DELETE unchanged. |
