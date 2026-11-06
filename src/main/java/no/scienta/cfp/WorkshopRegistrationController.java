@@ -62,6 +62,9 @@ public class WorkshopRegistrationController {
     }
 
     private static ResponseStatusException refusal(RegistrationOutcome outcome) {
+        if (outcome instanceof RegistrationOutcome.NotAWorkshop) {
+            return notAWorkshop();
+        }
         if (outcome instanceof RegistrationOutcome.Closed closed) {
             return new ResponseStatusException(HttpStatus.CONFLICT,
                     "a workshop that is " + closed.status() + " takes no registrations");
@@ -72,7 +75,7 @@ public class WorkshopRegistrationController {
         if (outcome instanceof RegistrationOutcome.AlreadyRegistered) {
             return new ResponseStatusException(HttpStatus.CONFLICT, "this email is already registered");
         }
-        return notAWorkshop();
+        throw new IllegalArgumentException("unknown registration outcome " + outcome);
     }
 
     private static ResponseStatusException notAWorkshop() {
