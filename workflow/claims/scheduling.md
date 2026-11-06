@@ -5,7 +5,7 @@ row says "waiting" or "gap". The product owner reads a claim request in three se
 architecture and functionality.
 
 Claim: **claimed at harness tick 162** by Nils Christian. Deployed: `7bdf99a` from 13:53Z ([deploy run 42229118539](https://github.com/Scienta/team-11/actions/runs/42229118539), green),
-then `dfd57c9` from 14:07:19 CET ([deploy run 42230675486](https://github.com/Scienta/team-11/actions/runs/42230675486): deploy and tests green).
+then `dfd57c9` from 14:07:19Z ([deploy run 42230675486](https://github.com/Scienta/team-11/actions/runs/42230675486): deploy and tests green).
 Both have the scheduling code `07f7d81` (the pushed copy of `7d4d8e0`).
 
 PO approval: **approved by Stein himself, twice.** «godkjent» at 15:07:40 CET at the top level of Slack #team-11
@@ -41,7 +41,7 @@ later changes that leave the programme as it is, and several committee members a
 | Our examples pass | **Local build only**, by our decision (spec, "Our decisions": each group empties the places it uses, and on the team URL that can delete the harness's entries). Against a local build of `7d4d8e0`: 215/215 three times, also with a place taken before the run; all 15 places were empty afterwards. A copy that expects 200 for a workshop in `S1` failed, so the file can fail. 215/215 again on a local build of `b700b6e`. | done |
 | The JUnit tests pass | `SchedulingTest` 78/78, the R8 rows at the same time included (49/49 table rows in `docs/specs/programme-scheduling`). CI: [run 42229118539](https://github.com/Scienta/team-11/actions/runs/42229118539) for `7bdf99a`, job `tests` success. | done |
 | The deploy workflow is green for the commit | [Run 42229118539](https://github.com/Scienta/team-11/actions/runs/42229118539) for `7bdf99a`: job `deploy` success. Then [run 42230675486](https://github.com/Scienta/team-11/actions/runs/42230675486) for `dfd57c9`: job `deploy` success. | done |
-| `GET /health` on the team URL shows that SHA as `version` | `7bdf99a5e8b8…` at 14:05:52Z. `dfd57c973cdc…` after 14:07:19 CET. | done |
+| `GET /health` on the team URL shows that SHA as `version` | `7bdf99a5e8b8…` at 14:05:52Z. `dfd57c973cdc…` after 14:07:19Z. | done |
 | A read-only check on the team URL | At 14:05:52Z on `7bdf99a` (Fuglen): `GET /programme/R1/S1`, `R2/S3` and `R3/S5` gave 200, and `GET /programme/R4/S1` gave 400. No PUT and no DELETE on the team URL. | done |
 | The base features still pass their examples | The harness checks of the base features stayed OK (below). The last run of our base examples on the team URL was at 13:39:51Z–13:41:50Z on `3318bf1`: all passed. | done |
 | No FAULTY check on the harness for this feature or the base features | `workflow/harness.sh feedback` at tick 161: all 24 claimed checks OK (speakers 4, talks 6, ratings 5, acceptance 5, workshop-registration 4), 732.05 points. The harness has no checks for scheduling until it is claimed. After the claim: 6 scheduling checks, not run yet at tick 162; we watch them. | done before the claim |
