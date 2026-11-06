@@ -67,7 +67,6 @@ request-log-filter-test/logs-a-large-body-in-a-short-time	Også en stor forespø
 utils-test/exports-a-value-that-starts-like-a-formula-as-text	I eksporten til regneark blir en verdi som ligner en formel, lagret som tekst.
 utils-test/quotes-a-value-with-a-semicolon-or-a-line-break	I eksporten til regneark får en verdi med semikolon eller linjeskift anførselstegn rundt seg.
 request-limits/refuses-a-request-body-larger-than-1-mb	Tjenesten avviser en forespørsel som er større enn 1 MB.
-request-log-filter-test/logs-a-large-body-in-a-short-time	Loggen skriver også en stor forespørsel raskt.
 programme-scheduling/r1-gives-each-slot-its-fixed-start-and-end	Programmet har tre rom med de samme fem tidspunktene i hvert rom. Start og slutt er faste.
 programme-scheduling/r1-refuses-a-room-or-slot-outside-the-venue	Bare rommene og tidspunktene som finnes, kan brukes. Andre avvises.
 programme-scheduling/r2-puts-a-talk-in-a-place-looks-it-up-takes-it-out	Komiteen kan sette et foredrag i et rom på et tidspunkt, se hva som står der, og ta det ut igjen.
