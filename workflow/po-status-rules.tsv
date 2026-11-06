@@ -89,3 +89,12 @@ spring-boot-4-upgrade/r2-answers-every-error-as-json-in-utf-8-with-the-boot-erro
 spring-boot-4-upgrade/r2-limits-the-request-body-on-a-path-with-a-trailing-slash-too	Grensen på 1 MB for en forespørsel gjelder også med skråstrek til slutt i nettadressen.
 spring-boot-4-upgrade/r2-reads-request-bodies-as-leniently-as-before	Tjenesten leser forespørsler like romslig som før oppgraderingen.
 spring-boot-4-upgrade/r2-takes-only-a-json-whole-number-as-a-score	En karakter må fortsatt være et helt tall.
+programme-export/r1-r2-r7-lists-only-the-talks-on-the-programme	Programmet kan hentes for nettsiden og som fil til trykkeriet. Begge viser bare foredragene som står på programmet, i samme rekkefølge.
+programme-export/r3-shows-each-talk-as-it-is-now	Hver linje viser tidspunkt, rom, tittel, format og foredragsholdere slik de er nå, også når foredraget er endret etter at det kom på programmet.
+programme-export/r4-names-the-main-speaker-then-the-co-speakers-as-added	Foredragsholderne står med navn: hovedforedragsholderen først, så medforedragsholderne i den rekkefølgen de ble lagt til.
+programme-export/r5-serves-each-view-in-its-own-type-whatever-the-client-asks-for	Filen til trykkeriet er alltid en CSV-fil, og nettsiden får alltid JSON, uansett hva den som spør ber om.
+programme-export/r5-r6-writes-a-stored-title-into-the-csv-as-the-print-shop-needs-it	Titler med æ, ø, å, komma, anførselstegn eller linjeskift kommer riktig fram i filen til trykkeriet.
+programme-export-the-csv-file/r5-r6-r7-writes-the-header-then-one-line-per-row	Filen til trykkeriet starter med en fast overskriftslinje, og har så én linje per foredrag. Et tomt program gir bare overskriften.
+programme-export-the-csv-file/r2-orders-the-rows-by-start-then-by-room	Programmet leses som en dag: det tidligste tidspunktet først, og på samme tidspunkt etter rom.
+programme-export-the-csv-file/r6-quotes-a-field-only-when-it-has-to	En verdi i filen står i anførselstegn bare når den må, for eksempel når den har et komma.
+programme-export-the-csv-file/r4-joins-the-speakers-with-a-semicolon-in-one-field	I filen står alle foredragsholderne i ett felt, skilt med semikolon.
