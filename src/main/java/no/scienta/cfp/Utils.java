@@ -81,9 +81,11 @@ public class Utils {
     }
 
     /**
-     * One {@code @}, a local part, and a domain of at least two dot-separated labels. No whitespace.
+     * One {@code @}, a local part, and a domain of at least two dot-separated labels. No whitespace, Unicode
+     * whitespace such as a no-break space included.
      */
-    private static final Pattern EMAIL = Pattern.compile("[^@\\s]+@[^@\\s.]+(\\.[^@\\s.]+)+");
+    private static final Pattern EMAIL = Pattern.compile("[^@\\s]+@[^@\\s.]+(\\.[^@\\s.]+)+",
+            Pattern.UNICODE_CHARACTER_CLASS);
 
     public static boolean isValidEmail(String email) {
         return email != null && EMAIL.matcher(email).matches();

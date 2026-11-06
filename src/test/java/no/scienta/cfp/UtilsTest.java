@@ -65,6 +65,7 @@ class UtilsTest {
             "ada@@example.com,                    false",
             "ada lovelace@example.com,            false",
             "' ada@example.com',                  false",
+            "ada\u00a0lovelace@example.com,       false",
     })
     void acceptsOnlyARealEmailAddress(String email, boolean valid) {
         assertEquals(valid, Utils.isValidEmail(email));
