@@ -40,18 +40,10 @@ public class TalkController {
     public List<TalkResponse> list(@RequestParam(required = false) String sort,
                               @RequestParam(required = false) Long speakerId,
                               @RequestParam(defaultValue = "true") String includeWithdrawn) {
-        boolean withWithdrawn = parseIncludeWithdrawn(includeWithdrawn);
-        TalkOrder order = TalkOrder.parse(sort)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "sort must be 'rating'"));
-        return service.listTalks(order, speakerId, withWithdrawn);
-    }
-
-    /** Only {@code true} or {@code false}, not the other spellings that Spring takes for a boolean (Acceptance R9). */
-    private static boolean parseIncludeWithdrawn(String value) {
-        if (!value.equals("true") && !value.equals("false")) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "includeWithdrawn must be true or false");
-        }
-        return Boolean.parseBoolean(value);
+        return switch (TalkListQuery.parse(sort, speakerId, includeWithdrawn)) {
+            case TalkListQuery.Valid valid -> service.listTalks(valid.query());
+            case TalkListQuery.Invalid invalid -> throw new ResponseStatusException(HttpStatus.BAD_REQUEST, invalid.reason());
+        };
     }
 
     @PutMapping("/talks/{id}/ratings/{reviewerId}")

@@ -27,7 +27,7 @@ public class TalkCsvExport {
 
     @Transactional(readOnly = true)
     public String csv() {
-        List<TalkResponse> talks = talkService.listTalks(TalkOrder.OLDEST_FIRST, null);
+        List<TalkResponse> talks = talkService.listTalks(TalkListQuery.EVERY_TALK);
         Map<Long, Speaker> speakersById = speakerDao.findAll().stream()
                 .collect(Collectors.toMap(Speaker::id, Function.identity()));
         StringBuilder sb = new StringBuilder();

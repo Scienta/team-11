@@ -108,21 +108,18 @@ public class TalkService {
         return withRatings(talkDao.findBySpeaker(speakerId));
     }
 
-    /** The talk list without the withdrawn talks when {@code includeWithdrawn} is false (Acceptance R9). */
+    /**
+     * The talks of the query in the order of Ratings R5 or R6, with the withdrawn talks after the others, or without
+     * them when the query leaves them out (Acceptance R9).
+     */
     @Transactional(readOnly = true)
-    public List<TalkResponse> listTalks(TalkOrder order, Long speakerId, boolean includeWithdrawn) {
-        return listTalks(order, speakerId).stream()
-                .filter(talk -> includeWithdrawn || !isWithdrawn(talk))
-                .collect(Collectors.toList());
-    }
-
-    /** The talks in the order of Ratings R5 or R6, with the withdrawn talks after the others (Acceptance R9). */
-    @Transactional(readOnly = true)
-    public List<TalkResponse> listTalks(TalkOrder order, Long speakerId) {
-        Map<Boolean, List<TalkResponse>> byWithdrawn = orderedTalks(order, speakerId).stream()
+    public List<TalkResponse> listTalks(TalkListQuery query) {
+        Map<Boolean, List<TalkResponse>> byWithdrawn = orderedTalks(query.order(), query.speaker()).stream()
                 .collect(Collectors.partitioningBy(TalkService::isWithdrawn));
         List<TalkResponse> talks = new ArrayList<>(byWithdrawn.get(false));
-        talks.addAll(byWithdrawn.get(true));
+        if (query.includeWithdrawn()) {
+            talks.addAll(byWithdrawn.get(true));
+        }
         return talks;
     }
 
@@ -130,8 +127,8 @@ public class TalkService {
         return talk.status() == TalkStatus.WITHDRAWN;
     }
 
-    private List<TalkResponse> orderedTalks(TalkOrder order, Long speakerId) {
-        List<TalkResponse> talks = withRatings(speakerId == null ? talkDao.findAll() : talkDao.findBySpeaker(speakerId));
+    private List<TalkResponse> orderedTalks(TalkOrder order, Optional<Long> speaker) {
+        List<TalkResponse> talks = withRatings(speaker.map(talkDao::findBySpeaker).orElseGet(talkDao::findAll));
         if (order == TalkOrder.OLDEST_FIRST) {
             return talks;
         }

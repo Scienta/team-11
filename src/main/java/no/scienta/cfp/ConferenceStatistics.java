@@ -28,7 +28,7 @@ public class ConferenceStatistics {
 
     @Transactional(readOnly = true)
     public Map<String, Object> statistics() {
-        List<TalkResponse> talks = talkService.listTalks(TalkOrder.OLDEST_FIRST, null);
+        List<TalkResponse> talks = talkService.listTalks(TalkListQuery.EVERY_TALK);
         Map<String, Integer> byFormat = new LinkedHashMap<>();
         Map<String, Integer> byLevel = new LinkedHashMap<>();
         Map<String, Integer> byStatus = new LinkedHashMap<>();
