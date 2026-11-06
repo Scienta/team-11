@@ -87,3 +87,7 @@ CREATE TABLE IF NOT EXISTS programme_entry (
     PRIMARY KEY (room, slot)
 );
 CREATE UNIQUE INDEX IF NOT EXISTS ux_programme_entry_talk ON programme_entry (talk_id);
+
+-- 2026-11 cancellation token (workshop-registration R10): only its SHA-256 hash. Older rows keep NULL and cannot be
+-- unregistered with a token.
+ALTER TABLE workshop_registration ADD COLUMN IF NOT EXISTS cancellation_token_hash TEXT;

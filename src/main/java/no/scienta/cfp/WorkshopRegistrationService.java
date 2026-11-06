@@ -24,23 +24,30 @@ public class WorkshopRegistrationService {
                 .orElseGet(RegistrationOutcome.NotAWorkshop::new);
     }
 
-    /** Registers the attendee unless the talk refuses them. Runs under the row lock that {@link #register} takes. */
+    /**
+     * Registers the attendee with a new cancellation token (R10), unless the talk refuses them. Runs under the row lock
+     * that {@link #register} takes.
+     */
     private RegistrationOutcome registerIfTaken(WorkshopTalk talk, long workshopId, RegistrationRequest request) {
+        CancellationToken token = CancellationToken.random();
         return talk.refusal(dao.seatsTaken(workshopId), dao.emailRegistered(workshopId, request.email()))
-                .orElseGet(() -> dao.addAttendee(workshopId, request)
-                        .<RegistrationOutcome>map(RegistrationOutcome.Registered::new)
+                .orElseGet(() -> dao.addAttendee(workshopId, request, token.hash())
+                        .<RegistrationOutcome>map(registration ->
+                                new RegistrationOutcome.Registered(RegistrationConfirmation.of(registration, token)))
                         .orElseGet(RegistrationOutcome.AlreadyRegistered::new));
     }
 
     /**
-     * Unregisters the attendee and frees the seat (R9), if the email is the registration's email (R10). Takes the same
-     * talk row lock as {@link #register}, so a freed seat goes to one registration only.
+     * Unregisters the attendee and frees the seat (R9), if the token is the registration's cancellation token (R10).
+     * Takes the same talk row lock as {@link #register}, so a freed seat goes to one registration only.
      */
     @Transactional
-    public UnregistrationOutcome unregister(long workshopId, long registrationId, String email) {
+    public UnregistrationOutcome unregister(long workshopId, long registrationId, CancellationToken token) {
         boolean deleted = dao.lockTalk(workshopId)
                 .filter(WorkshopTalk::isWorkshop)
-                .map(workshop -> dao.delete(workshopId, registrationId, email))
+                .flatMap(workshop -> dao.tokenHash(workshopId, registrationId))
+                .filter(token::matches)
+                .map(hash -> dao.delete(workshopId, registrationId))
                 .orElse(false);
         return deleted ? new UnregistrationOutcome.Unregistered() : new UnregistrationOutcome.NoSuchRegistration();
     }

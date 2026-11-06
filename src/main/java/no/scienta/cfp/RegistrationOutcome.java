@@ -6,8 +6,8 @@ package no.scienta.cfp;
  */
 public sealed interface RegistrationOutcome {
 
-    /** The attendee is on the list. */
-    record Registered(Registration registration) implements RegistrationOutcome {
+    /** The attendee is on the list, and only this outcome holds the cancellation token (R10). */
+    record Registered(RegistrationConfirmation confirmation) implements RegistrationOutcome {
     }
 
     /** Every outcome in which the attendee is not on the list. */

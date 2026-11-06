@@ -35,6 +35,8 @@ public class RequestLogFilter extends OncePerRequestFilter {
     private static final String NOT_IN_AN_EMAIL = "[^\\s@\"'\\\\,;:<>()\\[\\]{}]";
     private static final Pattern EMAIL = Pattern.compile(
             "(" + NOT_IN_AN_EMAIL + ")" + NOT_IN_AN_EMAIL + "{0,63}@(" + NOT_IN_AN_EMAIL + "{1,255})");
+    /** A cancellation token in a JSON body (workshop-registration R10), with bounds so that each match is short. */
+    private static final Pattern TOKEN = Pattern.compile("(\"(?:cancellationToken|token)\"[ ]{0,8}:[ ]{0,8}\")[^\"]{0,256}\"");
     /** The longest email: 64 characters before the @, and 255 after it. */
     private static final int LONGEST_EMAIL_CHARS = 64 + 1 + 255;
 
@@ -68,7 +70,7 @@ public class RequestLogFilter extends OncePerRequestFilter {
      */
     private static String shortened(byte[] body) {
         String text = new String(body, StandardCharsets.UTF_8);
-        String start = withMaskedEmails(onOneLine(firstChars(text, MAX_BODY_CHARS + LONGEST_EMAIL_CHARS)));
+        String start = withMaskedTokens(withMaskedEmails(onOneLine(firstChars(text, MAX_BODY_CHARS + LONGEST_EMAIL_CHARS))));
         if (text.length() <= MAX_BODY_CHARS) {
             return start;
         }
@@ -81,6 +83,11 @@ public class RequestLogFilter extends OncePerRequestFilter {
 
     private static String onOneLine(String text) {
         return text.replaceAll("\\s*[\\r\\n]+\\s*", " ");
+    }
+
+    /** Hides the value of each cancellation token: {@code "token":"kQ9…"} becomes {@code "token":"***"}. */
+    private static String withMaskedTokens(String text) {
+        return TOKEN.matcher(text).replaceAll("$1***\"");
     }
 
     /** Keeps the first character and the domain of each email: "ada@example.com" becomes "a***@example.com". */
