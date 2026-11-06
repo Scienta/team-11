@@ -14,9 +14,11 @@ public class SpeakerDao {
             new Speaker(rs.getLong("id"), rs.getString("name"), rs.getString("email"), rs.getString("bio"));
 
     private final JdbcTemplate jdbc;
+    private final Timestamps timestamps;
 
-    public SpeakerDao(JdbcTemplate jdbc) {
+    public SpeakerDao(JdbcTemplate jdbc, Timestamps timestamps) {
         this.jdbc = jdbc;
+        this.timestamps = timestamps;
     }
 
     public Optional<Speaker> findById(long id) {
@@ -36,7 +38,7 @@ public class SpeakerDao {
     public long insert(String name, String email, String bio) {
         return jdbc.queryForObject(
                 "INSERT INTO speaker (name, email, bio, created) VALUES (?, ?, ?, ?) RETURNING id",
-                Long.class, name, email, bio, Utils.today());
+                Long.class, name, email, bio, timestamps.today());
     }
 
     public int update(long id, String name, String email, String bio) {

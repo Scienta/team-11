@@ -1,5 +1,6 @@
 package no.scienta.cfp;
 
+import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -16,10 +17,12 @@ public class RatingService {
 
     private final TalkStatusDao talkStatusDao;
     private final RatingDao ratingDao;
+    private final Timestamps timestamps;
 
-    public RatingService(TalkStatusDao talkStatusDao, RatingDao ratingDao) {
+    public RatingService(TalkStatusDao talkStatusDao, RatingDao ratingDao, Timestamps timestamps) {
         this.talkStatusDao = talkStatusDao;
         this.ratingDao = ratingDao;
+        this.timestamps = timestamps;
     }
 
     @Transactional
@@ -40,14 +43,14 @@ public class RatingService {
         if (!status.isOpenForRating()) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "a talk that is " + status + " takes no ratings");
         }
-        String now = Utils.now();
-        ratingDao.save(talkId, reviewerId, s, now);
+        Instant ratedAt = timestamps.now();
+        ratingDao.save(talkId, reviewerId, s, Timestamps.databaseTime(ratedAt));
 
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("talkId", talkId);
         result.put("reviewerId", reviewerId);
         result.put("score", s);
-        result.put("ratedAtDisplay", Utils.usShort(Utils.parse(now)));
+        result.put("ratedAtDisplay", DisplayFormats.usShort(ratedAt));
         return result;
     }
 

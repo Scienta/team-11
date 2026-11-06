@@ -20,7 +20,8 @@ class TalkServiceTest {
     void setUp() {
         speakerDao = mock(SpeakerDao.class);
         talkDao = mock(TalkDao.class);
-        service = new TalkService(speakerDao, talkDao, mock(RatingService.class), mock(NotificationService.class));
+        service = new TalkService(speakerDao, talkDao, mock(RatingService.class), mock(NotificationService.class),
+                mock(Timestamps.class));
     }
 
     @Test

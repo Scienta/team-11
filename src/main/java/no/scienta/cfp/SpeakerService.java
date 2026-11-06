@@ -30,7 +30,7 @@ public class SpeakerService {
 
     @Transactional
     public Speaker registerSpeaker(SpeakerForm form) {
-        if (!Utils.isValidEmail(form.getEmail())) {
+        if (!EmailAddress.isValid(form.getEmail())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "invalid email");
         }
         requireBioWithinLimit(form.getBio());
@@ -59,7 +59,7 @@ public class SpeakerService {
         if (name == null || name.equals("")) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "name is required");
         }
-        if (!Utils.isValidEmail(email)) {
+        if (!EmailAddress.isValid(email)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "invalid email");
         }
         requireBioWithinLimit(bio);

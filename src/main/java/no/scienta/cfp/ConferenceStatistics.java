@@ -15,10 +15,12 @@ public class ConferenceStatistics {
 
     private final SpeakerDao speakerDao;
     private final TalkService talkService;
+    private final Timestamps timestamps;
 
-    public ConferenceStatistics(SpeakerDao speakerDao, TalkService talkService) {
+    public ConferenceStatistics(SpeakerDao speakerDao, TalkService talkService, Timestamps timestamps) {
         this.speakerDao = speakerDao;
         this.talkService = talkService;
+        this.timestamps = timestamps;
     }
 
     public Map<String, Object> statistics() {
@@ -51,8 +53,8 @@ public class ConferenceStatistics {
         stats.put("byLevel", byLevel);
         stats.put("byStatus", byStatus);
         stats.put("totalHours", minutes / 60);
-        stats.put("averageRating", rated == 0 ? null : Utils.roundRating(ratingSum / rated));
-        stats.put("generated", Utils.now());
+        stats.put("averageRating", rated == 0 ? null : RatingAverage.roundToOneDecimal(ratingSum / rated));
+        stats.put("generated", Timestamps.databaseTime(timestamps.now()));
         return stats;
     }
 }

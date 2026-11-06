@@ -35,13 +35,15 @@ public class TalkService {
     private final TalkDao talkDao;
     private final RatingService ratings;
     private final NotificationService notifications;
+    private final Timestamps timestamps;
 
     public TalkService(SpeakerDao speakerDao, TalkDao talkDao, RatingService ratings,
-                             NotificationService notifications) {
+                             NotificationService notifications, Timestamps timestamps) {
         this.speakerDao = speakerDao;
         this.talkDao = talkDao;
         this.ratings = ratings;
         this.notifications = notifications;
+        this.timestamps = timestamps;
     }
 
     @Transactional
@@ -76,7 +78,7 @@ public class TalkService {
 
     private Long checkSubmissionLimit(TalkForm form, int duration) {
         return talkDao.insertIfBelow(MAX_TALKS_PER_SPEAKER, form.title, form.format, duration, form.level, form.speakerId,
-                System.currentTimeMillis());
+                timestamps.now().toEpochMilli());
     }
 
     public TalkResponse getTalk(long id) {

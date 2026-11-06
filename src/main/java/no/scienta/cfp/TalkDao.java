@@ -1,5 +1,7 @@
 package no.scienta.cfp;
 
+import java.time.Instant;
+import java.time.ZoneOffset;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
@@ -22,11 +24,15 @@ public class TalkDao {
         long millis = rs.getLong("submitted_at");
         return new Talk(rs.getLong("id"), rs.getString("title"), rs.getString("format"), rs.getString("level"),
                 rs.getLong("speaker_id"), rs.getInt("duration"), rs.getString("status"), new Date(millis),
-                Utils.toSqlDate(millis), List.of((Long[]) rs.getArray("co_speaker_ids").getArray()));
+                utcDay(millis), List.of((Long[]) rs.getArray("co_speaker_ids").getArray()));
     };
 
     public TalkDao(JdbcTemplate jdbc) {
         this.jdbc = jdbc;
+    }
+
+    private static java.sql.Date utcDay(long epochMillis) {
+        return java.sql.Date.valueOf(Instant.ofEpochMilli(epochMillis).atZone(ZoneOffset.UTC).toLocalDate());
     }
 
     public Optional<Talk> findById(long id) {
