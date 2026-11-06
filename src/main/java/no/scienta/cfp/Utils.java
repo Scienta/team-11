@@ -68,16 +68,22 @@ public class Utils {
     }
 
     /**
-     * Makes a value safe for the semicolon CSV export.
+     * Makes a value safe for the semicolon CSV export: a spreadsheet shows it as text, never as a formula, and it stays
+     * in one cell.
      */
     public static String csv(String s) {
         if (s == null) {
             return "";
         }
-        if (s.contains(";") || s.contains("\"")) {
-            return "\"" + s.replace("\"", "'") + "\"";
+        String text = startsLikeAFormula(s) ? "'" + s : s;
+        if (text.contains(";") || text.contains("\"") || text.contains("\n") || text.contains("\r")) {
+            return "\"" + text.replace("\"", "'") + "\"";
         }
-        return s;
+        return text;
+    }
+
+    private static boolean startsLikeAFormula(String s) {
+        return !s.isEmpty() && "=+-@\t\r".indexOf(s.charAt(0)) >= 0;
     }
 
     /**
