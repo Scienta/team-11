@@ -172,6 +172,8 @@ No blocker in any of them. Each one first split a result that meant two things.
   Open, small: spec row 59 (DELETE on a non-workshop) still gives "Same as GET" as its reason.
 - `05ac2c5` scheduling: an unknown room or slot gives 404 on PUT, GET and DELETE. A missing or
   malformed body on PUT still gets Spring's 400 first, as the spec says.
+- `d4ef02a` co-speakers: own records with one status each: `MainSpeakerAsCoSpeaker` (400),
+  `MainSpeaker` (409), `NotCoSpeaker` (404, checked on the locked talk). G18 stays open.
 
 Lesson: before a status change, check that the result type does not hold two cases with different
 answers.
@@ -181,10 +183,45 @@ answers.
 No blocker. A push still deploys once from `deploy.yml`; only the `publish` job in `report.yml` has
 `pages: write` and `id-token: write`. Merge fix 10 for Spring Boot 4: `report.yml` also needs Java 25.
 
+The same review covers `81344e6` (`paths-ignore` for docs-only pushes) with the report workflow
+realigned as `b1a4061`: a push that touches `src/**`, `pom.xml`, `Dockerfile`, `.github/**`, `.mvn/**`
+or `mvnw` still deploys. After a docs-only push, `/health` reports the SHA of the last code push, so
+evidence for a claim names the deployed SHA.
+
+### 2026-11-06: ratings-cr PR #11 at `76513a4` (guardian)
+
+OK to merge (merged as `fff8c83`). The rule is one pure function, `RatingTotals.average()`: the trim
+from 5 ratings, the exact `BigDecimal` mean, 2 decimals, `HALF_EVEN`. The SQL only aggregates. The JSON
+changes only in `averageRating`; `ratingCount` still counts every reviewer.
+
+### 2026-11-06: Spring Boot 4, PR #5 at `815fd7a` (guardian)
+
+OK to merge. Frode: 627 tests on Java 25, 0 failures; start-up 22 s at 0.15 CPU; 16 of 16 answers
+byte-equal with `origin/main`. Merge fixes 1–9 and 11 are in; fix 10 waits for `report.yml` on `main`.
+The main-code diff touches only framework and configuration files (jakarta, Jackson 3, Boot 4
+property names, the slash and charset filters), so P1–P8 hold.
+
+Fix 11, found after the first list: `WorkshopRegistrationTest` caught `IOException` around
+`JSON.readTree`, which Jackson 3 does not throw.
+
+### 2026-11-06: submission-cap-cr `267cb08` and `f95fd45` (guardian)
+
+No blocker. Which statuses count stays in `TalkStatus.countsTowardLimit` (P1): only `REJECTED` changes.
+One SQL constant, `TalkDao.TALKS_THAT_COUNT`, counts main and co-speaker talks for both `POST /talks`
+and the co-speaker `PUT`. Both lock the speaker row; nothing locks a speaker and then an existing talk,
+so there is no deadlock.
+
+| # | Finding | Refactoring | When | Status |
+|---|---------|-------------|------|--------|
+| G24 | `MAX_TALKS_PER_SPEAKER` sits on `ConferenceService`, which PR #8 deletes, and `CoSpeakerService` depends on it. | Move Field to `TalkLimit.PER_SPEAKER` | before PR #8 | done, `ef9655b` |
+
+`6bcd412` (S17): `DatabaseFailureAdvice` also handles `TransactionException`, so a database or pool
+that does not answer gets the same fixed 500 message. No blocker. For the Boot 4 rebase, keep
+`jakarta.servlet` in that file.
+
 ## Watch list
 
-- Spring Boot 4 (PR #5): after the merge, check that the 10 merge fixes above are in, the JIT flag
-  first of all.
+- Spring Boot 4 (PR #5): after the merge, check that `report.yml`, when it lands, has Java 25 (fix 10).
 - PR #8: after the merge, check G19–G21 on `TalkService`.
 - Merges from Carl Kristian's laptop: check only the fit with P1–P8 and what our features rely on.
   Do not repeat his team's feature review.
