@@ -1,8 +1,8 @@
 # Teststatus
 
-Laget 6. november 2026 kl. 14:36 fra versjon [cae558e](https://github.com/Scienta/team-11/commit/cae558eb724e6d3a48eb905cc9691b7625525c96).
+Laget 6. november 2026 kl. 14:38 fra versjon [cd1a4df](https://github.com/Scienta/team-11/commit/cd1a4df7746d0705504a3b8db3ead16cc8516768).
 
-✅ Våre tester: alle 65 regler er i orden (260 av 260 eksempler).
+✅ Våre tester: alle 75 regler er i orden (309 av 309 eksempler).
 
 ✅ Arrangørenes kontroller: alle 20 er i orden (Foredragsholdere, Foredrag, Karakterer, Godkjenning).
 
@@ -95,3 +95,13 @@ Alle detaljer står i [testrapporten](specs/index.md).
 - ✅ I eksporten til regneark blir en verdi som ligner en formel, lagret som tekst. — 6 av 6 eksempler · [se eksemplene](specs/utils-test/exports-a-value-that-starts-like-a-formula-as-text.md)
 - ✅ I eksporten til regneark får en verdi med semikolon eller linjeskift anførselstegn rundt seg. — 4 av 4 eksempler · [se eksemplene](specs/utils-test/quotes-a-value-with-a-semicolon-or-a-line-break.md)
 - ✅ Tjenesten avviser en forespørsel som er større enn 1 MB. — 3 av 3 eksempler · [se eksemplene](specs/request-limits/refuses-a-request-body-larger-than-1-mb.md)
+- ✅ **R1** Gives each slot its fixed start and end — 5 av 5 eksempler · [se eksemplene](specs/programme-scheduling/r1-gives-each-slot-its-fixed-start-and-end.md)
+- ✅ **R1** Refuses a room or slot outside the venue — 4 av 4 eksempler · [se eksemplene](specs/programme-scheduling/r1-refuses-a-room-or-slot-outside-the-venue.md)
+- ✅ **R2** Puts a talk in a place, looks it up, takes it out — 8 av 8 eksempler · [se eksemplene](specs/programme-scheduling/r2-puts-a-talk-in-a-place-looks-it-up-takes-it-out.md)
+- ✅ **R2** Puts a talk only for a body with a talk ID — 11 av 11 eksempler · [se eksemplene](specs/programme-scheduling/r2-puts-a-talk-only-for-a-body-with-a-talk-id.md)
+- ✅ **R3** Puts only an accepted talk on the programme — 2 av 2 eksempler · [se eksemplene](specs/programme-scheduling/r3-puts-only-an-accepted-talk-on-the-programme.md)
+- ✅ **R4** Puts a workshop only in the long slot — 3 av 3 eksempler · [se eksemplene](specs/programme-scheduling/r4-puts-a-workshop-only-in-the-long-slot.md)
+- ✅ **R5** Keeps one talk per place, and each talk once — 4 av 4 eksempler · [se eksemplene](specs/programme-scheduling/r5-keeps-one-talk-per-place-and-each-talk-once.md)
+- ✅ **R6** Keeps each speaker in one room at a time — 6 av 6 eksempler · [se eksemplene](specs/programme-scheduling/r6-keeps-each-speaker-in-one-room-at-a-time.md)
+- ✅ **R7** Leaves the programme as it is when a talk changes — 3 av 3 eksempler · [se eksemplene](specs/programme-scheduling/r7-leaves-the-programme-as-it-is-when-a-talk-changes.md)
+- ✅ **R8** Keeps the rules when requests come at the same time — 3 av 3 eksempler · [se eksemplene](specs/programme-scheduling/r8-keeps-the-rules-when-requests-come-at-the-same-time.md)
