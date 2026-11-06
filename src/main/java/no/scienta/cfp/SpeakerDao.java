@@ -45,6 +45,10 @@ public class SpeakerDao {
         return jdbc.update("UPDATE speaker SET name = ?, email = ?, bio = ? WHERE id = ?", name, email, bio, id);
     }
 
+    public List<Speaker> findAll() {
+        return jdbc.query("SELECT id, name, email, bio FROM speaker", SPEAKER);
+    }
+
     public int count() {
         return jdbc.queryForObject("SELECT COUNT(*) FROM speaker", Integer.class);
     }

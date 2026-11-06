@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 
@@ -28,6 +30,7 @@ public class ConferenceStatistics {
         Map<String, Integer> byFormat = new LinkedHashMap<>();
         Map<String, Integer> byLevel = new LinkedHashMap<>();
         Map<String, Integer> byStatus = new LinkedHashMap<>();
+        Set<Long> registered = speakerDao.findAll().stream().map(Speaker::id).collect(Collectors.toSet());
         List<Long> speakersWithTalks = new ArrayList<>();
         int minutes = 0;
         double ratingSum = 0;
@@ -36,7 +39,7 @@ public class ConferenceStatistics {
             byFormat.put(t.format(), byFormat.getOrDefault(t.format(), 0) + 1);
             byLevel.put(t.level(), byLevel.getOrDefault(t.level(), 0) + 1);
             byStatus.put(t.status(), byStatus.getOrDefault(t.status(), 0) + 1);
-            if (!speakersWithTalks.contains(t.speakerId()) && speakerDao.findById(t.speakerId()).isPresent()) {
+            if (!speakersWithTalks.contains(t.speakerId()) && registered.contains(t.speakerId())) {
                 speakersWithTalks.add(t.speakerId());
             }
             minutes += t.durationMinutes();

@@ -54,6 +54,11 @@ public class RatingService {
         return result;
     }
 
+    /** The summaries of all rated talks, by talk id; a talk that is not in it has no ratings. */
+    public Map<Long, RatingSummary> summariesByTalk() {
+        return ratingDao.summariesByTalk();
+    }
+
     public RatingSummary summaryOf(long talkId) {
         Map<String, Object> stats = ratingDao.stats(talkId);
         return RatingSummary.of(((Number) stats.get("cnt")).intValue(), ((Number) stats.get("total")).longValue());

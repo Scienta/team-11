@@ -90,11 +90,19 @@ public class TalkService {
         return TalkResponse.of(talk, ratings.summaryOf(talk.id()));
     }
 
+    /** One query for the ratings of all the talks, not one per talk. */
+    private List<TalkResponse> withRatings(List<Talk> talks) {
+        Map<Long, RatingSummary> summaries = ratings.summariesByTalk();
+        return talks.stream()
+                .map(talk -> TalkResponse.of(talk, summaries.getOrDefault(talk.id(), RatingSummary.NONE)))
+                .toList();
+    }
+
     public List<TalkResponse> getTalksForSpeaker(long speakerId) {
         if (speakerDao.findById(speakerId).isEmpty()) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "speaker not found");
         }
-        return talkDao.findBySpeaker(speakerId).stream().map(this::withRatings).toList();
+        return withRatings(talkDao.findBySpeaker(speakerId));
     }
 
     /** The talk list without the withdrawn talks when {@code includeWithdrawn} is false (Acceptance R9). */
@@ -121,9 +129,7 @@ public class TalkService {
         if (sort != null && !sort.equals("rating")) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "sort must be 'rating'");
         }
-        List<TalkResponse> talks = (speakerId == null ? talkDao.findAll() : talkDao.findBySpeaker(speakerId)).stream()
-                .map(this::withRatings)
-                .toList();
+        List<TalkResponse> talks = withRatings(speakerId == null ? talkDao.findAll() : talkDao.findBySpeaker(speakerId));
         if (!"rating".equals(sort)) {
             return talks;
         }

@@ -9,6 +9,8 @@ import java.math.RoundingMode;
  */
 public record RatingSummary(int count, Double average) {
 
+    static final RatingSummary NONE = new RatingSummary(0, null);
+
     static RatingSummary of(int count, long total) {
         return new RatingSummary(count, count == 0 ? null
                 : BigDecimal.valueOf(total).divide(BigDecimal.valueOf(count), 1, RoundingMode.HALF_UP).doubleValue());

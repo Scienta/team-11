@@ -1,6 +1,7 @@
 package no.scienta.cfp;
 
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
@@ -28,5 +29,13 @@ public class RatingDao {
      */
     public Map<String, Object> stats(long talkId) {
         return jdbc.queryForMap("SELECT COUNT(*) AS cnt, COALESCE(SUM(score), 0) AS total FROM rating WHERE talk_id = ?", talkId);
+    }
+
+    /** The rating summary of every rated talk, by talk id, in one query. */
+    public Map<Long, RatingSummary> summariesByTalk() {
+        return jdbc.query("SELECT talk_id, COUNT(*) AS cnt, SUM(score) AS total FROM rating GROUP BY talk_id",
+                (rs, rowNum) -> Map.entry(rs.getLong("talk_id"), RatingSummary.of(rs.getInt("cnt"), rs.getLong("total"))))
+                .stream()
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 }
