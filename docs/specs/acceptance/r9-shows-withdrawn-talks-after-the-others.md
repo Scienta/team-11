@@ -8,6 +8,7 @@ Withdrawn column after the ratings.
 | Result | Scenario | Talk A | Talk B | Talk C | Withdrawn | List | Titles? |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | ✅ passes | Oldest first | [5] | [3] | [4] | [A] | {/talks, /talks?includeWithdrawn=true} | [B, C, A] |
+| ✅ passes | One speaker's talks | [5] | [3] | [4] | [A] | /talks?speakerId=1 | [B, C, A] |
 | ✅ passes | Ranking, best talk withdrawn | [5] | [3] | [4] | [A] | /talks?sort=rating | [C, B, A] |
 | ✅ passes | Ranking with an unrated talk | [5] | [] | [4] | [A] | /talks?sort=rating | [C, B, A] |
 | ✅ passes | Ranking, two talks withdrawn | [5] | [3] | [4] | [A, B] | /talks?sort=rating | [C, A, B] |
