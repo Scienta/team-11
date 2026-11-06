@@ -4,8 +4,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Registers attendees for workshops, unregisters them, and lists them (workshop-registration R1-R9). Returns the expected refusals as a
- * {@link RegistrationOutcome}; the rules themselves are in {@link WorkshopTalk}.
+ * Registers attendees for workshops, unregisters them, and lists them (workshop-registration R1-R10). Returns the
+ * expected refusals as a {@link RegistrationOutcome}; the rules themselves are in {@link WorkshopTalk}.
  */
 @Service
 public class WorkshopRegistrationService {
@@ -27,7 +27,7 @@ public class WorkshopRegistrationService {
     /** Registers the attendee unless the talk refuses them. Runs under the row lock that {@link #register} takes. */
     private RegistrationOutcome registerIfTaken(WorkshopTalk talk, long workshopId, RegistrationRequest request) {
         return talk.refusal(dao.seatsTaken(workshopId), dao.emailRegistered(workshopId, request.email()))
-                .orElseGet(() -> dao.insert(workshopId, request)
+                .orElseGet(() -> dao.addAttendee(workshopId, request)
                         .<RegistrationOutcome>map(RegistrationOutcome.Registered::new)
                         .orElseGet(RegistrationOutcome.AlreadyRegistered::new));
     }

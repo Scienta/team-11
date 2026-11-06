@@ -23,7 +23,7 @@ class WorkshopRegistrationServiceTest {
         when(dao.lockTalk(1L)).thenReturn(Optional.of(new WorkshopTalk("WORKSHOP", TalkStatus.ACCEPTED)));
         when(dao.seatsTaken(1L)).thenReturn(0);
         when(dao.emailRegistered(1L, "ada@example.com")).thenReturn(false);
-        when(dao.insert(1L, ada)).thenReturn(Optional.empty());
+        when(dao.addAttendee(1L, ada)).thenReturn(Optional.empty());
 
         RegistrationOutcome outcome = new WorkshopRegistrationService(dao).register(1L, ada);
 

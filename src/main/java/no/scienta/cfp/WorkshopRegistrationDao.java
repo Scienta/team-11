@@ -55,7 +55,7 @@ public class WorkshopRegistrationDao {
      * case. The unique index decides, so this holds even without the row lock (R6). {@code ON CONFLICT} leaves the
      * transaction usable, where a duplicate-key error would abort it.
      */
-    public Optional<Registration> insert(long talkId, RegistrationRequest request) {
+    public Optional<Registration> addAttendee(long talkId, RegistrationRequest request) {
         return jdbc.query("INSERT INTO workshop_registration (talk_id, name, email) VALUES (?, ?, ?) "
                         + "ON CONFLICT (talk_id, lower(email)) DO NOTHING RETURNING id",
                         (rs, row) -> rs.getLong("id"), talkId, request.name(), request.email())
