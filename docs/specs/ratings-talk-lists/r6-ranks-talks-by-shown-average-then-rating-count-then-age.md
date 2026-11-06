@@ -5,10 +5,10 @@ different reviewer. An empty list means that nobody has rated the talk. The rank
 GET /talks?sort=rating.
 
 
-| Scenario | Talk A | Talk B | Talk C | Ranking? |
-| --- | --- | --- | --- | --- |
-| Different averages | [3] | [5] | [4] | [B, C, A] |
-| Same average, different counts | [4] | [4, 4] | [4, 4, 4] | [C, B, A] |
-| Same average only after rounding | [4, 4, 4, 5] | [4, 4, 5] | [5] | [C, A, B] |
-| Same average and count | [4] | [4] | [4] | [A, B, C] |
-| Unrated talks | [] | [1] | [] | [B, A, C] |
+| Result | Scenario | Talk A | Talk B | Talk C | Ranking? |
+| --- | --- | --- | --- | --- | --- |
+| ✅ passes | Different averages | [3] | [5] | [4] | [B, C, A] |
+| ✅ passes | Same average, different counts | [4] | [4, 4] | [4, 4, 4] | [C, B, A] |
+| ✅ passes | Same average only after rounding | [4, 4, 4, 5] | [4, 4, 5] | [5] | [C, A, B] |
+| ✅ passes | Same average and count | [4] | [4] | [4] | [A, B, C] |
+| ✅ passes | Unrated talks | [] | [1] | [] | [B, A, C] |

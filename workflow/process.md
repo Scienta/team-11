@@ -10,8 +10,10 @@ An agent does the other steps.
    rule.
 3. **Ask the product owner (person).** A person takes the open questions to the organisers' product
    owner. Write each answer into the spec with the time of the answer.
-4. **Write the Hurl examples.** Put one Hurl file per feature in `examples/<feature>.hurl`. It covers
-   every row in the example tables, not only the happy path.
+4. **Write the Hurl examples.** Put one Hurl file per feature in `examples/our-<feature>.hurl`, for
+   example `our-speakers.hurl` and `our-ratings.hurl`. The prefix keeps our files apart from the
+   organisers' `examples/<feature>.hurl`. Our file covers every row in the example tables, not only
+   the happy path.
 5. **Write the tests first.** Write each example table as a `@TableTest`, with the rule ID in its
    `@DisplayName`. See it fail.
 6. **Implement.** Make the tests pass. Commit each step that compiles and passes the tests. When a
@@ -25,7 +27,9 @@ An agent does the other steps.
    JAVA_HOME=$(/usr/libexec/java_home -v 25) ./mvnw org.tabletest:tabletest-reporter-maven-plugin:report
    ```
 7. **Review.** A review agent compares the diff with `spec.md`, row by row. It does not see our
-   reasoning, only the spec and the code. See `workflow/review-rubric.md`.
+   reasoning, only the spec and the code. See `workflow/review-rubric.md` items 1–7.
+   Then a second session does the design review: it checks the code against our style, with
+   `workflow/review-rubric.md` item 8. Fix each "before the claim" finding before step 10.
 8. **Deploy (person approves the push).** Push to `main`. Wait for the deploy workflow to go green.
 9. **Verify on the deployed service.** Run `examples/run.sh https://fagsem-h2026-team-11.scienta.cloud`. Read the
    request log with `.github/fagdag/logs.sh` and the harness feedback with

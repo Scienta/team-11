@@ -5,11 +5,11 @@ PUT /talks/{id}/ratings/{reviewerId}. Each row rates a newly submitted talk with
 Open question for the product owner: is a reviewer number above 2147483647 realistic?
 
 
-| Scenario | Reviewer | Status? |
-| --- | --- | --- |
-| Lowest positive number | 1 | 200 |
-| Around the largest 32-bit | {2147483647, 2147483648} | 200 |
-| Largest 64-bit number | 9223372036854775807 | 200 |
-| One past the largest 64-bit | 9223372036854775808 | 400 |
-| Zero | 0 | 400 |
-| Negative number | -1 | 400 |
+| Result | Scenario | Reviewer | Status? |
+| --- | --- | --- | --- |
+| ✅ passes | Lowest positive number | 1 | 200 |
+| ✅ passes | Around the largest 32-bit | {2147483647, 2147483648} | 200 |
+| ✅ passes | Largest 64-bit number | 9223372036854775807 | 200 |
+| ✅ passes | One past the largest 64-bit | 9223372036854775808 | 400 |
+| ✅ passes | Zero | 0 | 400 |
+| ✅ passes | Negative number | -1 | 400 |

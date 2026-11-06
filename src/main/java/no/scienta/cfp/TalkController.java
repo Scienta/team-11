@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 
 @RestController
 public class TalkController {
@@ -35,8 +36,17 @@ public class TalkController {
 
     @GetMapping("/talks")
     public List<TalkDto> list(@RequestParam(required = false) String sort,
-                              @RequestParam(required = false) Long speakerId) {
-        return service.listTalks(sort, speakerId);
+                              @RequestParam(required = false) Long speakerId,
+                              @RequestParam(defaultValue = "true") String includeWithdrawn) {
+        return service.listTalks(sort, speakerId, parseIncludeWithdrawn(includeWithdrawn));
+    }
+
+    /** Only {@code true} or {@code false}, not the other spellings that Spring takes for a boolean (Acceptance R9). */
+    private static boolean parseIncludeWithdrawn(String value) {
+        if (!value.equals("true") && !value.equals("false")) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "includeWithdrawn must be true or false");
+        }
+        return Boolean.parseBoolean(value);
     }
 
     @PutMapping("/talks/{id}/ratings/{reviewerId}")

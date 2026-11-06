@@ -3,8 +3,8 @@
 The major version of each field in versions on GET /actuator/info.
 
 
-| Field | Major Version? |
-| --- | --- |
-| springBoot | 4 |
-| springFramework | 7 |
-| java | 25 |
+| Result | Field | Major Version? |
+| --- | --- | --- |
+| ✅ passes | springBoot | 4 |
+| ✅ passes | springFramework | 7 |
+| ✅ passes | java | 25 |

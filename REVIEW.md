@@ -33,6 +33,10 @@ Draft from 12:30. We update it when the steps change.
 The full steps are in [`workflow/process.md`](workflow/process.md). The agent rules are in
 [`.claude/rules/team-workflow.md`](.claude/rules/team-workflow.md).
 
+Many agent sessions work on one laptop, in one working tree. One coordinator session takes all
+requests and gives each task to an agent session. The rules are in
+[`workflow/coordination.md`](workflow/coordination.md).
+
 ## 2. How we reviewed agent output
 
 <!-- Who or what reviewed the agents' work (people, review agents, tests, Hurl examples, gates in
@@ -87,10 +91,40 @@ Why we missed it: our tests, the Hurl files and the deploy gate all run one requ
 deploy gate waits only for `/health` with the new SHA. Nothing measured the first burst of traffic on a
 cold JVM. Each deploy, and each start after scale-to-zero, can cost a FAULTY tick.
 
+**Tick 67 (12:34): `speakers/check-1` and `speakers/check-3` were FAULTY on `POST /speakers`.**
+The cause was the same: the cold start after the deploy of `0a95814`. Both checks were OK again at
+the next tick. The harness alert went to Slack #team-11 from our log and harness watches.
+
+The fix is a warm-up at start-up (`workflow/specs/warm-up/spec.md`, `c03799a`, deploy run
+42219441079). After the start, the service sends 6 requests to its own port. The requests change no
+data. The first warm-up request now gets the cold cost (2677 ms), not the harness.
+
+| First harness burst after a start | Of the first 35 requests, 1 s or more | Slowest |
+|---|---|---|
+| Before: containers 00009, 00010, 00011 | 25, 27, 21 | 3.6 s, 3.4 s, 3.9 s |
+| After: container 00012 | 0 | 782 ms |
+
+Ticks 68–78 were all OK after the fix, and we lost no more points. We check this (R5) in the request
+log after each deploy, because a JUnit test runs on a JVM that is already warm.
+
 ## 5. Reusable artifacts
 
 <!-- What's worth taking to client work: agents, skills, prompts, spec templates, gates. Give the paths. -->
 
+Draft. Each item works outside this repo with small changes.
+
+| Artifact | Path | What it does |
+|---|---|---|
+| Harness client | [`workflow/harness.sh`](workflow/harness.sh) | Gets specs, feedback and check transcripts. It never prints the token, and it waits on `429`. |
+| Spec template | [`workflow/spec-template.md`](workflow/spec-template.md) | Rules with IDs, our decisions, open questions for the product owner, one example table for each rule. |
+| Review rubric | [`workflow/review-rubric.md`](workflow/review-rubric.md) | A review agent checks the diff against the spec, rule by rule and row by row, without the conversation that wrote the code. |
+| Claim checklist | [`workflow/claim-checklist.md`](workflow/claim-checklist.md) | A person claims only when each line has evidence that another person can check. |
+| Coordination rules | [`workflow/coordination.md`](workflow/coordination.md) | One coordinator session, many agent sessions, one shared working tree. |
+| TableTest report | [`src/test/tabletest-templates/status-table.md.peb`](src/test/tabletest-templates/status-table.md.peb), output in [`docs/specs/`](docs/specs/index.md) | Turns the `@TableTest` example tables into Markdown pages for the product owners, with ✅ or ❌ on each row. |
+| Start-up warm-up | [`StartupWarmUp.java`](src/main/java/no/scienta/cfp/StartupWarmUp.java), spec in [`workflow/specs/warm-up/spec.md`](workflow/specs/warm-up/spec.md) | The service sends requests to its own port after a start, so the first real traffic does not get the cold-JVM cost (section 4). |
+
 ## 6. One thing we'd do differently
 
 <!-- One thing, and why. -->
+
+(draft, the team decides) Measure the first burst of traffic after a cold start before the first deploy, not after two FAULTY ticks.

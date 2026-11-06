@@ -4,11 +4,11 @@ Each row looks for the request's line in the request log (RequestLogFilter) afte
 The service is new and its database is empty.
 
 
-| Scenario | Method | Path | Request Body | Status? |
-| --- | --- | --- | --- | --- |
-| Speaker form that fails validation | POST | /speakers | {} | 400 |
-| Unknown speaker | GET | /speakers/0 | "" | 404 |
-| Talk form that fails validation | POST | /talks | {} | 400 |
-| Unknown talk | GET | /talks/0 | "" | 404 |
-| Ranking for a speaker with no talks | GET | /talks?speakerId=0&sort=rating | "" | 200 |
-| Rating for an unknown talk | PUT | /talks/0/ratings/1 | {"score":3} | 404 |
+| Result | Scenario | Method | Path | Request Body | Status? |
+| --- | --- | --- | --- | --- | --- |
+| ✅ passes | Speaker form that fails validation | POST | /speakers | {} | 400 |
+| ✅ passes | Unknown speaker | GET | /speakers/0 | "" | 404 |
+| ✅ passes | Talk form that fails validation | POST | /talks | {} | 400 |
+| ✅ passes | Unknown talk | GET | /talks/0 | "" | 404 |
+| ✅ passes | Ranking for a speaker with no talks | GET | /talks?speakerId=0&sort=rating | "" | 200 |
+| ✅ passes | Rating for an unknown talk | PUT | /talks/0/ratings/1 | {"score":3} | 404 |

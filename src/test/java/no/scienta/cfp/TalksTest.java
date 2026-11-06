@@ -46,7 +46,7 @@ class TalksTest {
 
     private final HttpClient http = HttpClient.newHttpClient();
 
-    @DisplayName("Sets the duration from the format")
+    @DisplayName("R4: Sets the duration from the format")
     @Description("""
             The speaker does not choose the length. Each row is the first talk of a newly registered
             speaker, at level BEGINNER.
@@ -63,7 +63,7 @@ class TalksTest {
         assertEquals(durationMinutes, JSON.readTree(res.body()).get("durationMinutes").asInt(), res.body());
     }
 
-    @DisplayName("Accepts only the four formats, in capitals")
+    @DisplayName("R5: Accepts only the four formats, in capitals")
     @Description("""
             Each row is the first talk of a newly registered speaker, at level BEGINNER.
             Keynotes are invited, not submitted.
@@ -79,7 +79,7 @@ class TalksTest {
         assertEquals(status, submit(format, "BEGINNER").statusCode());
     }
 
-    @DisplayName("Accepts only the three levels, in capitals")
+    @DisplayName("R5: Accepts only the three levels, in capitals")
     @Description("""
             Each row is the first talk of a newly registered speaker, in the format PRESENTATION.
             """)
@@ -94,7 +94,7 @@ class TalksTest {
         assertEquals(status, submit("PRESENTATION", level).statusCode());
     }
 
-    @DisplayName("Accepts a talk only with a real title")
+    @DisplayName("R3: Accepts a talk only with a real title")
     @Description("""
             A blank cell sends JSON null as the title. Each row is the first talk of a newly
             registered speaker, a PRESENTATION at level BEGINNER.
@@ -124,6 +124,7 @@ class TalksTest {
         return http.send(request("POST", "/talks", talk), HttpResponse.BodyHandlers.ofString());
     }
 
+    @DisplayName("R7: Keeps a speaker at 3 talks when 10 arrive at the same time")
     @Test
     void concurrentSubmissionsNeverExceedThreeTalks() throws Exception {
         String speaker = newSpeaker();

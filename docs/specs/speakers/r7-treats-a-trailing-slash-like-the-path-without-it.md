@@ -4,7 +4,7 @@ Each row registers speaker 1 first. Every request then carries the registration 
 another speaker as its body, which GET ignores.
 
 
-| Scenario | Method | Path | Status? |
-| --- | --- | --- | --- |
-| Look up a speaker | GET | {/speakers/1, /speakers/1/} | 200 |
-| Register a speaker | POST | {/speakers, /speakers/} | 201 |
+| Result | Scenario | Method | Path | Status? |
+| --- | --- | --- | --- | --- |
+| ✅ passes | Look up a speaker | GET | {/speakers/1, /speakers/1/} | 200 |
+| ✅ passes | Register a speaker | POST | {/speakers, /speakers/} | 201 |

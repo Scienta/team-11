@@ -20,6 +20,7 @@
         <tabletest-reporter.version>1.5.0</tabletest-reporter.version>
         <tabletest.report.format>markdown</tabletest.report.format>
         <tabletest.report.outputDirectory>${project.basedir}/docs/specs</tabletest.report.outputDirectory>
+        <tabletest.report.templateDirectory>${project.basedir}/src/test/tabletest-templates</tabletest.report.templateDirectory>
     </properties>
 
     <!-- We can't use spring-boot-starter-parent because of the old company parent pom,

@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,13 +44,15 @@ public class ConferenceService {
     private final SpeakerDao speakerDao;
     private final TalkDao talkDao;
     private final RatingDao ratingDao;
+    private final TalkStatusDao talkStatusDao;
     private final NotificationService notifications;
 
     public ConferenceService(SpeakerDao speakerDao, TalkDao talkDao, RatingDao ratingDao,
-                             NotificationService notifications) {
+                             TalkStatusDao talkStatusDao, NotificationService notifications) {
         this.speakerDao = speakerDao;
         this.talkDao = talkDao;
         this.ratingDao = ratingDao;
+        this.talkStatusDao = talkStatusDao;
         this.notifications = notifications;
     }
 
@@ -189,7 +192,27 @@ public class ConferenceService {
         return talks;
     }
 
+    /** The talk list without the withdrawn talks when {@code includeWithdrawn} is false (Acceptance R9). */
+    public List<TalkDto> listTalks(String sort, Long speakerId, boolean includeWithdrawn) {
+        return listTalks(sort, speakerId).stream()
+                .filter(talk -> includeWithdrawn || !isWithdrawn(talk))
+                .collect(Collectors.toList());
+    }
+
+    /** The talks in the order of Ratings R5 or R6, with the withdrawn talks after the others (Acceptance R9). */
     public List<TalkDto> listTalks(String sort, Long speakerId) {
+        Map<Boolean, List<TalkDto>> byWithdrawn = orderedTalks(sort, speakerId).stream()
+                .collect(Collectors.partitioningBy(ConferenceService::isWithdrawn));
+        List<TalkDto> talks = new ArrayList<>(byWithdrawn.get(false));
+        talks.addAll(byWithdrawn.get(true));
+        return talks;
+    }
+
+    private static boolean isWithdrawn(TalkDto talk) {
+        return TalkStatus.WITHDRAWN.name().equals(talk.status);
+    }
+
+    private List<TalkDto> orderedTalks(String sort, Long speakerId) {
         if (sort != null && !sort.equals("rating")) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "sort must be 'rating'");
         }
@@ -290,8 +313,10 @@ public class ConferenceService {
         if (s < 1 || s > 5) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "score must be 1-5");
         }
-        if (!talkDao.exists(talkId)) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "talk not found");
+        TalkStatus status = talkStatusDao.lockStatus(talkId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "talk not found"));
+        if (!status.isOpenForRating()) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "a talk that is " + status + " takes no ratings");
         }
         String now = Utils.now();
         ratingDao.save(talkId, reviewerId, s, now);

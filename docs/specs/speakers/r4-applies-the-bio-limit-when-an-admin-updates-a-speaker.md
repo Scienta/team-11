@@ -4,7 +4,7 @@ The admin update is PUT /speakers/{id}. Each row updates the bio of a registered
 and keeps the name and the email.
 
 
-| Scenario | Bio | Status? |
-| --- | --- | --- |
-| Emoji at the limit | 500 × 😀 | 200 |
-| One past the limit | 501 × x | 400 |
+| Result | Scenario | Bio | Status? |
+| --- | --- | --- | --- |
+| ✅ passes | Emoji at the limit | 500 × 😀 | 200 |
+| ✅ passes | One past the limit | 501 × x | 400 |
