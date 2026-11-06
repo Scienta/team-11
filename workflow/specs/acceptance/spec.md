@@ -52,7 +52,7 @@ on 2026-11-06.
 
 ## Examples
 
-Each table is a `@TableTest` in `AcceptanceTest` and a request in `examples/acceptance.hurl`. "Status
+Each table is a `@TableTest` in `AcceptanceTest` and a request in `examples/our-acceptance.hurl`. "Status
 before" is the status the talk gets through the API before the request. Every talk has ratings from
 two reviewers before it gets its status, except in the R3 table.
 
@@ -103,6 +103,18 @@ two reviewers before it gets its status, except in the R3 table.
 | `REJECTED` | 409 | `REJECTED` |
 | `WITHDRAWN` | 409 | `WITHDRAWN` |
 
+### R5: the status wherever the talk is shown
+
+One speaker has one talk with the status in the table. Each place shows that status for the talk.
+
+| Status | Place | Status shown |
+|--------|-------|--------------|
+| `SUBMITTED` | `GET /talks/{id}`, `GET /talks`, `GET /talks?speakerId=`, `GET /talks?sort=rating`, `GET /speakers/{id}/talks` | `SUBMITTED` |
+| `ACCEPTED` | the same five places | `ACCEPTED` |
+| `REJECTED` | the same five places | `REJECTED` |
+| `WAITLISTED` | the same five places | `WAITLISTED` |
+| `WITHDRAWN` | the same five places | `WITHDRAWN` |
+
 ### Unknown talk
 
 | Request | Response |
@@ -139,6 +151,7 @@ Talks A, B and C are submitted in this order. Each score comes from a different 
 | Talk A | Talk B | Talk C | Withdrawn | List | Titles |
 |--------|--------|--------|-----------|------|--------|
 | 5 | 3 | 4 | A | `/talks`, `/talks?includeWithdrawn=true` | B, C, A |
+| 5 | 3 | 4 | A | `/talks?speakerId=<the speaker>` | B, C, A |
 | 5 | 3 | 4 | A | `/talks?sort=rating` | C, B, A |
 | 5 | none | 4 | A | `/talks?sort=rating` | C, B, A |
 | 5 | 3 | 4 | A, B | `/talks?sort=rating` | C, A, B |

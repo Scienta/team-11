@@ -89,15 +89,15 @@ public class AcceptanceTest {
             whose second score replaces the first.
             """)
     @TableTest("""
-        Scenario                     | Ratings From Reviewers | Min Reviewers | Decision   | Response? | Status After?
-        No ratings                   | []                     | 2             | ACCEPTED   | 409       | SUBMITTED
-        One reviewer                 | [1]                    | 2             | ACCEPTED   | 409       | SUBMITTED
-        One reviewer who rated twice | [1, 1]                 | 2             | ACCEPTED   | 409       | SUBMITTED
-        Two reviewers                | [1, 2]                 | 2             | ACCEPTED   | 200       | ACCEPTED
-        No ratings, rejection        | []                     | 2             | REJECTED   | 200       | REJECTED
-        No ratings, waitlist         | []                     | 2             | WAITLISTED | 200       | WAITLISTED
+        Scenario                     | Ratings From Reviewers | Decision   | Response? | Status After?
+        No ratings                   | []                     | ACCEPTED   | 409       | SUBMITTED
+        One reviewer                 | [1]                    | ACCEPTED   | 409       | SUBMITTED
+        One reviewer who rated twice | [1, 1]                 | ACCEPTED   | 409       | SUBMITTED
+        Two reviewers                | [1, 2]                 | ACCEPTED   | 200       | ACCEPTED
+        No ratings, rejection        | []                     | REJECTED   | 200       | REJECTED
+        No ratings, waitlist         | []                     | WAITLISTED | 200       | WAITLISTED
         """)
-    void acceptsOnlyAfterTwoReviewers(List<Long> reviewers, int minReviewers, TalkStatus decision, int response,
+    void acceptsOnlyAfterTwoReviewers(List<Long> reviewers, TalkStatus decision, int response,
                                       TalkStatus statusAfter) throws Exception {
         long talk = submitTalk("A", registerSpeaker("ada@example.com"));
         for (long reviewer : reviewers) {
@@ -157,6 +157,27 @@ public class AcceptanceTest {
         assertEquals(statusAfter, statusOf(talk));
     }
 
+    @DisplayName("R5: Shows the current status wherever the talk is shown")
+    @Description("""
+            One speaker has one talk, rated by two different reviewers before it gets its status. In a
+            place, {talk} is the talk's id and {speaker} is the speaker's id. In a list, the test reads
+            the status of this talk.
+            """)
+    @TableTest("""
+        Scenario        | Status     | Place                                                                                                    | Status Shown?
+        Submitted talk  | SUBMITTED  | {'/talks/{talk}', /talks, '/talks?speakerId={speaker}', /talks?sort=rating, '/speakers/{speaker}/talks'} | SUBMITTED
+        Accepted talk   | ACCEPTED   | {'/talks/{talk}', /talks, '/talks?speakerId={speaker}', /talks?sort=rating, '/speakers/{speaker}/talks'} | ACCEPTED
+        Rejected talk   | REJECTED   | {'/talks/{talk}', /talks, '/talks?speakerId={speaker}', /talks?sort=rating, '/speakers/{speaker}/talks'} | REJECTED
+        Waitlisted talk | WAITLISTED | {'/talks/{talk}', /talks, '/talks?speakerId={speaker}', /talks?sort=rating, '/speakers/{speaker}/talks'} | WAITLISTED
+        Withdrawn talk  | WITHDRAWN  | {'/talks/{talk}', /talks, '/talks?speakerId={speaker}', /talks?sort=rating, '/speakers/{speaker}/talks'} | WITHDRAWN
+        """)
+    void showsTheStatusWhereverTheTalkIsShown(TalkStatus status, String place, TalkStatus statusShown)
+            throws Exception {
+        long speaker = registerSpeaker("ada@example.com");
+        long talk = ratedTalkIn(status, speaker);
+        assertEquals(statusShown, statusShownAt(place, talk, speaker));
+    }
+
     @DisplayName("Answers 404 for a talk that does not exist")
     @TableTest("""
         Scenario               | Request                                                                                   | Response?
@@ -189,11 +210,11 @@ public class AcceptanceTest {
             submits another talk.
             """)
     @TableTest("""
-        Scenario                | Third Talk                                  | Max Talks | Response?
-        Third talk still counts | {SUBMITTED, ACCEPTED, REJECTED, WAITLISTED} | 3         | 409
-        Third talk withdrawn    | WITHDRAWN                                   | 3         | 201
+        Scenario                | Third Talk                                  | Response?
+        Third talk still counts | {SUBMITTED, ACCEPTED, REJECTED, WAITLISTED} | 409
+        Third talk withdrawn    | WITHDRAWN                                   | 201
         """)
-    void leavesWithdrawnTalkOutOfTheLimit(TalkStatus thirdTalk, int maxTalks, int response) throws Exception {
+    void leavesWithdrawnTalkOutOfTheLimit(TalkStatus thirdTalk, int response) throws Exception {
         long speaker = registerSpeaker("ada@example.com");
         submitTalk("A", speaker);
         submitTalk("B", speaker);
@@ -225,6 +246,7 @@ public class AcceptanceTest {
     @TableTest("""
         Scenario                         | Talk A | Talk B | Talk C | Withdrawn | List                                      | Titles?
         Oldest first                     | [5]    | [3]    | [4]    | [A]       | {/talks, /talks?includeWithdrawn=true}    | [B, C, A]
+        One speaker's talks              | [5]    | [3]    | [4]    | [A]       | '/talks?speakerId=1'                      | [B, C, A]
         Ranking, best talk withdrawn     | [5]    | [3]    | [4]    | [A]       | /talks?sort=rating                        | [C, B, A]
         Ranking with an unrated talk     | [5]    | []     | [4]    | [A]       | /talks?sort=rating                        | [C, B, A]
         Ranking, two talks withdrawn     | [5]    | [3]    | [4]    | [A, B]    | /talks?sort=rating                        | [C, A, B]
@@ -253,6 +275,7 @@ public class AcceptanceTest {
     @TableTest("""
         Scenario      | Include Withdrawn | Response?
         True or false | {true, false}     | 200
+        Empty value   | ''                | 200
         Another value | {yes, 1, TRUE}    | 400
         """)
     void takesOnlyTrueOrFalseForIncludeWithdrawn(String includeWithdrawn, int response) throws Exception {
@@ -351,6 +374,19 @@ public class AcceptanceTest {
     private HttpResponse<String> withdraw(long talkId, Long speakerId) throws Exception {
         String body = speakerId == null ? "{}" : "{\"speakerId\":" + speakerId + "}";
         return send("POST", "/talks/" + talkId + "/withdraw", body);
+    }
+
+    /** The status of the talk as the place shows it: the talk itself, or the talk's entry in a list. */
+    private TalkStatus statusShownAt(String place, long talkId, long speakerId) throws Exception {
+        String path = place.replace("{talk}", Long.toString(talkId)).replace("{speaker}", Long.toString(speakerId));
+        HttpResponse<String> res = send("GET", path, null);
+        assertEquals(200, res.statusCode(), res.body());
+        JsonNode shown = JSON.readTree(res.body());
+        JsonNode entry = StreamSupport.stream(shown.isArray() ? shown.spliterator() : List.of(shown).spliterator(), false)
+                .filter(talk -> talk.get("id").asLong() == talkId)
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("talk " + talkId + " not shown at " + path));
+        return TalkStatus.valueOf(entry.get("status").asText());
     }
 
     private TalkStatus statusOf(long talkId) throws Exception {
