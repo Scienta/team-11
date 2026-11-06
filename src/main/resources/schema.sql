@@ -48,3 +48,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS ux_speaker_email ON speaker (lower(email));
 
 -- 2022-01 GET /speakers/{id}/talks was slow
 CREATE INDEX IF NOT EXISTS ix_talk_speaker ON talk (speaker_id);
+
+-- 2026-11 a reviewer is any positive whole number (Ratings R1), not only up to 2147483647.
+-- Only the first run rewrites the table; when the column is already BIGINT, Postgres does nothing.
+ALTER TABLE rating ALTER COLUMN reviewer_id TYPE BIGINT;
