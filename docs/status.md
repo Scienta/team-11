@@ -1,8 +1,8 @@
 # Teststatus
 
-Laget 6. november 2026 kl. 13:51 fra versjon [3e7a9b7](https://github.com/Scienta/team-11/commit/3e7a9b7364dac48ca470205abe63f8215223b104).
+Laget 6. november 2026 kl. 13:59 fra versjon [b5b8132](https://github.com/Scienta/team-11/commit/b5b8132c879b325ab58c5daa9015bf52536a2723).
 
-✅ Våre tester: alle 36 regler er i orden (143 av 143 eksempler).
+✅ Våre tester: alle 43 regler er i orden (177 av 177 eksempler).
 
 ✅ Arrangørenes kontroller: alle 15 er i orden (Foredragsholdere, Foredrag, Karakterer).
 
@@ -60,3 +60,13 @@ Alle detaljer står i [testrapporten](specs/index.md).
 - ✅ **R3** Tjenesten skriver i loggen hvor mange forespørsler oppvarmingen sendte. — 1 av 1 eksempel · [se eksemplene](specs/warm-up/r3-writes-the-number-of-requests-when-the-warm-up-ends.md)
 - ✅ **R4** En forespørsel som ikke får svar, regnes som en feil. — 2 av 2 eksempler · [se eksemplene](specs/warm-up-http-exchange/r4-turns-a-request-without-an-answer-into-a-failure.md)
 - ✅ **R4** Tjenesten varsler i loggen om et uventet svar eller en feil under oppvarmingen. — 3 av 3 eksempler · [se eksemplene](specs/warm-up-outcomes/r4-warns-about-an-unexpected-status-or-a-failure.md)
+
+## Annet
+
+- ✅ Et foredrag kan ha høyst to medforedragsholdere. De må være registrert, og hovedforedragsholderen kan ikke være en av dem. — 10 av 10 eksempler · [se eksemplene](specs/co-speakers/r1-r2-r3-r5-adds-another-registered-speaker-at-most-two.md)
+- ✅ **R4** Alle foredrag viser medforedragsholderne i den rekkefølgen de ble lagt til. — 7 av 7 eksempler · [se eksemplene](specs/co-speakers/r4-shows-the-co-speakers-last-in-the-order-added-wherever-a-talk-is-shown.md)
+- ✅ **R4** Medforedragsholderne vises også når et foredrag blir godkjent, avvist, satt på venteliste eller trukket. — 2 av 2 eksempler · [se eksemplene](specs/co-speakers/r4-shows-the-co-speakers-in-the-answers-of-the-acceptance-endpoints.md)
+- ✅ **R6** En foredragsholders egen liste viser bare foredrag der hen er hovedforedragsholder. — 2 av 2 eksempler · [se eksemplene](specs/co-speakers/r6-a-co-speaker-s-own-talk-list-shows-only-their-own-talks.md)
+- ✅ **R8** En medforedragsholder kan fjernes igjen. Hovedforedragsholderen kan ikke fjernes. — 7 av 7 eksempler · [se eksemplene](specs/co-speakers/r8-removes-a-co-speaker-never-the-main-speaker.md)
+- ✅ **R9** Et foredrag som er trukket eller avvist, kan ikke få nye eller færre medforedragsholdere. — 2 av 2 eksempler · [se eksemplene](specs/co-speakers/r9-a-withdrawn-or-rejected-talk-can-t-be-changed.md)
+- ✅ Et ukjent foredrag gir en tydelig feilmelding. — 4 av 4 eksempler · [se eksemplene](specs/co-speakers/answers-404-for-an-unknown-talk-and-400-for-a-talk-id-that-is-not-a-number.md)

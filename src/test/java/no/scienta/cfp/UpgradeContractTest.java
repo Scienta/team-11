@@ -134,7 +134,7 @@ class UpgradeContractTest {
         assertMatches("\\{\"id\":" + talk + ",\"title\":\"Legacy is a feeling\",\"format\":\"PRESENTATION\","
                 + "\"level\":\"BEGINNER\",\"speakerId\":" + speaker + ",\"durationMinutes\":45,\"status\":\"SUBMITTED\","
                 + "\"submittedAt\":\"" + TIMESTAMP + "\",\"submittedOn\":\"\\d{4}-\\d{2}-\\d{2}\","
-                + "\"averageRating\":null,\"ratingCount\":0}", res.body());
+                + "\"averageRating\":null,\"ratingCount\":0,\"coSpeakerIds\":\\[]}", res.body());
     }
 
     @Test

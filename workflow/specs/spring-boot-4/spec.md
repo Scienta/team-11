@@ -73,7 +73,7 @@ The feature request does not give these. We decide them and write down why.
 
 | Response | Body |
 |----------|------|
-| `POST /talks` | `{"id":…,"title":…,"format":…,"level":…,"speakerId":…,"durationMinutes":…,"status":"SUBMITTED","submittedAt":"2026-11-06T12:31:32.907+00:00","submittedOn":"2026-11-06","averageRating":null,"ratingCount":0}` |
+| `POST /talks` | `{"id":…,"title":…,"format":…,"level":…,"speakerId":…,"durationMinutes":…,"status":"SUBMITTED","submittedAt":"2026-11-06T12:31:32.907+00:00","submittedOn":"2026-11-06","averageRating":null,"ratingCount":0,"coSpeakerIds":[]}` (`coSpeakerIds` last, from co-speakers) |
 | `POST /speakers` | `{"id":…,"name":…,"email":…,"bio":null}` |
 | `PUT /talks/{id}/ratings/{reviewerId}` | `{"talkId":…,"reviewerId":…,"score":3,"ratedAtDisplay":"11/6/26, 12:31 PM"}` |
 | `GET /speakers/999999` | `{"timestamp":"2026-11-06T12:31:32.825+00:00","status":404,"error":"Not Found","message":"speaker not found","path":"/speakers/999999"}` |
