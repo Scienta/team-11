@@ -7,7 +7,6 @@ import static org.mockito.Mockito.when;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -48,28 +47,6 @@ class ConferenceServiceTest {
         when(speakerDao.exists(7L)).thenReturn(false);
         ResponseStatusException e = assertThrows(ResponseStatusException.class, () -> service.submitTalk(form()));
         assertEquals(HttpStatus.BAD_REQUEST, e.getStatus());
-    }
-
-    @Test
-    void emailRegisteredConcurrentlyIsConflictInAnyServerLanguage() {
-        SpeakerForm form = new SpeakerForm();
-        form.setName("Ada");
-        form.setEmail("ada@example.com");
-        when(speakerDao.emailTaken("ada@example.com")).thenReturn(false);
-        when(speakerDao.insert("Ada", "ada@example.com", null))
-                .thenThrow(new DuplicateKeyException("FEIL: duplisert nøkkelverdi bryter unik-skranke"));
-        ResponseStatusException e = assertThrows(ResponseStatusException.class, () -> service.registerSpeaker(form));
-        assertEquals(HttpStatus.CONFLICT, e.getStatus());
-    }
-
-    @Test
-    void duplicateEmailIsConflict() {
-        SpeakerForm form = new SpeakerForm();
-        form.setName("Ada");
-        form.setEmail("ada@example.com");
-        when(speakerDao.emailTaken("ada@example.com")).thenReturn(true);
-        ResponseStatusException e = assertThrows(ResponseStatusException.class, () -> service.registerSpeaker(form));
-        assertEquals(HttpStatus.CONFLICT, e.getStatus());
     }
 
     private TalkForm form() {

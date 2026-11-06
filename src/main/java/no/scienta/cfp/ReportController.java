@@ -15,9 +15,11 @@ import org.springframework.web.bind.annotation.RestController;
 public class ReportController {
 
     private final ConferenceService service;
+    private final SpeakerService speakers;
 
-    public ReportController(ConferenceService service) {
+    public ReportController(ConferenceService service, SpeakerService speakers) {
         this.service = service;
+        this.speakers = speakers;
     }
 
     @GetMapping("/admin/stats")
@@ -31,7 +33,7 @@ public class ReportController {
         StringBuilder sb = new StringBuilder();
         sb.append("id;title;format;minutes;level;speaker;status;submitted;rating;ratings\n");
         for (TalkDto t : talks) {
-            Map<String, Object> speaker = service.getSpeaker(t.speakerId);
+            Map<String, Object> speaker = speakers.getSpeaker(t.speakerId);
             sb.append(t.id).append(';')
                     .append(Utils.csv(t.title)).append(';')
                     .append(Utils.capitalize(t.format.replace("_", " "))).append(';')

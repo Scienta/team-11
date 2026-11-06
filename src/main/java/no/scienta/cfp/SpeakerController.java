@@ -20,10 +20,12 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/speakers")
 public class SpeakerController {
 
-    private final ConferenceService service;
+    private final SpeakerService service;
+    private final ConferenceService talks;
 
-    public SpeakerController(ConferenceService service) {
+    public SpeakerController(SpeakerService service, ConferenceService talks) {
         this.service = service;
+        this.talks = talks;
     }
 
     @PostMapping
@@ -45,7 +47,7 @@ public class SpeakerController {
 
     @GetMapping("/{id}/talks")
     public List<TalkDto> talks(@PathVariable Long id) {
-        return service.getTalksForSpeaker(id);
+        return talks.getTalksForSpeaker(id);
     }
 
     // admin only, not in the API docs
