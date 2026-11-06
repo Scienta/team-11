@@ -4,10 +4,10 @@ The rows come from [`../claim-checklist.md`](../claim-checklist.md). A person cl
 row says "waiting" or "gap". The product owner reads a claim request in three sections: security,
 architecture and functionality.
 
-Claim: **waiting for the person.** Deployed commit: `c43bbaf` (`origin/main`, `GET /health` at 13:27:14Z).
+Claim: **claimed at harness tick 124** by Nils Christian. Deployed commit: `c43bbaf` (`origin/main`, `GET /health` at 13:27:14Z).
 
-PO approval: **waiting**. The product owner, Stein, approves claims. The Hand asked him at 13:59 CET (12:59:53Z)
-(Slack #team-11, ts `1793969993.259739`).
+PO approval: **approved.** Stein answered «Godkjent» at 14:30:30 CET (13:30:30Z) in Slack #team-11
+(ts `1793971830.749579`). The Hand asked him at 13:59 CET (ts `1793969993.259739`).
 
 `TEAM_URL=https://fagsem-h2026-team-11.scienta.cloud`
 
@@ -42,5 +42,6 @@ withdrawn talks last in the lists.
 | The base features still pass their examples | The same run: `speakers.hurl`, `talks.hurl`, `ratings.hurl`, `our-speakers.hurl` and `our-ratings.hurl` passed. | done |
 | No FAULTY check on the harness for this feature or the base features | `workflow/harness.sh feedback`: tick 121, all 15 checks OK, 484.05 points. The 15 checks are the base features only (speakers 4, talks 6, ratings 5). The harness has no checks for acceptance until it is claimed: the timeline for `acceptance/check-1` answers 404 "No such check among your claimed features". | done for the base features |
 | Claim risk: response times on the team URL | An unfiltered `GET /talks` takes 12–17 s on `c43bbaf` (4017 talks, 1.1 MB; request log 13:27–13:28Z). After the claim, a harness check that lists all talks without a filter can time out. Frekken's ratings query fixes it in the next push. | **risk**: until that push is deployed |
+| After the claim: the acceptance checks on the harness | `workflow/harness.sh feedback` at tick 125: acceptance check-1 to check-5 all OK, and the 15 base checks OK. 502.05 points. | OK at tick 125; we watch them |
 
 When the person has claimed, copy the evidence into the claim log in `REVIEW.md` section 3.
