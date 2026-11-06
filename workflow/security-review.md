@@ -39,7 +39,7 @@ Kristian's team. Co-speakers is reviewed by Carl Kristian's team.
 | S4 | Medium | Tomcat 9.0.83 (Boot 2.7.18) has a multipart DoS (CVE-2025-48988). | `pom.xml:18` | `84a7fab` | CLOSED on `62eec68` |
 | S5 | Medium | Anybody can unregister anybody from a workshop. | `WorkshopRegistrationController.java:42` | `0a9c234` | CLOSED on `b7f1b79`: 404, 404, 400, then 204 |
 | S5b | Medium | The email that R10 asks for is public: `GET /workshops/{id}/registrations` lists every email, as the request's `Registration` schema requires. Anybody can read the list and then unregister an attendee. | `WorkshopRegistrationController` | `b8b5077` | CLOSED on `b8b5077`: the email alone 404, the right token 204, the token not in the list or the log |
-| S5c | Low | The log mask for `token` allows only spaces, at most 8, before the colon. With a tab or 9 spaces, the token is in the log. | `RequestLogFilter` `TOKEN` at `b8b5077` | Fix when convenient: `\s{0,8}` instead of `[ ]{0,8}` | | OPEN on `b8b5077` (standard JSON clients are CLOSED) |
+| S5c | Low | The log mask for `token` allows only spaces, at most 8, before the colon. With a tab or 9 spaces, the token is in the log. | `RequestLogFilter` `TOKEN` at `b8b5077` | `e8ff81d` | CLOSED on `d14fda0`: no token in the log with a tab, a newline or 40 spaces; at most 0.025 s for 1 MB |
 | S6 | Medium | A title can start a formula or a new row in `/admin/talks.csv`. | `Utils.java:73` | `9f3d7d2` | CLOSED on `b7f1b79` |
 | S7 | Medium | Emails are in the container logs. | `RequestLogFilter.java:39`, `ConferenceService.java:76` | `9458d53`, `f210ff0` | CLOSED on `b7f1b79` |
 | S8 | Low | The container runs as root. | `Dockerfile:19` | `4a8753f` | CLOSED on `b7f1b79` |
@@ -64,3 +64,5 @@ Kristian's team. Co-speakers is reviewed by Carl Kristian's team.
 | 2026-11-06 | `d8612c3` (S12) | S12 CLOSED. Only S2b (low) and S5b OPEN. |
 | 2026-11-06 | `7d4d8e0` (scheduling) | No blocker. SQL bound; the slot lock and the unique indexes hold R8 under parallel PUTs; bad input gives 400; `schema.sql` safe on a restart with data. S10b noted. |
 | 2026-11-06 | `b8b5077` (S5b) | S5b CLOSED. S11t: the token mask takes under 0.01 s on 600 KB of quotes and a 900 KB token. S5c (low) found. The exploit script is in `workflow/security/exploits.sh`. |
+| 2026-11-06 | `f0f237e`, `9fa3cc4`, `e8ff81d` | No blocker. S5 and S5b stay CLOSED. S5c CLOSED. Only S2b (low) OPEN. |
+| 2026-11-06 | `a242630`, `a697884`, `54f8f40` (push candidate `3393575`) | No blocker. 409 for an accepted talk that is not a workshop, no row saved; 404 for an unknown talk. Only S2b (low) OPEN. |
