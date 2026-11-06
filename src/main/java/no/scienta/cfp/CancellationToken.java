@@ -6,6 +6,8 @@ import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.Base64;
 import java.util.HexFormat;
+import java.util.Map;
+import java.util.Optional;
 
 /**
  * The secret that lets the attendee who registered cancel the registration (workshop-registration R10): 32 random bytes
@@ -21,6 +23,11 @@ public record CancellationToken(String value) {
         byte[] bytes = new byte[RANDOM_BYTES];
         RANDOM.nextBytes(bytes);
         return new CancellationToken(Base64.getUrlEncoder().withoutPadding().encodeToString(bytes));
+    }
+
+    /** The token in the body of an unregistration, or empty when {@code token} is missing or not a JSON string. */
+    public static Optional<CancellationToken> parse(Map<String, Object> body) {
+        return body.get("token") instanceof String token ? Optional.of(new CancellationToken(token)) : Optional.empty();
     }
 
     /** The SHA-256 hash of the token in lower-case hex, as the database keeps it. */

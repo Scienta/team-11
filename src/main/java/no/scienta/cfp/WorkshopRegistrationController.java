@@ -49,9 +49,10 @@ public class WorkshopRegistrationController {
     @DeleteMapping("/workshops/{id}/registrations/{registrationId}")
     public ResponseEntity<Void> unregister(@PathVariable long id, @PathVariable long registrationId,
                                            @RequestBody Map<String, Object> body) {
-        boolean unregistered = body.get("token") instanceof String token
-                && service.unregister(id, registrationId, new CancellationToken(token))
-                instanceof UnregistrationOutcome.Unregistered;
+        boolean unregistered = CancellationToken.parse(body)
+                .map(token -> service.unregister(id, registrationId, token))
+                .filter(UnregistrationOutcome.Unregistered.class::isInstance)
+                .isPresent();
         if (unregistered) {
             return ResponseEntity.noContent().build();
         }
