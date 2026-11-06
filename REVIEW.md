@@ -120,6 +120,16 @@ claimed or skipped, at which tick, and the evidence you held before claiming. Fo
 | Co-speakers | claimed (Carl Kristian), after the product owner's «Godkjent» at 15:15:41 CET in the thread of our request | 170 | Deployed `dfd57c9` (PR #9: R9 on `TalkStatus`, sealed result, R11 cascading foreign keys, R12 `actingSpeakerId`). **Security:** Nils Christian's security guardian OK'd PR #9 at `3ca19dd` after testing the migration and an attack script (one low finding left). **Architecture:** their architecture guardian OK'd it; both their points closed. **Functionality:** R1–R12 in `workflow/specs/co-speakers/spec.md`, each with an example table; our spec review found no defect. 545 tests green (Java 21). Deploy run for `dfd57c9` green, `/health` showed `dfd57c9`, all 537 Hurl requests (9 files) passed on the team URL. Harness at tick 165: all claimed features OK except `scheduling/check-1`. After the claim: at tick 171 `co-speakers/check-1` (second DELETE of a removed co-speaker, we answer 200) and `check-2` (PUT of the main speaker, we answer 409) were FAULTY; check-3 OK. See section 4. |
 | Ratings change request (`ratings-cr`) | claimed (Nils Christian), after the product owner's «Godkjent» at 15:40:25 CET in the thread of our request | 195 | Deployed `6227fcb` (PR #11, merged as `fff8c83`, deployed together with PR #13). **Security:** Nils Christian's security guardian OK'd PR #11 at `76513a4`: still one query, no division by zero or overflow, edge cases and 1000 ratings tested, attack script all closed but one low finding. **Architecture:** their architecture guardian OK'd it: the rule lives in `RatingTotals.average()`, a pure function; SQL only aggregates. **Functionality:** R1–R6 in `workflow/specs/ratings-cr/spec.md`, each with an example table; tests written first (16 of 29 rows red), 578 tests green (Java 21). `/health` showed `6227fcb`; all 892 Hurl requests (10 files, 354 in `our-ratings-cr.hurl`) passed on the team URL. Harness at tick 190: all claimed features OK. Open (not blocking): whether `/admin/stats` should use the trimmed averages. |
 
+**Workshop-registration claim: an approval that was not the product owner's own.**
+We claimed at tick 136 after Ingvild Hardeng wrote "Jeg godkjenner for Stein" in #team-11. Stein
+objected at 14:51:33 CET that he gave nobody the authority to approve for him. Nils Christian answered
+in Stein's thread at 14:53 that accepting the approval on his behalf was our mistake. The claim is
+permanent, so it stays. The rule now: only the product owner's own approval counts, in his own words.
+
+Why we missed it: the claim gate asked for "the product owner's approval" but did not say whose words
+count. We took an approval in Stein's name as his. Nobody checked that the person who wrote it was the
+product owner.
+
 ## 4. What the harness caught that we didn't
 
 <!-- Failures the harness found after you claimed (or after a deploy), and why your own review missed them. -->
