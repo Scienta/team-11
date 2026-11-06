@@ -77,3 +77,4 @@ Kristian's team. Co-speakers is reviewed by Carl Kristian's team.
 | 2026-11-06 | origin/main `dfd57c9` (PR #9 merged) | Nothing reopened. Everything CLOSED except S2b (low), also S3b with `--big`. |
 | 2026-11-06 | `05ac2c5` (scheduling hotfix, check-1) | No blocker (static review). Only 400 → 404 for a room or slot outside the list; the enum parse still comes first. |
 | 2026-11-06 | `d4ef02a` (co-speakers hotfix, check-1 and check-2) | No blocker (static review). The R12 403 still comes first; the new 404 comes after it, on the locked talk; no SQL change; the limit of 2 untouched. |
+| 2026-11-06 | PR #11 `76513a4` (ratings-cr: trimmed average, 2 decimals) | OK to merge. One constant query with MIN/MAX; no division by zero; edge cases (exactly 5, all equal, 1000 ratings) correct; script: only S2b OPEN, S4r CLOSED. |
