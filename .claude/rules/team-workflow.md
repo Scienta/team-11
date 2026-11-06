@@ -20,6 +20,9 @@ The steps from feature request to claim are in `workflow/process.md`. Follow the
   match the specs. The spec on the harness is the source of truth, not the code or its comments.
 - Keep each commit small enough to pass the tests on its own. Commit after the tests pass. Do not
   push: a person approves each push, because a push deploys.
+- Stage files by path (`git add <path>`), never `git add -A`, `git add .` or `git commit -a`. More
+  than one agent session can work in this working tree, and they share one git index. Run
+  `git status --short` before each commit.
 
 ## Running things on this laptop
 
@@ -32,6 +35,11 @@ The steps from feature request to claim are in `workflow/process.md`. Follow the
   which tests did not run.
 - Run the Hurl examples with `examples/run.sh https://fagsem-h2026-team-11.scienta.cloud`. This
   works inside the sandbox.
+- The default local JDK is 27, but the service runs Java 11. To see what the deployed service
+  does, run the app with `JAVA_HOME=$(/usr/libexec/java_home -v 17)` (the oldest JDK here). Date
+  and number formats from the locale differ between JDKs.
+- `docker compose` is not installed. Start the local database with
+  `docker run -d --rm --name cfp-local -p 5432:5432 -e POSTGRES_DB=cfp -e POSTGRES_USER=cfp -e POSTGRES_PASSWORD=cfp postgres:16-alpine`.
 - Use `workflow/harness.sh` for the harness API. Never print, log or commit
   `.fagdag/harness-token`.
 - Read the deployed service's requests with `.github/fagdag/logs.sh --since <RFC 3339 time>`. Each
