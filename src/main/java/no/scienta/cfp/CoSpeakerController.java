@@ -1,10 +1,13 @@
 package no.scienta.cfp;
 
+import java.util.Optional;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -23,13 +26,15 @@ public class CoSpeakerController {
     }
 
     @PutMapping
-    public TalkDto add(@PathVariable Long id, @PathVariable Long speakerId) {
-        return answer(service.add(id, speakerId), "the main speaker can't be a co-speaker");
+    public TalkDto add(@PathVariable Long id, @PathVariable Long speakerId,
+                       @RequestParam Optional<Long> actingSpeakerId) {
+        return answer(service.add(id, speakerId, actingSpeakerId), "the main speaker can't be a co-speaker");
     }
 
     @DeleteMapping
-    public TalkDto remove(@PathVariable Long id, @PathVariable Long speakerId) {
-        return answer(service.remove(id, speakerId), "the main speaker can't be removed");
+    public TalkDto remove(@PathVariable Long id, @PathVariable Long speakerId,
+                          @RequestParam Optional<Long> actingSpeakerId) {
+        return answer(service.remove(id, speakerId, actingSpeakerId), "the main speaker can't be removed");
     }
 
     /** The changed talk, or the refusal as an error; the message for the main speaker depends on the request. */
@@ -43,6 +48,9 @@ public class CoSpeakerController {
     private static ResponseStatusException refusal(CoSpeakerChange.Refusal change, String mainSpeakerMessage) {
         if (change instanceof CoSpeakerChange.TalkNotFound) {
             return new ResponseStatusException(HttpStatus.NOT_FOUND, "talk not found");
+        }
+        if (change instanceof CoSpeakerChange.NotMainSpeaker) {
+            return new ResponseStatusException(HttpStatus.FORBIDDEN, "only the main speaker can change the co-speakers");
         }
         if (change instanceof CoSpeakerChange.SpeakerNotFound) {
             return new ResponseStatusException(HttpStatus.NOT_FOUND, "speaker not found");

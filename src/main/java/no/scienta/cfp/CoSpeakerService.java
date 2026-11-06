@@ -28,16 +28,16 @@ public class CoSpeakerService {
     }
 
     @Transactional
-    public CoSpeakerChange add(long talkId, long speakerId) {
+    public CoSpeakerChange add(long talkId, long speakerId, Optional<Long> actingSpeakerId) {
         return lockedTalk(talkId)
-                .map(talk -> refusal(talk, speakerId).orElseGet(() -> addTo(talk, speakerId)))
+                .map(talk -> refusal(talk, speakerId, actingSpeakerId).orElseGet(() -> addTo(talk, speakerId)))
                 .orElseGet(CoSpeakerChange.TalkNotFound::new);
     }
 
     @Transactional
-    public CoSpeakerChange remove(long talkId, long speakerId) {
+    public CoSpeakerChange remove(long talkId, long speakerId, Optional<Long> actingSpeakerId) {
         return lockedTalk(talkId)
-                .map(talk -> refusal(talk, speakerId).orElseGet(() -> removeFrom(talk, speakerId)))
+                .map(talk -> refusal(talk, speakerId, actingSpeakerId).orElseGet(() -> removeFrom(talk, speakerId)))
                 .orElseGet(CoSpeakerChange.TalkNotFound::new);
     }
 
@@ -58,8 +58,14 @@ public class CoSpeakerService {
         return changed(talk);
     }
 
-    /** The refusals that adding and removing share, in the order they are checked. */
-    private Optional<CoSpeakerChange> refusal(TalkDto talk, long speakerId) {
+    /**
+     * The refusals that adding and removing share, in the order they are checked. Who acts is checked only when the
+     * request says (R12).
+     */
+    private Optional<CoSpeakerChange> refusal(TalkDto talk, long speakerId, Optional<Long> actingSpeakerId) {
+        if (actingSpeakerId.filter(acting -> !acting.equals(talk.speakerId)).isPresent()) {
+            return Optional.of(new CoSpeakerChange.NotMainSpeaker());
+        }
         if (!speakerDao.exists(speakerId)) {
             return Optional.of(new CoSpeakerChange.SpeakerNotFound());
         }

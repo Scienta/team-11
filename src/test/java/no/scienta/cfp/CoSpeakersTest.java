@@ -293,6 +293,67 @@ class CoSpeakersTest {
         assertEquals(List.of("Ada"), coSpeakersOfTheTalk());
     }
 
+    @DisplayName("R12: Only the main speaker changes the co-speakers, when the request says who acts")
+    @Description("""
+            The talk has Ada as co-speaker. PUT adds Bob, DELETE removes Ada. Acting is the
+            actingSpeakerId query parameter: a blank cell sends none, '' sends an empty value.
+            A blank message is not checked.
+            """)
+    @TableTest("""
+        Scenario                         | Request               | Acting               | Status? | Message?                                           | Co-speakers after?
+        No acting speaker, as before     | PUT Bob               |                      | 200     |                                                    | [Ada, Bob]
+        No acting speaker, as before     | DELETE Ada            |                      | 200     |                                                    | []
+        An empty value, as none          | PUT Bob               | ''                   | 200     |                                                    | [Ada, Bob]
+        An empty value, as none          | DELETE Ada            | ''                   | 200     |                                                    | []
+        The main speaker                 | PUT Bob               | Main                 | 200     |                                                    | [Ada, Bob]
+        The main speaker                 | DELETE Ada            | Main                 | 200     |                                                    | []
+        A co-speaker                     | {PUT Bob, DELETE Ada} | Ada                  | 403     | only the main speaker can change the co-speakers   | [Ada]
+        Another registered speaker       | {PUT Bob, DELETE Ada} | Cy                   | 403     | only the main speaker can change the co-speakers   | [Ada]
+        An unregistered speaker          | {PUT Bob, DELETE Ada} | Nobody               | 403     | only the main speaker can change the co-speakers   | [Ada]
+        No speaker has id 0 or below     | {PUT Bob, DELETE Ada} | {0, -1}              | 403     | only the main speaker can change the co-speakers   | [Ada]
+        Acting id that is not a number   | {PUT Bob, DELETE Ada} | {abc, 1.5}           | 400     |                                                    | [Ada]
+        Acting id past 64 bits           | {PUT Bob, DELETE Ada} | 99999999999999999999 | 400     |                                                    | [Ada]
+        """)
+    void onlyTheMainSpeakerChangesTheCoSpeakers(String request, String acting, int status, String message,
+                                                List<String> after) throws Exception {
+        add(List.of("Ada"));
+        String[] methodAndSpeaker = request.split(" ");
+        assertAnswer(status, message,
+                send(methodAndSpeaker[0], coSpeakerPath(methodAndSpeaker[1]) + actingQuery(acting), null));
+        assertEquals(after, coSpeakersOfTheTalk());
+    }
+
+    @DisplayName("R12: Who acts is checked after the talk is found and before the other rules")
+    @Description("""
+            The talk has Ada as co-speaker and the talk status given, or is a talk id that does not
+            exist. Acting is the actingSpeakerId query parameter.
+            """)
+    @TableTest("""
+        Scenario                           | Talk                  | Request                     | Acting | Status? | Message?
+        Unknown talk first                 | unknown               | {PUT Bob, DELETE Ada}       | Cy     | 404     | talk not found
+        Before an unregistered speaker     | SUBMITTED             | {PUT Nobody, DELETE Nobody} | Cy     | 403     | only the main speaker can change the co-speakers
+        Before the main speaker as target  | SUBMITTED             | {PUT Main, DELETE Main}     | Cy     | 403     | only the main speaker can change the co-speakers
+        Before the status                  | {WITHDRAWN, REJECTED} | {PUT Bob, DELETE Ada}       | Cy     | 403     | only the main speaker can change the co-speakers
+        The main speaker gets the status   | {WITHDRAWN, REJECTED} | {PUT Bob, DELETE Ada}       | Main   | 409     | "a withdrawn or rejected talk can't be changed"
+        """)
+    void whoActsIsCheckedAfterTheTalkIsFound(String talkStatus, String request, String acting, int status,
+                                             String message) throws Exception {
+        add(List.of("Ada"));
+        String[] methodAndSpeaker = request.split(" ");
+        String path = coSpeakerPath(methodAndSpeaker[1]) + actingQuery(acting);
+        if (talkStatus.equals("unknown")) {
+            path = path.replace("/talks/" + talk + "/", "/talks/2147483647/");
+        } else {
+            moveTheTalkTo(talkStatus);
+        }
+        assertAnswer(status, message, send(methodAndSpeaker[0], path, null));
+    }
+
+    /** The actingSpeakerId query for a speaker in the tables or a literal value, none for null. */
+    private String actingQuery(String acting) {
+        return acting == null ? "" : "?actingSpeakerId=" + speakers.getOrDefault(acting, acting);
+    }
+
     @Test
     @DisplayName("R11: A deleted speaker is no longer a co-speaker and leaves room for another")
     void aDeletedSpeakerIsNoLongerACoSpeaker() throws Exception {

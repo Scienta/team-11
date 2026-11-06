@@ -2,7 +2,7 @@ package no.scienta.cfp;
 
 /**
  * What a request to add or remove a co-speaker did to a talk: it changed, or did not need to, or one of the reasons
- * why it was refused (Co-speakers R1–R3, R5, R8, R9).
+ * why it was refused (Co-speakers R1–R3, R5, R8, R9, R12).
  */
 public sealed interface CoSpeakerChange {
 
@@ -16,6 +16,10 @@ public sealed interface CoSpeakerChange {
 
     /** No talk has this id. */
     record TalkNotFound() implements Refusal {
+    }
+
+    /** The request says who acts, and it is not the talk's main speaker (R12). */
+    record NotMainSpeaker() implements Refusal {
     }
 
     /** No registered speaker has this id (R1). */

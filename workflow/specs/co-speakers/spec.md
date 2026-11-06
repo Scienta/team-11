@@ -17,13 +17,14 @@ Source: `request.md` in this folder (the feature request from the harness, not e
 | R9 | A talk that is withdrawn or rejected can't be changed: no co-speakers added or removed. (Product owner, see below.) |
 | R10 | Simultaneous adds and double-clicks never give a talk more than two co-speakers, and never the same co-speaker twice. |
 | R11 | A co-speaker link belongs to its talk and its speaker: when either is deleted, the link goes too. (Ours, not in the request; see below.) |
+| R12 | Only the main speaker may add or remove co-speakers on their talk. Checked only when the request says who acts, with the optional query parameter `actingSpeakerId`. (Product owner, see below.) |
 
 ## API
 
 | Method | Path | Request body | Success status | Response body |
 |--------|------|--------------|----------------|---------------|
-| PUT | `/talks/{id}/co-speakers/{speakerId}` | none | 200 | Talk |
-| DELETE | `/talks/{id}/co-speakers/{speakerId}` | none | 200 | Talk |
+| PUT | `/talks/{id}/co-speakers/{speakerId}[?actingSpeakerId=]` | none | 200 | Talk |
+| DELETE | `/talks/{id}/co-speakers/{speakerId}[?actingSpeakerId=]` | none | 200 | Talk |
 
 Talk is the Talk of the talks and ratings specs with one more field, `coSpeakerIds` (array of speaker
 ids), placed last.
@@ -43,9 +44,12 @@ ids), placed last.
 | Removing the main speaker | 409 `the main speaker can't be removed` | R8. A conflict with the talk's state. |
 | Removing a co-speaker and adding them again | They go last | R4: the order they were added. |
 | Withdrawn or rejected talk | 409 `a withdrawn or rejected talk can't be changed` | R9. A talk gets these statuses through the `acceptance` endpoints, `POST /talks/{id}/withdraw` and `PUT /talks/{id}/status`. The talk row lock makes a co-speaker change and a status change wait for each other. Checked after the 404s, before the other rules. |
-| Order of checks | talk 404, speaker 404, R9, R3/R8, R5, R2 | The most basic error first. R5 before R2, so re-adding a co-speaker at the limit is still 200. |
+| Order of checks | `actingSpeakerId` 400, talk 404, R12 403, speaker 404, R9, R3/R8, R5, R2 | The most basic error first. R5 before R2, so re-adding a co-speaker at the limit is still 200. R12 is placed as acceptance places the withdrawal's 403: after the talk 404 and before the status (R9), so someone who may not act learns nothing about the talk's status or the speaker in the path. |
 | A co-speaker's own talk list | Unchanged: main-speaker talks only | R6. Applies to `GET /speakers/{id}/talks` and `GET /talks?speakerId=`. |
 | Request body on PUT or DELETE | Ignored | The request says no body. |
+| Who acts (R12) | Optional query parameter `actingSpeakerId` on PUT and DELETE. Absent, or an empty value (`actingSpeakerId=`): no check, as before R12. | Product owner (Stein, 2026-11-06 14:21): yes, only the main speaker. The request defines no body for PUT, and the harness sends no actor, so a required actor would break the harness checks. An empty value counts as absent, as `includeWithdrawn=` does in acceptance. |
+| `actingSpeakerId` that is not the talk's main speaker, also a co-speaker, an unknown speaker or 0 or below | 403 `only the main speaker can change the co-speakers`, the talk does not change | R12. Same as acceptance's withdrawal by someone else (403 `only the main speaker can withdraw the talk`), with Boot's usual error body. |
+| `actingSpeakerId` that is not a whole number, or beyond a 64-bit number | 400 | Same as the base features' bad parameters and path ids. |
 | A talk or speaker row is deleted (R11) | Its co-speaker links are deleted with it: foreign keys `talk_id REFERENCES talk(id) ON DELETE CASCADE` and `speaker_id REFERENCES speaker(id) ON DELETE CASCADE` | No API deletes talks or speakers, but a row deleted by hand left a link behind: a deleted speaker still showed in `coSpeakerIds` (R4) and took one of the two places (R2), and a link to a deleted speaker broke R1 (co-speakers are registered speakers). Cascade rather than restrict, because a link has no meaning without its talk and speaker, and restrict would make deleting a speaker fail for a reason nobody can see in the API. |
 | Adding the R11 keys to the production table | `schema.sql` adds each key only when it is missing, `NOT VALID` first, then deletes the links to a talk or speaker that is gone, then validates. Any error is a Postgres warning, not a failed start-up; the next start-up tries again. | The table already exists in production with data, so `CREATE TABLE IF NOT EXISTS` with `REFERENCES` would add nothing, and a plain `ADD CONSTRAINT` fails on one orphan row, which stops start-up and the deploy. `NOT VALID` makes no new orphan possible before the old ones are deleted. Orphan links are deleted, not kept: they point at a talk or speaker that no longer exists. Proven by `CoSpeakerForeignKeysTest`. |
 
@@ -131,6 +135,24 @@ unregistered speaker id.
 | the schema run twice more | nothing changes |
 | a key that can't be added (no primary key on `talk`) | the schema still runs to the end, without the keys |
 
+### R12: only the main speaker, when the request says who acts
+
+The talk has Ada as co-speaker. PUT adds Bob, DELETE removes Ada.
+
+| `actingSpeakerId` | Status | `coSpeakerIds` after |
+|-------------------|--------|----------------------|
+| none, or empty | 200 | PUT [Ada, Bob], DELETE [] |
+| Main | 200 | PUT [Ada, Bob], DELETE [] |
+| Ada, Cy, Nobody, 0 or -1 | 403 | [Ada] |
+| `abc`, `1.5`, `99999999999999999999` | 400 | [Ada] |
+
+| Given | Request, `actingSpeakerId` Cy | Status |
+|-------|-------------------------------|--------|
+| unknown talk | PUT Bob or DELETE Ada | 404 |
+| talk `SUBMITTED` | PUT or DELETE Nobody | 403 |
+| talk `SUBMITTED` | PUT or DELETE Main | 403 |
+| talk `WITHDRAWN` or `REJECTED` | PUT Bob or DELETE Ada | 403 (with Main acting: 409) |
+
 ## Effect on existing features
 
 - Talks and ratings: every talk response gets `coSpeakerIds` as its last field. The other fields,
@@ -148,3 +170,4 @@ unregistered speaker id.
   2026-11-06 13:11 and 13:14)
 - [x] Can a co-speaker withdraw a talk? No, only the main speaker. (Stein, #team-11, 2026-11-06 13:11)
   That is `acceptance`'s rule (`POST /talks/{id}/withdraw`).
+- [x] Who may add or remove co-speakers? Only the main speaker on their talk. (Stein, 2026-11-06 14:21) That is R12.
