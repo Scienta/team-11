@@ -48,7 +48,7 @@ PUT {{base_url}}/talks/{{talk_id}}/ratings/-1
 {"score": 4}
 HTTP 400
 
-# R4: 4, 4, 4, 5 averages 4.25, shown as 4.3 (halves round up)
+# R4: 4, 4, 4, 5 averages 4.25, shown with two decimals since ratings-cr R3
 POST {{base_url}}/talks
 {"title": "Abstraction mechanisms in CLU", "format": "WORKSHOP", "level": "ADVANCED", "speakerId": {{speaker_id}}}
 HTTP 201
@@ -80,5 +80,5 @@ HTTP 200
 GET {{base_url}}/talks/{{average_talk}}
 HTTP 200
 [Asserts]
-jsonpath "$.averageRating" == 4.3
+jsonpath "$.averageRating" == 4.25
 jsonpath "$.ratingCount" == 4

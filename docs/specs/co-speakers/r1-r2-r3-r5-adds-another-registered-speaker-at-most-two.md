@@ -12,7 +12,7 @@ A blank message is not checked.
 | ✅ passes | R2: a third co-speaker | [Ada, Bob] | Cy | 409 | a talk has at most 2 co-speakers | [Ada, Bob] |
 | ✅ passes | R5: already a co-speaker | [Ada] | Ada | 200 |  | [Ada] |
 | ✅ passes | R5: already one, at the limit | [Ada, Bob] | Bob | 200 |  | [Ada, Bob] |
-| ✅ passes | R3: the main speaker | [] | Main | 409 | the main speaker can't be a co-speaker | [] |
+| ✅ passes | R3: the main speaker | [] | Main | 400 | the main speaker can't be a co-speaker | [] |
 | ✅ passes | R1: an unregistered speaker | [] | Nobody | 404 | speaker not found | [] |
 | ✅ passes | No speaker has id 0 or below | [] | {0, -1} | 404 | speaker not found | [] |
 | ✅ passes | Speaker id that is not a number | [] | abc | 400 |  | [] |

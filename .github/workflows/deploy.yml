@@ -17,6 +17,14 @@ name: deploy
 on:
   push:
     branches: [main]
+    # A push that only changes these files deploys nothing: a redeploy has a cold-start window
+    # where the harness can get a 502. A push with any other file still deploys all of it.
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - 'workflow/**'
+      - 'examples/**'
+      - '.claude/**'
   workflow_dispatch:
 
 # One deploy at a time; a newer push waits rather than cancelling a deploy halfway.

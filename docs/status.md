@@ -1,10 +1,10 @@
 # Teststatus
 
-Laget 6. november 2026 kl. 15:03 fra versjon [6d82881](https://github.com/Scienta/team-11/commit/6d828815245d174ee163cf8dc4e6fba3ed7d1391).
+Laget 6. november 2026 kl. 15:26 fra versjon [1e8572f](https://github.com/Scienta/team-11/commit/1e8572f40555843a295815f615ccee373094803b).
 
-✅ Våre tester: alle 78 regler er i orden (340 av 340 eksempler).
+✅ Våre tester: alle 82 regler er i orden (370 av 370 eksempler).
 
-❌ Arrangørenes kontroller: 1 av 24 er ikke i orden (Påmelding til workshop).
+❌ Arrangørenes kontroller: 2 av 33 er ikke i orden (Medforedragsholdere).
 
 Hver linje er en regel vi tester. Et eksempel er ett konkret tilfelle av regelen.
 Arrangørenes kontroller sjekker tjenesten som kjører nå, og bare funksjoner vi har meldt ferdige.
@@ -30,7 +30,7 @@ Alle detaljer står i [testrapporten](specs/index.md).
 - ✅ **R4** Alle foredrag viser medforedragsholderne i den rekkefølgen de ble lagt til. — 7 av 7 eksempler · [se eksemplene](specs/co-speakers/r4-shows-the-co-speakers-last-in-the-order-added-wherever-a-talk-is-shown.md)
 - ✅ **R4** Medforedragsholderne vises også når et foredrag blir godkjent, avvist, satt på venteliste eller trukket. — 2 av 2 eksempler · [se eksemplene](specs/co-speakers/r4-shows-the-co-speakers-in-the-answers-of-the-acceptance-endpoints.md)
 - ✅ **R6** En foredragsholders egen liste viser bare foredrag der hen er hovedforedragsholder. — 2 av 2 eksempler · [se eksemplene](specs/co-speakers/r6-a-co-speaker-s-own-talk-list-shows-only-their-own-talks.md)
-- ✅ **R8** En medforedragsholder kan fjernes igjen. Hovedforedragsholderen kan ikke fjernes. — 7 av 7 eksempler · [se eksemplene](specs/co-speakers/r8-removes-a-co-speaker-never-the-main-speaker.md)
+- ✅ **R8** En medforedragsholder kan fjernes igjen. Hovedforedragsholderen kan ikke fjernes. — 8 av 8 eksempler · [se eksemplene](specs/co-speakers/r8-removes-a-co-speaker-never-the-main-speaker.md)
 - ✅ **R9** Et foredrag som er trukket eller avvist, kan ikke få nye eller færre medforedragsholdere. — 2 av 2 eksempler · [se eksemplene](specs/co-speakers/r9-a-withdrawn-or-rejected-talk-can-t-be-changed.md)
 - ✅ Et ukjent foredrag gir en tydelig feilmelding. — 4 av 4 eksempler · [se eksemplene](specs/co-speakers/answers-404-for-an-unknown-talk-and-400-for-a-talk-id-that-is-not-a-number.md)
 - ✅ **R12** Når forespørselen sier hvem som gjør endringen, kan bare hovedforedragsholderen legge til eller fjerne medforedragsholdere. — 12 av 12 eksempler · [se eksemplene](specs/co-speakers/r12-only-the-main-speaker-changes-the-co-speakers-when-the-request-says-who-acts.md)
@@ -41,7 +41,11 @@ Alle detaljer står i [testrapporten](specs/index.md).
 - ✅ **R1** Hver vurderer har et nummer. Vi tar bare imot gyldige numre. — 6 av 6 eksempler · [se eksemplene](specs/ratings/r1-accepts-a-reviewer-from-1-to-9223372036854775807.md)
 - ✅ **R2** Karakteren er et helt tall fra 1 til 5. — 7 av 7 eksempler · [se eksemplene](specs/ratings/r2-accepts-only-a-whole-number-from-1-to-5-as-score.md)
 - ✅ **R3** Hver vurderer har én karakter per foredrag. Den siste karakteren gjelder. — 2 av 2 eksempler · [se eksemplene](specs/ratings/r3-keeps-one-rating-per-reviewer-the-latest-score.md)
-- ✅ **R4** Snittet vises med én desimal. En halv rundes opp. — 3 av 3 eksempler · [se eksemplene](specs/ratings/r4-shows-the-average-score-with-one-decimal-halves-up.md)
+- ✅ **R4** Snittet vises med to desimaler. — 3 av 3 eksempler · [se eksemplene](specs/ratings/r4-shows-the-average-score-with-two-decimals-ratings-cr-r3.md)
+- ✅ **R1, R2, R4, R6** Med 5 karakterer eller flere teller ikke den høyeste og den laveste, bare én av hver. Antallet teller alle. — 14 av 14 eksempler · [se eksemplene](specs/ratings-change-request/r1-r2-r4-r6-leaves-out-one-highest-and-one-lowest-score-from-5-ratings.md)
+- ✅ **R3** Snittet rundes av til to desimaler. Står det midt mellom, går det til det partallet som er nærmest (3,125 blir 3,12 og 3,375 blir 3,38). — 6 av 6 eksempler · [se eksemplene](specs/ratings-change-request/r3-rounds-the-exact-average-to-2-decimals-ties-to-even.md)
+- ✅ **R1, R2** En vurderer som gir ny karakter, teller én gang, med den siste karakteren. — 3 av 3 eksempler · [se eksemplene](specs/ratings-change-request/r1-r2-counts-a-reviewer-who-rates-again-once-with-the-latest-score.md)
+- ✅ **R5** Rangeringen går etter det avrundede snittet med to desimaler. — 6 av 6 eksempler · [se eksemplene](specs/ratings-change-request/r5-ranks-talks-by-the-rounded-average.md)
 - ✅ **R5** Listen viser alle foredrag med det eldste først, eller bare foredragene til én foredragsholder. — 4 av 4 eksempler · [se eksemplene](specs/ratings-talk-lists/r5-lists-all-talks-oldest-first-or-the-talks-of-one-speaker.md)
 - ✅ **R6** Rangeringen går etter snittet, så etter antall karakterer, så etter hvor gammelt foredraget er. — 5 av 5 eksempler · [se eksemplene](specs/ratings-talk-lists/r6-ranks-talks-by-shown-average-then-rating-count-then-age.md)
 - ✅ Listen er bare rangert når man ber om det. Ellers kommer det eldste foredraget først. — 4 av 4 eksempler · [se eksemplene](specs/ratings-talk-lists/ranks-talks-only-for-the-sort-order-rating.md)

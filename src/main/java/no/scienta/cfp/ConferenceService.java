@@ -1,7 +1,5 @@
 package no.scienta.cfp;
 
-import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -243,13 +241,7 @@ public class ConferenceService {
 
     private void addRatings(TalkDto talk, RatingTotals totals) {
         talk.ratingCount = totals.count();
-        talk.averageRating = totals.count() == 0 ? null : calculateAverage(totals.sum(), totals.count());
-    }
-
-    // 1 decimal, half up (4.25 -> 4.3)
-    private Double calculateAverage(long total, int count) {
-        return BigDecimal.valueOf(total).divide(BigDecimal.valueOf(count), 1, RoundingMode.HALF_UP).doubleValue();
-        // return Utils.roundRating((double) total / count);
+        talk.averageRating = totals.average();
     }
 
     // ---------------------------------------------------------------- statistics
