@@ -67,6 +67,11 @@ The feature request does not give these. We decide them and write down why.
 | GET | `/talks/{id}/` | 200 |
 | GET | `/talks/` | 200 |
 | PUT | `/talks/{id}/ratings/{reviewerId}/` | 200 |
+| GET | `/talks/?includeWithdrawn=false` | 200 |
+| PUT | `/talks/{id}/status/` | 200 |
+| POST | `/talks/{id}/withdraw/` | 200 |
+| PUT | `/talks/{id}/co-speakers/{speakerId}/` | 200 |
+| DELETE | `/talks/{id}/co-speakers/{speakerId}/` | 200 |
 | GET | `/speakers/999999/` | 404, `"path":"/speakers/999999/"` |
 
 ### R2: formats and property order
