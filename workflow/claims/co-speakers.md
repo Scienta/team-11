@@ -4,7 +4,7 @@ The rows come from [`../claim-checklist.md`](../claim-checklist.md). A person cl
 row says "waiting" or "gap". The product owner reads a claim request in three sections: security,
 architecture and functionality.
 
-Claim: **waiting for the person.** Deployed commit: `3318bf1` (`GET /health` at 13:41:50Z and 13:42:00Z). It has the R4 and R9 Hurl rows (`c8e30de`, the pushed copy of `ec38273`) and the ratings-query fix `88e5d86`.
+Claim: **waiting for Carl Kristian's team**, who request this claim. Deployed commit: `3318bf1` (`GET /health` at 13:41:50Z and 13:42:00Z). It has the R4 and R9 Hurl rows (`c8e30de`, the pushed copy of `ec38273`) and the ratings-query fix `88e5d86`.
 Co-speakers came from Carl Kristian's team (PR #4, merged in `b729a5e`).
 
 PO approval: **waiting**.
@@ -15,7 +15,7 @@ PO approval: **waiting**.
 
 | Check | Evidence | State |
 |-------|----------|-------|
-| The security guardian reports no blocker | [`workflow/security-review.md`](../security-review.md): "Co-speakers is reviewed by Carl Kristian's team." | **waiting**: the report for the co-speakers commits |
+| The security guardian reports no blocker | Carl Kristian's team reviewed co-speakers (reported 14:09, relayed by The Hand): nothing critical. Medium: anyone can add or remove co-speakers; their next PR fixes it with `actingSpeakerId`. Low: no foreign keys, in the same PR. [`workflow/security-review.md`](../security-review.md) says the same team reviews co-speakers. | no critical finding; the medium finding is open until their next PR |
 
 ## Architecture: tested and OK?
 
