@@ -44,7 +44,7 @@ email as the attendee typed it. Only the 201 of POST adds `cancellationToken` to
 | Unknown talk in the path, on POST and GET | 404 | Same as the base features |
 | POST with an unusable body to an unknown talk | 400 | The body is checked before the workshop is looked up (`WorkshopRegistrationController`), as in the base features. A request that is wrong in itself is a bad request, whatever it is for. |
 | POST for a talk that exists but is not a `WORKSHOP` (R2) | 409, nothing is saved | The request names "only workshops" and "only accepted" in one rule, so a talk of another format refuses a registration like a closed workshop (R3). Changed from 404 on 2026-11-06: harness check `workshop-registration/check-2` was FAULTY at tick 137 on `POST /workshops/{id}/registrations` for an accepted `LIGHTNING_20`, which got our 404. |
-| GET for a talk that exists but is not a `WORKSHOP` (R2) | 404 | A talk of another format has no list of attendees. Only the POST answer changed after check-2. |
+| GET for a talk that exists but is not a `WORKSHOP` (R2) | 200 with `[]` | Nobody can register for it, so its list is empty, as for a workshop that was never accepted. Changed from 404 on 2026-11-06: harness check `workshop-registration/check-2` was FAULTY at tick 150 on `GET /workshops/{id}/registrations` for an accepted `LIGHTNING_10`, after our POST answered 409. An unknown talk ID still gives 404. |
 | A workshop that is `SUBMITTED`, `WAITLISTED`, `REJECTED` or `WITHDRAWN` (R3) | 409 on POST, nothing is saved | A conflict with the current state, as in Acceptance R8 (rating a closed talk). |
 | GET for a workshop that is not `ACCEPTED` | 200 with its list | R4 needs the list of a withdrawn workshop. A workshop that was never accepted has an empty list. |
 | The 21st registration (R5) | 409, nothing is saved | A conflict with the current state, as for the limit of 3 talks (Talks R7). |
@@ -89,7 +89,7 @@ email as the attendee typed it. Only the 201 of POST adds `cancellationToken` to
 | Talk format | Status of POST | Status of GET |
 |-------------|----------------|---------------|
 | `WORKSHOP` (accepted) | 201 | 200 |
-| `LIGHTNING_10`, `LIGHTNING_20` or `PRESENTATION` (accepted) | 409 | 404 |
+| `LIGHTNING_10`, `LIGHTNING_20` or `PRESENTATION` (accepted) | 409 | 200, `[]` |
 | no talk with this ID | 404 | 404 |
 
 ### R3: only an accepted workshop
