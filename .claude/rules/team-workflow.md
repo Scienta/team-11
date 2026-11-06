@@ -41,9 +41,9 @@ The steps from feature request to claim are in `workflow/process.md`. Follow the
   which tests did not run.
 - Run the Hurl examples with `examples/run.sh https://fagsem-h2026-team-11.scienta.cloud`. This
   works inside the sandbox.
-- The default local JDK is 27, but the service runs Java 11. To see what the deployed service
-  does, run the app with `JAVA_HOME=$(/usr/libexec/java_home -v 17)` (the oldest JDK here). Date
-  and number formats from the locale differ between JDKs.
+- The default local JDK is 27, but the service and the CI tests run Java 17. Run Maven and the app
+  with `JAVA_HOME=$(/usr/libexec/java_home -v 17)`. Date and number formats from the locale differ
+  between JDKs.
 - `docker compose` is not installed. Start the local database with
   `docker run -d --rm --name cfp-local -p 5432:5432 -e POSTGRES_DB=cfp -e POSTGRES_USER=cfp -e POSTGRES_PASSWORD=cfp postgres:16-alpine`.
 - Use `workflow/harness.sh` for the harness API. Never print, log or commit
