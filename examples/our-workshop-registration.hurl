@@ -173,29 +173,35 @@ PUT {{base_url}}/talks/{{presentation}}/status
 {"status": "ACCEPTED"}
 HTTP 200
 
-# R2: an accepted LIGHTNING_10 is not a workshop
+# R2: an accepted LIGHTNING_10 is not a workshop: the POST is refused like a closed workshop, and the list is empty
 POST {{base_url}}/workshops/{{lightning_10}}/registrations
 {"name": "Ada Lovelace", "email": "ada@example.com"}
-HTTP 404
+HTTP 409
 
 GET {{base_url}}/workshops/{{lightning_10}}/registrations
-HTTP 404
+HTTP 200
+[Asserts]
+jsonpath "$" count == 0
 
-# R2: an accepted LIGHTNING_20 is not a workshop
+# R2: an accepted LIGHTNING_20 is not a workshop: the POST is refused like a closed workshop, and the list is empty
 POST {{base_url}}/workshops/{{lightning_20}}/registrations
 {"name": "Ada Lovelace", "email": "ada@example.com"}
-HTTP 404
+HTTP 409
 
 GET {{base_url}}/workshops/{{lightning_20}}/registrations
-HTTP 404
+HTTP 200
+[Asserts]
+jsonpath "$" count == 0
 
-# R2: an accepted PRESENTATION is not a workshop
+# R2: an accepted PRESENTATION is not a workshop: the POST is refused like a closed workshop, and the list is empty
 POST {{base_url}}/workshops/{{presentation}}/registrations
 {"name": "Ada Lovelace", "email": "ada@example.com"}
-HTTP 404
+HTTP 409
 
 GET {{base_url}}/workshops/{{presentation}}/registrations
-HTTP 404
+HTTP 200
+[Asserts]
+jsonpath "$" count == 0
 
 # R2: no talk with this ID
 POST {{base_url}}/workshops/999999999/registrations
