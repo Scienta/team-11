@@ -4,11 +4,11 @@ The reason is the message field of the error body. Talk "submitted" is a newly s
 talk; 999999 is no talk. A blank Score cell sends a body without "score".
 
 
-| Scenario | Talk | Reviewer | Score | Status? | Message? |
-| --- | --- | --- | --- | --- | --- |
-| Reviewer zero | submitted | 0 | 4 | 400 | reviewerId must be positive |
-| Decimal number | submitted | 1 | 4.0 | 400 | score must be a whole number |
-| No score | submitted | 1 |  | 400 | score must be a whole number |
-| Above the scale | submitted | 1 | 6 | 400 | score must be 1-5 |
-| Bad score for no talk | 999999 | 1 | 6 | 400 | score must be 1-5 |
-| Good score for no talk | 999999 | 1 | 4 | 404 | talk not found |
+| Result | Scenario | Talk | Reviewer | Score | Status? | Message? |
+| --- | --- | --- | --- | --- | --- | --- |
+| ✅ passes | Reviewer zero | submitted | 0 | 4 | 400 | reviewerId must be positive |
+| ✅ passes | Decimal number | submitted | 1 | 4.0 | 400 | score must be a whole number |
+| ✅ passes | No score | submitted | 1 |  | 400 | score must be a whole number |
+| ✅ passes | Above the scale | submitted | 1 | 6 | 400 | score must be 1-5 |
+| ✅ passes | Bad score for no talk | 999999 | 1 | 6 | 400 | score must be 1-5 |
+| ✅ passes | Good score for no talk | 999999 | 1 | 4 | 404 | talk not found |

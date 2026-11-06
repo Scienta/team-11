@@ -1,4 +1,4 @@
 # Reports
 
-* [Averages the talks' shown averages, cut to one decimal](./averages-the-talks-shown-averages-cut-to-one-decimal.md)
-* [Counts the total length of all talks in whole hours](./counts-the-total-length-of-all-talks-in-whole-hours.md)
+* [Averages the talks' shown averages, one decimal, halves up](./averages-the-talks-shown-averages-one-decimal-halves-up.md)
+* [Counts the total length of all talks in whole hours, rounded](./counts-the-total-length-of-all-talks-in-whole-hours-rounded.md)
