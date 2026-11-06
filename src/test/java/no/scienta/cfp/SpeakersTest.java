@@ -53,13 +53,28 @@ public class SpeakersTest {
 
     @BeforeEach
     void startWithNoSpeakers() {
-        jdbc.execute("TRUNCATE speaker, talk, rating");
+        jdbc.execute("TRUNCATE speaker, talk, rating RESTART IDENTITY");
+    }
+
+    @DisplayName("R3: Registers a speaker only with a name")
+    @Description("""
+            A blank cell sends JSON null as the name. Each row registers with a real email.
+            """)
+    @TableTest("""
+        Scenario    | Name         | Status?
+        A real name | Grace Hopper | 201
+        Empty       | ''           | 400
+        Only spaces | '   '        | 400
+        No name     |              | 400
+        """)
+    void registersASpeakerOnlyWithAName(String name, int status) throws Exception {
+        assertEquals(status, send("POST", "/speakers", speaker(name, "grace@example.com", null)).statusCode());
     }
 
     @DisplayName("R3: Registers a speaker only with a real email address")
     @Description("""
             A real address has one @, a local part, and a domain of at least two labels split by dots,
-            with no spaces.
+            with no spaces. A blank cell sends JSON null as the email.
             """)
     @TableTest("""
         Scenario                        | Email                               | Status?
@@ -73,9 +88,42 @@ public class SpeakersTest {
         Two dots in a row in the domain | ada@example..com                    | 400
         Two @                           | ada@@example.com                    | 400
         Space in the local part         | ada lovelace@example.com            | 400
+        Empty                           | ''                                  | 400
+        Only spaces                     | '   '                               | 400
+        No email                        |                                     | 400
         """)
     void registersASpeakerOnlyWithARealEmail(String email, int status) throws Exception {
         assertEquals(status, register(email, null).statusCode());
+    }
+
+    @DisplayName("Finds a registered speaker by ID")
+    @Description("""
+            Each row registers one speaker first, who gets ID 1.
+            """)
+    @TableTest("""
+        Scenario       | Speaker ID | Status?
+        Registered     | 1          | 200
+        Not registered | 2          | 404
+        Not a number   | abc        | 400
+        """)
+    void findsARegisteredSpeakerById(String speakerId, int status) throws Exception {
+        assertEquals(201, register("grace@example.com", null).statusCode());
+        assertEquals(status, send("GET", "/speakers/" + speakerId, null).statusCode());
+    }
+
+    @DisplayName("R7: Treats a trailing slash like the path without it")
+    @Description("""
+            Each row registers speaker 1 first. Every request then carries the registration of
+            another speaker as its body, which GET ignores.
+            """)
+    @TableTest("""
+        Scenario           | Method | Path                        | Status?
+        Look up a speaker  | GET    | {/speakers/1, /speakers/1/} | 200
+        Register a speaker | POST   | {/speakers, /speakers/}     | 201
+        """)
+    void treatsATrailingSlashLikeThePathWithoutIt(String method, String path, int status) throws Exception {
+        assertEquals(201, register("grace@example.com", null).statusCode());
+        assertEquals(status, send(method, path, speaker("ada@example.com", null)).statusCode());
     }
 
     @DisplayName("R4: Limits the bio to 500 characters")
@@ -172,7 +220,11 @@ public class SpeakersTest {
     }
 
     private static String speaker(String email, Bio bio) throws Exception {
-        ObjectNode speaker = JSON.createObjectNode().put("name", "Grace Hopper").put("email", email);
+        return speaker("Grace Hopper", email, bio);
+    }
+
+    private static String speaker(String name, String email, Bio bio) throws Exception {
+        ObjectNode speaker = JSON.createObjectNode().put("name", name).put("email", email);
         if (bio != null) {
             speaker.put("bio", bio.text());
         }
