@@ -19,7 +19,11 @@ The steps from feature request to claim are in `workflow/process.md`. Follow the
 - The legacy code has known traps: the README is out of date, and some comments and constants do not
   match the specs. The spec on the harness is the source of truth, not the code or its comments.
 - Keep each commit small enough to pass the tests on its own. Commit after the tests pass. Do not
-  push: a person approves each push, because a push deploys.
+  push yourself: a push deploys. A person approves each push, or The Hand (the coordinator session)
+  approves it on the person's behalf when all of these hold: the push candidate is built on the
+  current origin/main, the full suite is green, the security and architecture guardians report no
+  blocker, and the pusher pushes by SHA and stops if origin/main moved. The Hand reports each such
+  push to the person.
 - Stage files by path (`git add <path>`), never `git add -A`, `git add .` or `git commit -a`. More
   than one agent session can work in this working tree, and they share one git index. Run
   `git status --short` before each commit.
