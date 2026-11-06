@@ -20,10 +20,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.tabletest.junit.Description;
@@ -47,9 +45,6 @@ class CoSpeakersTest {
 
     @Value("${local.server.port}")
     int port;
-
-    @Autowired
-    JdbcTemplate jdbc;
 
     private final HttpClient http = HttpClient.newHttpClient();
 
@@ -141,6 +136,7 @@ class CoSpeakersTest {
         The ranking                   | /talks?sort=rating                  | [Bob, Ada]   | []
         One speaker's ranking         | /talks?speakerId=:main&sort=rating  | [Bob, Ada]   | []
         The speaker's own talk list   | /speakers/:main/talks               | [Bob, Ada]   | []
+        Without withdrawn talks       | /talks?includeWithdrawn=false       | [Bob, Ada]   | []
         """)
     void showsTheCoSpeakersWhereverATalkIsShown(String path, List<String> coSpeakers, List<String> none)
             throws Exception {
@@ -154,6 +150,27 @@ class CoSpeakersTest {
         assertEquals(coSpeakers, coSpeakersOf(talkWithId(talks, talk)));
         talks.stream().filter(shown -> shown.get("id").asText().equals(other))
                 .forEach(shown -> assertEquals(none, coSpeakersOf(shown)));
+    }
+
+    @DisplayName("R4: Shows the co-speakers in the answers of the acceptance endpoints")
+    @Description("""
+            Ada is added to Main's talk, which the committee then waitlists, or Main withdraws.
+            :talk is the talk's id and :main is Main's speaker id.
+            """)
+    @TableTest("""
+        Scenario           | Method | Path                  | Body                      | Co-speakers?
+        Committee decision | PUT    | /talks/:talk/status   | '{"status":"WAITLISTED"}' | [Ada]
+        Main withdraws     | POST   | /talks/:talk/withdraw | '{"speakerId"::main}'     | [Ada]
+        """)
+    void showsTheCoSpeakersInTheAcceptanceAnswers(String method, String path, String body, List<String> coSpeakers)
+            throws Exception {
+        add(List.of("Ada"));
+        HttpResponse<String> res = send(method, path.replace(":talk", talk),
+                body.replace(":main", speakers.get("Main")));
+        assertEquals(200, res.statusCode(), res.body());
+        JsonNode shown = JSON.readTree(res.body());
+        assertEquals(coSpeakers, coSpeakersOf(shown));
+        assertEquals("coSpeakerIds", lastFieldOf(shown));
     }
 
     @Test
@@ -213,20 +230,37 @@ class CoSpeakersTest {
 
     @DisplayName("R9: A withdrawn or rejected talk can't be changed")
     @Description("""
-            The talk has Ada as co-speaker; its status is then set in the database, because the
-            acceptance feature that changes it is not built yet. PUT adds Bob, DELETE removes Ada.
+            The talk has Ada as co-speaker. Main then withdraws it with POST /talks/{id}/withdraw, or
+            the committee decides with PUT /talks/{id}/status, after two ratings for ACCEPTED.
+            PUT adds Bob, DELETE removes Ada. A blank message is not checked.
             """)
     @TableTest("""
-        Scenario          | Talk status                          | Request              | Status?
-        Out for good      | {WITHDRAWN, REJECTED}                | {PUT Bob, DELETE Ada} | 409
-        Still on offer    | {SUBMITTED, WAITLISTED, ACCEPTED}    | {PUT Bob, DELETE Ada} | 200
+        Scenario       | Talk status                       | Request               | Status? | Message?
+        Out for good   | {WITHDRAWN, REJECTED}             | {PUT Bob, DELETE Ada} | 409     | "a withdrawn or rejected talk can't be changed"
+        Still on offer | {SUBMITTED, WAITLISTED, ACCEPTED} | {PUT Bob, DELETE Ada} | 200     |
         """)
-    void aWithdrawnOrRejectedTalkCantBeChanged(String talkStatus, String request, int status) throws Exception {
+    void aWithdrawnOrRejectedTalkCantBeChanged(String talkStatus, String request, int status, String message)
+            throws Exception {
         add(List.of("Ada"));
-        jdbc.update("UPDATE talk SET status = ? WHERE id = ?", talkStatus, Long.parseLong(talk));
+        moveTheTalkTo(talkStatus);
         String[] methodAndSpeaker = request.split(" ");
-        HttpResponse<String> res = send(methodAndSpeaker[0], coSpeakerPath(methodAndSpeaker[1]), null);
-        assertEquals(status, res.statusCode(), res.body());
+        assertAnswer(status, message, send(methodAndSpeaker[0], coSpeakerPath(methodAndSpeaker[1]), null));
+    }
+
+    /** Moves the talk to the status through the acceptance endpoints. */
+    private void moveTheTalkTo(String status) throws Exception {
+        if (status.equals("ACCEPTED")) {
+            for (int reviewer = 1; reviewer <= 2; reviewer++) {
+                assertEquals(200, send("PUT", "/talks/" + talk + "/ratings/" + reviewer, "{\"score\":4}").statusCode());
+            }
+        }
+        HttpResponse<String> res = switch (status) {
+            case "SUBMITTED" -> send("GET", "/talks/" + talk, null);
+            case "WITHDRAWN" -> send("POST", "/talks/" + talk + "/withdraw",
+                    "{\"speakerId\":" + speakers.get("Main") + "}");
+            default -> send("PUT", "/talks/" + talk + "/status", "{\"status\":\"" + status + "\"}");
+        };
+        assertEquals(status, JSON.readTree(res.body()).get("status").asText(), res.body());
     }
 
     @Test

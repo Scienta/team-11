@@ -9,7 +9,7 @@ Source: `request.md` in this folder (the feature request from the harness, not e
 | R1 | A talk keeps its one main speaker (`speakerId`). Co-speakers are other registered speakers, added to the talk afterwards. |
 | R2 | A talk has at most two co-speakers. |
 | R3 | The main speaker can't be a co-speaker of their own talk. |
-| R4 | Every talk shows `coSpeakerIds`, in the order they were added, `[]` when none, wherever a talk is shown: `POST /talks`, `GET /talks/{id}`, `GET /talks` (with and without `speakerId` and `sort=rating`) and `GET /speakers/{id}/talks`. |
+| R4 | Every talk shows `coSpeakerIds`, in the order they were added, `[]` when none, wherever a talk is shown: `POST /talks`, `GET /talks/{id}`, `GET /talks` (with and without `speakerId` and `sort=rating`), `GET /speakers/{id}/talks`, and the answers of `PUT /talks/{id}/status` and `POST /talks/{id}/withdraw` (acceptance). |
 | R5 | Adding someone who is already a co-speaker changes nothing. |
 | R6 | A speaker's own talk list shows only the talks where they are the main speaker. |
 | R7 | The limit of 3 talks counts only the talks where the speaker is the main speaker. A speaker who has reached it can still co-speak. |
@@ -41,7 +41,7 @@ ids), placed last.
 | Removing a registered speaker who isn't a co-speaker | 200, talk unchanged | DELETE is idempotent, like R5 for PUT: a double-click on remove must not fail. |
 | Removing the main speaker | 409 `the main speaker can't be removed` | R8. A conflict with the talk's state. |
 | Removing a co-speaker and adding them again | They go last | R4: the order they were added. |
-| Withdrawn or rejected talk | 409 `a withdrawn or rejected talk can't be changed` | R9. The statuses come from the `acceptance` feature (`WITHDRAWN`, `REJECTED`); today every talk is `SUBMITTED`, so this never fires until it is built. Checked after the 404s, before the other rules. |
+| Withdrawn or rejected talk | 409 `a withdrawn or rejected talk can't be changed` | R9. A talk gets these statuses through the `acceptance` endpoints, `POST /talks/{id}/withdraw` and `PUT /talks/{id}/status`. The talk row lock makes a co-speaker change and a status change wait for each other. Checked after the 404s, before the other rules. |
 | Order of checks | talk 404, speaker 404, R9, R3/R8, R5, R2 | The most basic error first. R5 before R2, so re-adding a co-speaker at the limit is still 200. |
 | A co-speaker's own talk list | Unchanged: main-speaker talks only | R6. Applies to `GET /speakers/{id}/talks` and `GET /talks?speakerId=`. |
 | Request body on PUT or DELETE | Ignored | The request says no body. |
@@ -86,7 +86,8 @@ unregistered speaker id.
 | Given | Request | `coSpeakerIds` |
 |-------|---------|----------------|
 | a new talk | `POST /talks` | [] |
-| Bob, then Ada added | `GET /talks/{id}`, `GET /talks`, `GET /talks?speakerId=`, `GET /talks?sort=rating`, `GET /talks?speakerId=&sort=rating`, `GET /speakers/{id}/talks` | [Bob, Ada], last field of the talk |
+| Bob, then Ada added | `GET /talks/{id}`, `GET /talks`, `GET /talks?speakerId=`, `GET /talks?sort=rating`, `GET /talks?speakerId=&sort=rating`, `GET /speakers/{id}/talks`, `GET /talks?includeWithdrawn=false` | [Bob, Ada], last field of the talk |
+| Ada added | `PUT /talks/{id}/status` `{"status":"WAITLISTED"}`, `POST /talks/{id}/withdraw` | [Ada], last field of the talk |
 | [Ada, Bob], Ada removed and added again | `GET /talks/{id}` | [Bob, Ada] |
 
 ### R6: a co-speaker's own talk list
@@ -133,4 +134,4 @@ unregistered speaker id.
   are added or removed only while it is `SUBMITTED`, `WAITLISTED` or `ACCEPTED`. (Stein, #team-11,
   2026-11-06 13:11 and 13:14)
 - [x] Can a co-speaker withdraw a talk? No, only the main speaker. (Stein, #team-11, 2026-11-06 13:11)
-  That belongs to `acceptance`, which isn't built yet.
+  That is `acceptance`'s rule (`POST /talks/{id}/withdraw`).
