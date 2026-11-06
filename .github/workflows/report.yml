@@ -28,7 +28,7 @@ jobs:
       - uses: actions/setup-java@v5
         with:
           distribution: temurin
-          java-version: "17"
+          java-version: "25" # the same JDK as the build; the report plugin needs 21 or later
       - name: Cache ~/.m2
         uses: actions/cache@v4
         with:
@@ -41,10 +41,6 @@ jobs:
       - name: Unit tests
         continue-on-error: true
         run: ./mvnw -B test
-      - uses: actions/setup-java@v5
-        with:
-          distribution: temurin
-          java-version: "21" # the report plugin needs 21; the tests above ran on 17
       - name: TableTest report
         run: ./mvnw -B org.tabletest:tabletest-reporter-maven-plugin:report -Dtabletest.report.format=html -Dtabletest.report.outputDirectory=target/generated-docs/tabletest
       - uses: actions/upload-pages-artifact@v3
