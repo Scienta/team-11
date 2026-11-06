@@ -2,9 +2,34 @@
 
 I read every file under `src/`, all the tests, `pom.xml`, the `Dockerfile`, both workflows, `rollout.sh`, the Hurl examples and the workflow docs. I changed nothing.
 
-I couldn't check anything against the harness specs. `.fagdag/harness-token` is missing and `workflow/specs/` is empty, so I used the published Hurl examples as the closest thing to a spec. Every item marked **B** below therefore needs a person to check it against `workflow/harness.sh spec talks|speakers|ratings` first.
+The inventory was written before the harness token was available, from the published Hurl examples. The **B** items have since been checked against the harness specs: see "Checked against the harness specs" below.
 
 Paths are relative to `/Users/cke/gits/scienta/team-11`. `CS` means `src/main/java/no/scienta/cfp/ConferenceService.java`.
+
+---
+
+## Checked against the harness specs (2026-11-06, tick 15)
+
+Specs: `talks` V1, `speakers` V1, `ratings` V2. At tick 15 all 15 harness checks for the three base features were OK.
+
+| Item | What the spec says | Conclusion |
+|---|---|---|
+| B2 | Talks: "A speaker may submit at most **3** talks", and the limit holds under concurrent submissions. | The code is right. `Utils.MAX_TALKS = 5` and the README are wrong: remove the constant and fix the README (steps 10 and 25). |
+| B3 | Ratings: `averageRating` rounds halves up "wherever a talk is shown"; ranking uses the average "as shown, rounded". | Talk averages and ranking are right (`CS:199` compares the rounded value). `/admin/stats` is in no spec, so its floor rounding is our decision. |
+| B4 | Speakers: "A bio is at most **500** characters." | `PUT /speakers` allowing 1000 (`CS:94`) contradicts the rule, although `PUT` itself is not in the spec. Probably a bug: fix to 500. |
+| B5 | Speakers: "A speaker needs a real name and a real email to register." | `POST /speakers` checks only `@NotBlank` on email. What counts as a "real" email is an open question for the product owner. The harness has not flagged it. |
+| B6 | Not covered. | Our decision. |
+| B7 | Talks: "nothing else is a format or a level". | 400 for `KEYNOTE` is right. Closed. |
+| B8–B11 | `/admin/*` and `/speakers/search` are in no spec. | Our decision. The harness does not check them. B1 (SQL injection) still stands as a security fix. |
+| B12 | The status codes for an unknown speaker are not specified. | Our decision. Write it in "Our decisions". |
+| B13 | Ratings: "A score is a whole number from 1 to 5. Nothing else is a score." | Rejecting `3.0` and `"3"` is right. Closed. |
+
+The specs also confirm these constraints from sections 1c and 4:
+
+- **Trailing slash**: `/speakers/` and `/speakers/{id}/` "must keep working". Spring Boot 3 would break this unless we add a workaround.
+- **`submittedAt`** must be `yyyy-MM-dd'T'HH:mm:ss.SSS+00:00`, never `Z`, and `submittedOn` must be `yyyy-MM-dd`. Switching the JSON to `java.time` types is ruled out.
+- **`ratedAtDisplay`** must be `M/d/yy, h:mm AM` with "exactly one ordinary space" before AM/PM. Java 20+ breaks this unless step 21 comes first.
+- **Email uniqueness ignores case**: already met (`schema.sql:47`, `SpeakerDao.java:32`).
 
 ---
 
