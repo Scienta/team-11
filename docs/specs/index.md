@@ -18,6 +18,7 @@
   * [R5: Refuses a second speaker with the same email](./speakers/r5-refuses-a-second-speaker-with-the-same-email.md)
   * [R7: Treats a trailing slash like the path without it](./speakers/r7-treats-a-trailing-slash-like-the-path-without-it.md)
 * [Spring Boot 4 upgrade](./spring-boot-4-upgrade/index.md)
+  * [R1: Runs on Spring Boot 4 and Java 25](./spring-boot-4-upgrade/r1-runs-on-spring-boot-4-and-java-25.md)
   * [R2: Answers a path with a trailing slash like the path without it](./spring-boot-4-upgrade/r2-answers-a-path-with-a-trailing-slash-like-the-path-without-it.md)
   * [R2: Reads request bodies as leniently as before](./spring-boot-4-upgrade/r2-reads-request-bodies-as-leniently-as-before.md)
   * [R2: Takes only a JSON whole number as a score](./spring-boot-4-upgrade/r2-takes-only-a-json-whole-number-as-a-score.md)

@@ -28,17 +28,20 @@ The feature request does not give these. We decide them and write down why.
 | Where the versions come from | `VersionInfoContributor`, unchanged: `SpringBootVersion.getVersion()`, `SpringVersion.getVersion()` and the `java.version` system property | R3. They read the jar manifests and the JVM at run time. |
 | Trailing slash on any path (`/speakers/`, `/speakers/{id}/`, `/talks/{id}/` …) | Same answer as without the slash, for every method, as on Boot 2.7 | Speakers R7. Spring 6+ no longer matches a trailing slash, so a `UrlHandlerFilter` strips it before the request reaches the controllers. It wraps the request, it does not redirect, so a `POST` or `PUT` keeps its body and status. |
 | `path` in an error body for a request with a trailing slash | Keeps the slash, as on Boot 2.7 | R2: the error body shows the path the client sent. |
-| `submittedAt` | `yyyy-MM-dd'T'HH:mm:ss.SSS+00:00`, never `Z` | Talks spec. Jackson 3 must keep the old `java.util.Date` format. |
-| `submittedOn` | `yyyy-MM-dd` | Talks spec. |
-| Property order in JSON bodies | As on Boot 2.7: the field order of `TalkDto`, the insertion order of the maps | R2. Jackson 3 sorts properties alphabetically by default; we turn that off. |
+| Jackson 3 defaults | `spring.jackson.use-jackson2-defaults=true` | R2. Boot's switch for the defaults Boot 2.7 used with Jackson 2. Without it, Jackson 3 writes dates as `…Z`. |
+| `submittedAt` | `yyyy-MM-dd'T'HH:mm:ss.SSS+00:00`, never `Z` | Talks spec. Kept by the Jackson 2 defaults. |
+| `submittedOn` | `yyyy-MM-dd` | Talks spec. Jackson 3 writes a `java.sql.Date` as a full timestamp (`2026-11-05T23:00:00.000+00:00`) even with the Jackson 2 defaults, so `SqlDateJsonModule` writes its `toString()`, as Jackson 2 did. |
+| Property order in JSON bodies | As on Boot 2.7: the field order of `TalkDto`, the insertion order of the maps | R2. Checked as text by `UpgradeContractTest`. |
+| Path variables without a name (`@PathVariable Long id`) | Compile with `-parameters` | Spring 6.1+ reads the names only from `-parameters`; without it every such request is a 500. The starter parent sets it; we import the BOM instead, so the pom sets it. |
 | `averageRating: null` | Stays in the body | Ratings R4 |
 | Score `3.0`, `"3"`, `true`, `null`, `[3]` | 400 `score must be a whole number` | Ratings R2. The body stays a `Map`, so Jackson does not coerce. |
 | Unknown fields in a request body | Ignored | As on Boot 2.7 |
 | Comments in a request body | Allowed | As on Boot 2.7 (`allow-comments`, kept for the mobile client) |
 | A number where a text field is expected (`"title": 5`), a text number where a number is expected (`"speakerId": "7"`) | Coerced, as on Boot 2.7 | R2 |
 | Error bodies | The Boot error body, not RFC 9457 Problem Details: `timestamp`, `status`, `error`, `message`, `path`, plus `errors` for a `@Valid` failure. Our own messages unchanged. | R2. `include-message` and `include-binding-errors` stay `always`. |
-| Error messages written by Spring or Jackson (malformed JSON, a path variable that is not a number, a missing body) | Same status; the wording may change | The text names library classes (`com.fasterxml.jackson…`, "nested exception is …") that do not exist in Spring 7 and Jackson 3. No spec defines it. |
-| `Content-Type` | `application/json;charset=UTF-8`, as on Boot 2.7 | R2. The forced UTF-8 encoding moves to the Boot 4 property name. |
+| Error messages written by Spring or Jackson (malformed JSON, a path variable that is not a number, an unknown path, a wrong method) | Same status; the wording changes | The text names library classes (`com.fasterxml.jackson…`, "nested exception is …") that do not exist in Spring 7 and Jackson 3. No spec defines it. Examples: an unknown path says `No static resource nope.` instead of `No message available`; `DELETE /speakers` says `Method 'DELETE' is not supported.` instead of `Request method 'DELETE' not supported`. |
+| `Content-Type` of a success | `application/json;charset=UTF-8`, as on Boot 2.7 | R2. The forced UTF-8 encoding moves to the Boot 4 property name. |
+| `Content-Type` of an error body | `application/json`, without `;charset=UTF-8` | Spring 7 and Tomcat 11 reset the response before the error page, so the forced charset is lost. JSON is UTF-8 by definition (RFC 8259 defines no charset parameter), so no client reads it differently. Restoring it would need our own filter on the error dispatch. A person decides whether that is worth it (open question). |
 | `ratedAtDisplay` | `M/d/yy, h:mm AM` with an ordinary space before AM/PM, on Java 25 | Ratings R8. The explicit pattern in `Utils.usShort` does not use the locale's SHORT style. |
 | `GET /health` | Unchanged: 200 `{"status":"ok","version":"<GIT_SHA>"}`, 503 `db-unavailable` within 5 s | Deploy contract. `HealthTest` covers it. |
 
@@ -108,4 +111,4 @@ from the `Dockerfile`.
 
 ## Open questions for the product owner
 
-- [ ] None. The request is clear, and the user chose Java 25.
+- [ ] For the team, not the product owner: is `application/json` without `;charset=UTF-8` on error bodies acceptable? We think so (see "Our decisions").

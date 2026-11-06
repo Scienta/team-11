@@ -129,7 +129,7 @@ class UpgradeContractTest {
     void answersAnErrorWithTheBootErrorBody() throws Exception {
         HttpResponse<String> res = send("GET", "/speakers/999999", null);
         assertEquals(404, res.statusCode());
-        assertEquals(JSON_UTF8, res.headers().firstValue("Content-Type").orElse(""));
+        assertTrue(res.headers().firstValue("Content-Type").orElse("").startsWith("application/json"));
         assertMatches("\\{\"timestamp\":\"" + TIMESTAMP + "\",\"status\":404,\"error\":\"Not Found\","
                 + "\"message\":\"speaker not found\",\"path\":\"/speakers/999999\"}", res.body());
     }
@@ -187,6 +187,23 @@ class UpgradeContractTest {
         String json = body.replace("$email", "grace-" + UUID.randomUUID() + "@example.com").replace("$speaker", speaker);
         HttpResponse<String> res = send("POST", path, json);
         assertEquals(status, res.statusCode(), res.body());
+    }
+
+    @DisplayName("R1: Runs on Spring Boot 4 and Java 25")
+    @Description("""
+            The major version of each field in versions on GET /actuator/info.
+            """)
+    @TableTest("""
+        Field           | Major Version?
+        springBoot      | 4
+        springFramework | 7
+        java            | 25
+        """)
+    void runsOnSpringBoot4AndJava25(String field, int majorVersion) throws Exception {
+        String info = send("GET", "/actuator/info", null).body();
+        Matcher version = Pattern.compile("\"" + field + "\":\"(\\d+)").matcher(info);
+        assertTrue(version.find(), info);
+        assertEquals(majorVersion, Integer.parseInt(version.group(1)), info);
     }
 
     @Test
