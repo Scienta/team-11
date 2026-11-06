@@ -20,11 +20,15 @@ An agent does the other steps.
    `@TableTest` changed, update the product owners' report in `docs/specs/` and commit it with the
    test. Empty `target/junit-jupiter` first: the reporter reads every result in it, also from
    earlier runs and from other sessions in this working tree. Check that no page has "Failed Rows".
+   Then make the status page for the product owner, `docs/status.md`, and commit it with the report.
+   A new report page needs a line in plain Norwegian in `workflow/po-status-rules.tsv`; the script
+   warns when a line is missing.
 
    ```bash
    rm -rf target/junit-jupiter docs/specs
    JAVA_HOME=$(/usr/libexec/java_home -v 25) ./mvnw test
    JAVA_HOME=$(/usr/libexec/java_home -v 25) ./mvnw org.tabletest:tabletest-reporter-maven-plugin:report
+   workflow/po-status.sh
    ```
 7. **Review.** A review agent compares the diff with `spec.md`, row by row. It does not see our
    reasoning, only the spec and the code. See `workflow/review-rubric.md` items 1–7.
