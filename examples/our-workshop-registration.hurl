@@ -4,6 +4,7 @@
 # Each group registers its own speakers and submits its own workshops, so the file runs against a
 # shared database. A speaker has at most 3 talks. A workshop is ACCEPTED after ratings from two
 # reviewers and the committee's decision (Acceptance R2, R3).
+# Every unregistration sends the registration's own email in its body (R10).
 # Hurl sends the requests one at a time, so the rows "at the same time" of R5 and R6 are not here
 # (WorkshopRegistrationTest has them).
 
@@ -690,6 +691,7 @@ HTTP 409
 
 # R9: Ada unregisters from the full workshop, with no body in the response
 DELETE {{base_url}}/workshops/{{full_workshop}}/registrations/{{full_ada}}
+{"email": "ada@example.com"}
 HTTP 204
 [Asserts]
 bytes count == 0
@@ -724,6 +726,7 @@ HTTP 201
 
 # R9: Ada unregisters, and the list no longer has her
 DELETE {{base_url}}/workshops/{{twice_workshop}}/registrations/{{first_ada}}
+{"email": "ada@example.com"}
 HTTP 204
 
 GET {{base_url}}/workshops/{{twice_workshop}}/registrations
@@ -734,6 +737,7 @@ jsonpath "$[0].name" == "Grace Hopper"
 
 # R9: Ada unregisters a second time, and the second request finds nothing
 DELETE {{base_url}}/workshops/{{twice_workshop}}/registrations/{{first_ada}}
+{"email": "ada@example.com"}
 HTTP 404
 
 # R6, R9: Ada registers again after unregistering
@@ -754,10 +758,12 @@ jsonpath "$[1].email" == "ADA@Example.com"
 
 # R9: Ada's registration is for another workshop
 DELETE {{base_url}}/workshops/{{other_workshop}}/registrations/{{second_ada}}
+{"email": "ADA@Example.com"}
 HTTP 404
 
 # R9: no registration with this ID
 DELETE {{base_url}}/workshops/{{other_workshop}}/registrations/999999999
+{"email": "ada@example.com"}
 HTTP 404
 
 # R9: none of the refused requests removed Ada from her workshop
@@ -769,13 +775,16 @@ jsonpath "$[1].id" == {{second_ada}}
 
 # R2, R9: no talk with this ID
 DELETE {{base_url}}/workshops/999999999/registrations/{{second_ada}}
+{"email": "ADA@Example.com"}
 HTTP 404
 
 # Our decisions: an ID in the path that is not a number is 400
 DELETE {{base_url}}/workshops/abc/registrations/{{second_ada}}
+{"email": "ADA@Example.com"}
 HTTP 400
 
 DELETE {{base_url}}/workshops/{{twice_workshop}}/registrations/abc
+{"email": "ADA@Example.com"}
 HTTP 400
 
 POST {{base_url}}/speakers
@@ -798,6 +807,7 @@ not_a_workshop: jsonpath "$.id"
 
 # R2, R9: a talk that is not a workshop
 DELETE {{base_url}}/workshops/{{not_a_workshop}}/registrations/{{second_ada}}
+{"email": "ADA@Example.com"}
 HTTP 404
 
 PUT {{base_url}}/talks/{{withdrawn_workshop}}/ratings/1
@@ -828,6 +838,7 @@ HTTP 200
 
 # R4, R9: Ada unregisters from the withdrawn workshop, and the list shows only Grace
 DELETE {{base_url}}/workshops/{{withdrawn_workshop}}/registrations/{{withdrawn_ada}}
+{"email": "ada@example.com"}
 HTTP 204
 
 GET {{base_url}}/workshops/{{withdrawn_workshop}}/registrations
@@ -835,3 +846,91 @@ HTTP 200
 [Asserts]
 jsonpath "$" count == 1
 jsonpath "$[0].name" == "Grace Hopper"
+
+# ================================================================ R10: unregister with the registration's email
+
+POST {{base_url}}/speakers
+{"name": "Adele Goldberg", "email": "goldberg-{{newUuid}}@example.com"}
+HTTP 201
+[Captures]
+goldberg: jsonpath "$.id"
+
+POST {{base_url}}/talks
+{"title": "Smalltalk for children", "format": "WORKSHOP", "level": "BEGINNER", "speakerId": {{goldberg}}}
+HTTP 201
+[Captures]
+r10_workshop: jsonpath "$.id"
+
+PUT {{base_url}}/talks/{{r10_workshop}}/ratings/1
+{"score": 5}
+HTTP 200
+
+PUT {{base_url}}/talks/{{r10_workshop}}/ratings/2
+{"score": 4}
+HTTP 200
+
+PUT {{base_url}}/talks/{{r10_workshop}}/status
+{"status": "ACCEPTED"}
+HTTP 200
+
+POST {{base_url}}/workshops/{{r10_workshop}}/registrations
+{"name": "Ada Lovelace", "email": "ada@example.com"}
+HTTP 201
+[Captures]
+r10_ada: jsonpath "$.id"
+
+# R10: another email unregisters nothing
+DELETE {{base_url}}/workshops/{{r10_workshop}}/registrations/{{r10_ada}}
+{"email": "grace@example.com"}
+HTTP 404
+
+# R10: a body without an email unregisters nothing
+DELETE {{base_url}}/workshops/{{r10_workshop}}/registrations/{{r10_ada}}
+{}
+HTTP 404
+
+# R10: no body
+DELETE {{base_url}}/workshops/{{r10_workshop}}/registrations/{{r10_ada}}
+Content-Type: application/json
+HTTP 400
+
+# R10: a body that is not JSON
+DELETE {{base_url}}/workshops/{{r10_workshop}}/registrations/{{r10_ada}}
+Content-Type: application/json
+```
+{"email":
+```
+HTTP 400
+
+# R10: none of the refused requests unregistered Ada
+GET {{base_url}}/workshops/{{r10_workshop}}/registrations
+HTTP 200
+[Asserts]
+jsonpath "$" count == 1
+jsonpath "$[0].id" == {{r10_ada}}
+
+# R10: the registration's email unregisters Ada
+DELETE {{base_url}}/workshops/{{r10_workshop}}/registrations/{{r10_ada}}
+{"email": "ada@example.com"}
+HTTP 204
+
+GET {{base_url}}/workshops/{{r10_workshop}}/registrations
+HTTP 200
+[Asserts]
+jsonpath "$" count == 0
+
+POST {{base_url}}/workshops/{{r10_workshop}}/registrations
+{"name": "Ada Lovelace", "email": "ada@example.com"}
+HTTP 201
+[Captures]
+r10_ada_again: jsonpath "$.id"
+
+# R6, R10: the registration's email in other letter case unregisters Ada
+DELETE {{base_url}}/workshops/{{r10_workshop}}/registrations/{{r10_ada_again}}
+{"email": "ADA@Example.com"}
+HTTP 204
+
+GET {{base_url}}/workshops/{{r10_workshop}}/registrations
+HTTP 200
+[Asserts]
+jsonpath "$" count == 0
