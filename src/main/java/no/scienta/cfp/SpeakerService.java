@@ -43,7 +43,7 @@ public class SpeakerService {
         } catch (DuplicateKeyException e) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "email already registered");
         }
-        log.info("registered speaker " + id + " (" + form.getEmail() + ")");
+        log.info("registered speaker {}", id);
         notifications.speakerRegistered(form.getEmail(), form.getName());
         return new Speaker(id, form.getName(), form.getEmail(), form.getBio());
     }

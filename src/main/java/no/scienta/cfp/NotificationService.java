@@ -30,9 +30,9 @@ public class NotificationService {
 
     private void send(String to, String subject, String body) {
         if (!enabled) {
-            log.debug("mail disabled, not sending '" + subject + "' to " + to);
+            log.debug("mail disabled, not sending '{}'", subject);
             return;
         }
-        log.info("MAIL from=" + from + " to=" + to + " subject=" + subject);
+        log.info("MAIL from={} subject={}", from, subject);
     }
 }
