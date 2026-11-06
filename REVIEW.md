@@ -16,7 +16,8 @@
 
 <!-- The steps you actually ran, from spec to claim. Link to the files in workflow/ and .claude/. -->
 
-Draft from 12:30. We update it when the steps change.
+Final state at 16:05: 11 features claimed (the 3 base features and 8 more), about 10 Claude sessions on
+this laptop, and Carl Kristian's team with its own agents on a second laptop.
 
 1. Fetch the feature request with [`workflow/harness.sh`](workflow/harness.sh). Write our spec
    from [`workflow/spec-template.md`](workflow/spec-template.md): rules with IDs, our decisions on
@@ -27,7 +28,9 @@ Draft from 12:30. We update it when the steps change.
    [`workflow/review-rubric.md`](workflow/review-rubric.md). Then the guardians review the batch
    (below).
 5. Frikke builds the push candidate in its own git worktree, runs the full suite there and makes
-   the report. A person approves the push, because a push deploys. We verify on the team URL with
+   the report. A person approves each push, because a push deploys. The Hand may approve on the person's
+   behalf when the candidate is on the current origin/main, the suite is green and both guardians
+   report no blocker. We verify on the team URL with
    the Hurl examples, the request log (`RequestLogFilter`, read with `.github/fagdag/logs.sh`) and
    the harness feedback.
 6. A person claims only after [`workflow/claim-checklist.md`](workflow/claim-checklist.md) has
@@ -56,6 +59,10 @@ tree. The rules are in [`workflow/coordination.md`](workflow/coordination.md).
   architecture and functionality, each with evidence that a person can check. The product owner
   approves in Slack before a person presses claim. Example: acceptance, «Godkjent» at 14:30:30 CET,
   in [`workflow/claims/acceptance.md`](workflow/claims/acceptance.md).
+
+### Carl Kristian's team: one coordinator session
+
+One Claude Code session coordinated our work. It used a background Slack watch every minute: it read #team-11, answered factual questions and reported only what needed a person's decision. Subagents did the feature work, each in its own git worktree and on its own feature branch, with one PR for each feature (co-speakers PR #4/#9, Spring Boot 4 PR #5, ratings-cr PR #11, paths-ignore PR #13, tech debt PR #8). The two teams share one `main`, so we agreed the merge order in Slack before each merge, and we let the other team's guardians review our PRs. Rules we kept: only the product owner's own «godkjent» counts (no approval by proxy), a person approves each push and each merge, and a claim request to the product owner is a requirement-by-requirement table (requirement | implemented | tested green) plus security and architecture.
 
 ## 2. How we reviewed agent output
 
@@ -119,7 +126,8 @@ claimed or skipped, at which tick, and the evidence you held before claiming. Fo
 | Workshop registration | claimed (Nils Christian), after Ingvild Hardeng approved on Stein's behalf at 14:42:57 CET ("Jeg godkjenner for Stein"); Stein himself has not answered in the claim thread | 136 | Deployed `c4fe79c`, then `3318bf1` (same workshop code; R10 proves with the email). **Security:** Ferdinand, S1–S12 closed; S5b (the email is public, so anybody can unregister) is fixed in `b8b5077`, not deployed at the claim. **Architecture:** Frode's design review and Fiffi, no blocker. **Functionality:** R1–R10 each have an example table. Frekken's spec review: no open defect. CI and deploy run 42226345319 green. The deployed `our-workshop-registration.hurl` 211/211 and the base examples passed on the team URL at 13:39:51Z. The 20 claimed checks were OK at tick 133. Details: `workflow/claims/workshop-registration.md`. |
 | Scheduling | claimed (Nils Christian), after Stein's own «godkjent» at 15:07:40 CET (top level) and «Godkjent» in the scheduling thread at 15:08:33 CET | 162 | Deployed `7bdf99a`, then `dfd57c9`. **Security:** Ferdinand, no blocker (S10b: anybody can change the programme; the spec has no auth model). **Architecture:** Fiffi, no blocker; 4 "tidy after" items, 2 done. **Functionality:** R1–R8 each have an example table; Stein got a requirement-by-requirement overview. `SchedulingTest` 78/78 (R8 at the same time included), CI and deploy run 42229118539 green. `examples/local/our-scheduling.hurl` 215/215 three times against a local build only, because it changes the shared programme. Read-only check on the team URL: 200 for three places, 400 for `R4/S1`. All 24 claimed checks were OK at tick 161. Details: `workflow/claims/scheduling.md`. |
 | Co-speakers | claimed (Nils Christian), after Stein's own «Godkjent» at 15:15:20 CET (top level) and at 15:15:41 CET in Carl Kristian's claim thread | 170 | Co-speakers came from Carl Kristian's team (PR #4, `b729a5e`), and his team prepared the claim request. Deployed `05ac2c5`, which has PR #9 (`dfd57c9`: R9 on `TalkStatus`, sealed result, R11 cascading foreign keys, R12 `actingSpeakerId`). **Security:** our security guardian (Ferdinand) OK'd PR #9 at `3ca19dd` after testing the migration and an attack script (one low finding left). **Architecture:** our architecture guardian (Fiffi) OK'd PR #9; both points (G2, G3) closed. **Functionality:** R1–R12 in `workflow/specs/co-speakers/spec.md`, each with an example table; our spec review found no defect. 545 tests green (Java 21). Deploy run for `dfd57c9` green, and CI and deploy run 42226853638 green. All 537 Hurl requests (9 files) passed on the team URL; earlier, `our-co-speakers.hurl` 66/66 on `3318bf1` at 13:41:50Z. Harness at tick 165: all claimed features OK except `scheduling/check-1`. After the claim: at tick 171 `co-speakers/check-1` (second DELETE of a removed co-speaker, we answer 200) and `check-2` (PUT of the main speaker, we answer 409) were FAULTY; check-3 OK. See section 4, ticks 171–178. Details: `workflow/claims/co-speakers.md`. |
-| Ratings change request (`ratings-cr`) | claimed (Nils Christian), after the product owner's «Godkjent» at 15:40:25 CET in the thread of our request | 195 | Deployed `6227fcb` (PR #11, merged as `fff8c83`, deployed together with PR #13). **Security:** Nils Christian's security guardian OK'd PR #11 at `76513a4`: still one query, no division by zero or overflow, edge cases and 1000 ratings tested, attack script all closed but one low finding. **Architecture:** their architecture guardian OK'd it: the rule lives in `RatingTotals.average()`, a pure function; SQL only aggregates. **Functionality:** R1–R6 in `workflow/specs/ratings-cr/spec.md`, each with an example table; tests written first (16 of 29 rows red), 578 tests green (Java 21). `/health` showed `6227fcb`; all 892 Hurl requests (10 files, 354 in `our-ratings-cr.hurl`) passed on the team URL. Harness at tick 190: all claimed features OK. Open (not blocking): whether `/admin/stats` should use the trimmed averages. |
+| Ratings change request (`ratings-cr`) | claimed (Nils Christian), after Stein's own «Godkjent» at 15:40:25 CET in Carl Kristian's claim thread | 195 | Carl Kristian's team prepared the claim request (PR #11). Deployed `6227fcb` (PR #11, merged as `fff8c83`, deployed together with PR #13). **Security:** our security guardian (Ferdinand) OK'd PR #11 at `76513a4`: still one query, no division by zero or overflow, edge cases and 1000 ratings tested, attack script all closed but one low finding. **Architecture:** our architecture guardian (Fiffi) OK'd it: the rule lives in `RatingTotals.average()`, a pure function; SQL only aggregates. **Functionality:** R1–R6 in `workflow/specs/ratings-cr/spec.md`, each with an example table; tests written first (16 of 29 rows red), 578 tests green (Java 21). CI and deploy run 42235128898: `deploy` and `tests` success. `/health` showed `6227fcb`; all 892 Hurl requests (10 files, 354 in `our-ratings-cr.hurl`) passed on the team URL. Harness at tick 190: all claimed features OK. After the claim: `ratings-cr/check-4` was FAULTY for one tick (197) under twice the normal load, with no answer recorded, and OK at tick 198. The time went before the requests reached our service: all 36 PUTs of the burst got 200 in 13–388 ms in our request log, but 23 of them arrived about 5 s after the burst began (Frode). Not a defect in our code. Open (not blocking): whether `/admin/stats` should use the trimmed averages. Details: `workflow/claims/ratings-cr.md`. |
+| Spring Boot 4 (`spring-boot-4`) | claimed (who pressed claim is not confirmed yet), after Stein's own «Godkjent» at 15:48:17 CET in Carl Kristian's claim thread and 15:48:59 CET in Nils Christian's | 201 | PR #5 came from Carl Kristian's team, and our laptop finished it (Frode, `815fd7a`). Deployed `e18954e` (PR #5: Boot 4.1.2, Spring 7.0.10, Java 25, Jackson 3); `/health` showed it from 14:46:18 UTC, and deploy run 42236603631 succeeded. **Security:** our security guardian (Ferdinand) ran the exploit script on the new version: all closed but one low finding; actuator exposes only health and info. **Architecture:** our architecture guardian (Fiffi) said "OK to merge" after a scratch merge with a list of 11 merge points; only framework and configuration changed, no business rule. **Functionality:** 627 tests green on Java 25; 16 of 16 responses byte-equal with the previous version; `/actuator/info` reads the versions from the running service. Start-up 21.7 s (before 24–29 s). All 30 active checks OK at tick 200; `spring-boot-4/check-1` and `check-2` OK from tick 202. |
 | Submission-cap-cr | claimed (Nils Christian), after Stein's own «Godkjent» at 15:50:15 CET and «Begge er godkjent» in the claim thread | 205 | Deployed `e7304e2`. **Security:** Ferdinand, `f95fd45` OK (no deadlock, R6 exactly 1 success under load). **Architecture:** Fiffi, OK, no blocker (relayed by The Hand): the counting statuses stay in `TalkStatus`, one SQL constant counts for both paths, lock order talk then speaker. **Functionality:** R1–R8 each have an example table; Stein's answer keeps Co-speakers R9. `SubmissionCapTest` R1–R7; `our-submission-cap.hurl` 128/128 and the changed old rows green on a local build of `f95fd45`; Frikke on the candidate: 695 tests, Hurl 1023 + 333 + 225. Details: `workflow/claims/submission-cap-cr.md`. |
 | Programme export | claimed (Nils Christian), on the same approval as submission-cap-cr («Begge er godkjent») | 206 | Deployed `e7304e2`. **Security:** Ferdinand, `b700b6e` no blocker (S14, S16 low). **Architecture:** guardian, `b700b6e` no blocker (G22, G23 tidy after). **Functionality:** R1–R7 each have an example table. `examples/local/our-programme-export.hurl` 333/333 against a local build only, because it empties the shared programme. 38/38 table rows. Details: `workflow/claims/programme-export.md`. |
 
@@ -263,6 +271,26 @@ burst after a start. It is not enough for the next minute, while the JIT compile
 also took a deploy as free: about 10 sessions push documents such as this file, and each push
 restarted the service while the harness ran.
 
+**Tick 206 (14:53 UTC): 7 checks FAULTY in the cold start after a deploy of a test-only change.**
+All 7 were OK again at tick 207.
+
+- The checks: `speakers/check-1` and `check-4` and `acceptance/check-3` on `POST /speakers`,
+  `ratings-cr/check-2` on `POST /talks`, `ratings/check-3` on `PUT /talks/{id}/ratings/{reviewerId}`,
+  and `scheduling/check-2` and `check-6` on `DELETE /programme/{room}/{slot}`.
+- The push of `e7304e2` changed only one test file, but it deployed. Container 00030 (Java 25,
+  Spring Boot 4) took 31.0 s to start, and it was ready at 14:52:06 UTC. Its warm-up ended at
+  14:52:11.
+- In the next minute, 90 of 475 requests took 1 s or more, and the slowest took 3.1 s. Our request
+  log has no 5xx answer. The first Spring Boot 4 deploy (`e18954e`) had started in 21.7 s.
+- Decision: a deploy freeze. The Hand decided it at about 15:55 CET, after tick 206, and proposed it
+  to Carl Kristian in Slack. No deploy until 17:00, except a hotfix for a red check. A push of
+  documents only does not deploy.
+
+Why we missed it: the tick 179 entry named the two fixes, fewer deploys and a stronger warm-up.
+`81344e6` stopped the deploys for documents, but a change to a test still deploys, and the stronger
+warm-up was not in yet. Each deploy while the harness scores costs a FAULTY tick, so we stopped
+deploying.
+
 ## 5. Reusable artifacts
 
 <!-- What's worth taking to client work: agents, skills, prompts, spec templates, gates. Give the paths. -->
@@ -287,4 +315,7 @@ Draft. Each item works outside this repo with small changes.
 
 <!-- One thing, and why. -->
 
-(draft, the team decides) Measure a burst of traffic before the first deploy, on a cold start and with the container's CPU limit. We learnt both from FAULTY ticks (27, 67 and 107).
+Two drafts. The team keeps one of them.
+
+- (draft, the team decides) Measure a burst of traffic before the first deploy, on a cold start and with the container's CPU limit. We learnt both from FAULTY ticks (27, 67 and 107).
+- (draft, the team decides; Carl Kristian's suggestion) Ask the product owner for the status codes of the error cases before the claim, and don't decide them ourselves. On co-speakers we chose 200 and 409 in «Our decisions», the harness expected 404 and 400, and two checks were FAULTY after the claim (section 4, ticks 171–178).
