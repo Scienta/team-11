@@ -37,7 +37,7 @@ by its subject with `git log --grep`.
 | A4 | `TalkDto.status` is a `String`, and the code compares enum names (P4). | Replace Type Code with Enum | done, `a030b26` (also in `CoSpeakerService`) |
 | A5 | `TalkStatus` has a `switch` and `this ==` checks (P1). | Replace Conditional with enum constructor fields | done, `5fba392` |
 | A6 | The R7 rule and `'SUBMITTED'` are SQL literals in `TalkDao` (P1). | Move Method `TalkStatus.countsTowardLimit()`, bound parameters | done, `aa01d71` |
-| A7 | Two `listTalks` overloads with a flag argument. | Replace Flag Argument with `TalkListQuery`; Extract Class `TalkListing` (D1, P8) | done: `0380244`, `3df81ef`, `6bef5fa` (Frode; not on `origin/main` yet) |
+| A7 | Two `listTalks` overloads with a flag argument. | Replace Flag Argument with `TalkListQuery`; Extract Class `TalkListing` (D1, P8) | superseded by PR #8, which deletes `ConferenceService` and moves the talk lists to `TalkService`. Frode's commits stay on branch `a7-talk-listing`. |
 | A8 | `refusal()` reads the talk again to find the reason. | Goes away with A1 | done, `4d03267` |
 | A9 | Nested `Stream.of` and `flatMap` build the SQL arguments. | Extract Method | done, `2039ed6` |
 
@@ -139,15 +139,19 @@ and the generated `docs/status.md`. The full suite was green on Java 17: 545 tes
 
 ### 2026-11-06: A7, the talk list out of `ConferenceService` (guardian)
 
-No blocker. `0380244` (Introduce Parameter Object `TalkListQuery`), `3df81ef` (Extract Class
-`TalkRatings`), `6bef5fa` (Extract Class `TalkListing`). `ConferenceService` has 252 lines (D1).
+Superseded: these commits are not on `main`. They stay on branch `a7-talk-listing`, because
+Carl Kristian's PR #8 deletes `ConferenceService` and moves the talk lists to `TalkService`. After
+that merge, check G19–G21 again on `TalkService`.
+
+The review found no blocker. `0380244` (Introduce Parameter Object `TalkListQuery`), `3df81ef` (Extract Class
+`TalkRatings`), `6bef5fa` (Extract Class `TalkListing`). `ConferenceService` had 252 lines after them (D1).
 Frode showed byte-equal answers for 16 requests.
 
 | # | Finding | Refactoring | When | Status |
 |---|---------|-------------|------|--------|
-| G19 | `TalkListing`, a service, throws a 400 `ResponseStatusException` for an unknown sort, and `TalkListQuery.sort` is a `String` (P2, P3). | Replace Type Code with Enum `TalkOrder`, parsed by `TalkListQuery.parse` in the controller | tidy after | open |
-| G20 | The ranking in `TalkListing.orderedTalks` is a `for` loop with a hand-written comparator. | Replace Loop with Pipeline: `partitioningBy` and `Comparator.comparing(…).thenComparing(…)` | tidy after | open |
-| G21 | `TalkRatings.addTo` changes each `TalkDto`. | Make `TalkDto` a record (P5) | later | open |
+| G19 | `TalkListing`, a service, throws a 400 `ResponseStatusException` for an unknown sort, and `TalkListQuery.sort` is a `String` (P2, P3). | Replace Type Code with Enum `TalkOrder`, parsed by `TalkListQuery.parse` in the controller | tidy after | open: check again on `TalkService` after PR #8 |
+| G20 | The ranking in `TalkListing.orderedTalks` is a `for` loop with a hand-written comparator. | Replace Loop with Pipeline: `partitioningBy` and `Comparator.comparing(…).thenComparing(…)` | tidy after | open: check again on `TalkService` after PR #8 |
+| G21 | `TalkRatings.addTo` changes each `TalkDto`. | Make `TalkDto` a record (P5) | later | open: check again on `TalkService` after PR #8 |
 
 ### 2026-11-06: programme export `b700b6e` (guardian)
 
@@ -181,5 +185,6 @@ No blocker. A push still deploys once from `deploy.yml`; only the `publish` job 
 
 - Spring Boot 4 (PR #5): after the merge, check that the 10 merge fixes above are in, the JIT flag
   first of all.
+- PR #8: after the merge, check G19–G21 on `TalkService`.
 - Merges from Carl Kristian's laptop: check only the fit with P1–P8 and what our features rely on.
   Do not repeat his team's feature review.
