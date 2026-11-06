@@ -103,7 +103,8 @@ jsonpath "$.coSpeakerIds[1]" == {{bob}}
 GET {{base_url}}/talks
 HTTP 200
 [Asserts]
-jsonpath "$[?(@.id == {{talk}})].coSpeakerIds[0]" == {{ada}}
+jsonpath "$[?(@.id == {{talk}})].coSpeakerIds[*]" nth 0 == {{ada}}
+jsonpath "$[?(@.id == {{talk}})].coSpeakerIds[*]" nth 1 == {{bob}}
 
 GET {{base_url}}/talks?speakerId={{main}}
 HTTP 200
@@ -113,7 +114,8 @@ jsonpath "$[0].coSpeakerIds[1]" == {{bob}}
 GET {{base_url}}/talks?sort=rating
 HTTP 200
 [Asserts]
-jsonpath "$[?(@.id == {{talk}})].coSpeakerIds[1]" == {{bob}}
+jsonpath "$[?(@.id == {{talk}})].coSpeakerIds[*]" nth 0 == {{ada}}
+jsonpath "$[?(@.id == {{talk}})].coSpeakerIds[*]" nth 1 == {{bob}}
 
 GET {{base_url}}/talks?speakerId={{main}}&sort=rating
 HTTP 200
