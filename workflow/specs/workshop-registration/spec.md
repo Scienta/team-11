@@ -34,6 +34,7 @@ email as the attendee typed it.
 | Missing body or malformed JSON | 400 | Same as the base features |
 | ID in the path that is not a number | 400 | Same as the base features |
 | Unknown talk in the path, on POST and GET | 404 | Same as the base features |
+| POST with an unusable body to an unknown talk | 400 | The body is checked before the workshop is looked up (`WorkshopRegistrationController`), as in the base features. A request that is wrong in itself is a bad request, whatever it is for. |
 | A talk that is not a `WORKSHOP` (R2), on POST and GET | 404 | The path names a workshop. A talk of another format is not a workshop, so the resource does not exist. |
 | A workshop that is `SUBMITTED`, `WAITLISTED`, `REJECTED` or `WITHDRAWN` (R3) | 409 on POST, nothing is saved | A conflict with the current state, as in Acceptance R8 (rating a closed talk). |
 | GET for a workshop that is not `ACCEPTED` | 200 with its list | R4 needs the list of a withdrawn workshop. A workshop that was never accepted has an empty list. |

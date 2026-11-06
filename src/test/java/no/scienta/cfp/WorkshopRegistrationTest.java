@@ -82,15 +82,17 @@ public class WorkshopRegistrationTest {
 
     @DisplayName("Answers 400 for a request it cannot use")
     @Description("""
-            Each row submits and accepts one workshop first, which gets ID 1. A blank body sends no
-            body at all.
+            Each row submits and accepts one workshop first, which gets ID 1; there is no talk 2. A
+            blank body sends no body at all. The body is checked before the workshop, so an unknown
+            workshop with an unusable body gives 400.
             """)
     @TableTest("""
-        Scenario                | Method      | Workshop ID | Body                                                   | Status?
-        No body                 | POST        | 1           |                                                        | 400
-        Body that is not JSON   | POST        | 1           | '{"name": "Ada Lovelace"'                              | 400
-        Body that is a list     | POST        | 1           | '[]'                                                   | 400
-        ID that is not a number | {POST, GET} | abc         | '{"name": "Ada Lovelace", "email": "ada@example.com"}' | 400
+        Scenario                  | Method      | Workshop ID | Body                                                   | Status?
+        No body                   | POST        | 1           |                                                        | 400
+        Body that is not JSON     | POST        | 1           | '{"name": "Ada Lovelace"'                              | 400
+        Body that is a list       | POST        | 1           | '[]'                                                   | 400
+        ID that is not a number   | {POST, GET} | abc         | '{"name": "Ada Lovelace", "email": "ada@example.com"}' | 400
+        Unknown workshop, no name | POST        | 2           | '{"email": "ada@example.com"}'                         | 400
         """)
     void answers400ForARequestItCannotUse(String method, String workshopId, String body, int status) throws Exception {
         talkWith("WORKSHOP", "ACCEPTED");
