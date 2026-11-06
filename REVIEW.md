@@ -315,7 +315,4 @@ Draft. Each item works outside this repo with small changes.
 
 <!-- One thing, and why. -->
 
-Two drafts. The team keeps one of them.
-
-- (draft, the team decides) Measure a burst of traffic before the first deploy, on a cold start and with the container's CPU limit. We learnt both from FAULTY ticks (27, 67 and 107).
-- (draft, the team decides; Carl Kristian's suggestion) Ask the product owner for the status codes of the error cases before the claim, and don't decide them ourselves. On co-speakers we chose 200 and 409 in «Our decisions», the harness expected 404 and 400, and two checks were FAULTY after the claim (section 4, ticks 171–178).
+Ask the product owner for the status codes of the error cases before the claim, and don't decide them ourselves. On co-speakers we chose 200 and 409 in «Our decisions», the harness expected 404 and 400, and two checks were FAULTY after the claim (section 4, ticks 171–178). The product owner wants no technical questions, so agree all the status codes with the product owner once, up front, in one list, not case by case.
