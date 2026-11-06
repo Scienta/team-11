@@ -63,6 +63,7 @@ No two slots overlap, so "at the same time" in R6 means "in the same slot".
 | DELETE of a talk that is no longer `ACCEPTED` | 204 | R7 keeps the entry, so the committee must be able to remove it. |
 | Concurrency (R8) | A PUT or DELETE is one transaction. It locks the slot for all three rooms with `SELECT … FOR UPDATE` on one fixed row for each slot, and reads the talk with `FOR SHARE`. Unique indexes on (room, slot) and on the talk back R5. | Advisory locks are not available on the platform. R6 compares the talks of all three rooms in the slot, so locking only one room and slot is not enough. The talk can be put in two different slots at the same time, and the unique index on the talk refuses the second one. |
 | Who can change the programme | Anyone, no authentication | Same as the other endpoints today (tech debt B11). |
+| Our Hurl examples | `examples/local/our-scheduling.hurl`, run only against a local build, never against the team URL. For the claim, the team-URL evidence is the harness checks plus `examples/run.sh` for the other files. | Each group empties the places it uses, and on the team URL that can delete the harness's own entries. `examples/run.sh` takes only the files directly in `examples/`. Coordinator, 2026-11-06. |
 | An overview of the whole programme or of the empty places | Not built now | The request does not ask for it. The product owner wished for an overview of the gaps on 2026-11-06 at 13:09, but that wish is not part of this request. It is a later wish. Coordinator, 2026-11-06: do not ask the product owner. |
 
 ## Examples
@@ -164,7 +165,8 @@ GET and DELETE give 400 for the same four paths that are not in the list.
 | an empty programme | 10 PUTs of one talk in 10 different rooms and slots | one 200, nine 409; the talk is on the programme once |
 | `S2` empty | PUT a talk of Ada in `R1` `S2` and another talk of Ada in `R2` `S2` | one 200, one 409 |
 
-Hurl sends one request at a time, so the R8 rows are in the JUnit test only.
+Hurl sends one request at a time, so the R8 rows are in the JUnit test only. The Hurl file for the other
+rows is `examples/local/our-scheduling.hurl` (local build only, see "Our decisions").
 
 ## Effect on existing features
 
