@@ -92,20 +92,19 @@ class UpgradeContractTest {
             As on Boot 2.7, an error has Content-Type application/json;charset=UTF-8, like a success,
             and the fields timestamp, status, error, message and path. $speaker and $talk are a
             registered speaker and their talk, $email a new address and $taken the speaker's address.
-            The 500 comes from the unescaped search (tech-debt B1); when B1 is fixed, drop that row.
+            No row has a 500: no request gives one without a bug.
             """)
     @TableTest("""
-        Scenario                   | Method | Path                   | Body                                    | Status?
-        Our own 400                | POST   | /speakers              | '{"name":"Ada","email":"not-an-email"}' | 400
-        Validation error           | POST   | /speakers              | '{"name":"","email":"$email"}'          | 400
-        Malformed JSON             | POST   | /speakers              | '{not json'                             | 400
-        Path variable not a number | GET    | /speakers/abc          |                                         | 400
-        Not the main speaker       | POST   | /talks/$talk/withdraw  | '{"speakerId":999999}'                  | 403
-        Unknown speaker            | GET    | /speakers/999999       |                                         | 404
-        Unknown path               | GET    | /nope                  |                                         | 404
-        Wrong method               | DELETE | /speakers              |                                         | 405
-        Email taken                | POST   | /speakers              | '{"name":"Ada","email":"$taken"}'       | 409
-        Server error               | GET    | /speakers/search?q=%27 |                                         | 500
+        Scenario                   | Method | Path                  | Body                                    | Status?
+        Our own 400                | POST   | /speakers             | '{"name":"Ada","email":"not-an-email"}' | 400
+        Validation error           | POST   | /speakers             | '{"name":"","email":"$email"}'          | 400
+        Malformed JSON             | POST   | /speakers             | '{not json'                             | 400
+        Path variable not a number | GET    | /speakers/abc         |                                         | 400
+        Not the main speaker       | POST   | /talks/$talk/withdraw | '{"speakerId":999999}'                  | 403
+        Unknown speaker            | GET    | /speakers/999999      |                                         | 404
+        Unknown path               | GET    | /nope                 |                                         | 404
+        Wrong method               | DELETE | /speakers             |                                         | 405
+        Email taken                | POST   | /speakers             | '{"name":"Ada","email":"$taken"}'       | 409
         """)
     void answersEveryErrorAsJsonInUtf8(String method, String path, String body, int status) throws Exception {
         HttpResponse<String> res = send(method, filledIn(path), body == null ? null : filledIn(body));

@@ -3,7 +3,7 @@
 As on Boot 2.7, an error has Content-Type application/json;charset=UTF-8, like a success,
 and the fields timestamp, status, error, message and path. $speaker and $talk are a
 registered speaker and their talk, $email a new address and $taken the speaker's address.
-The 500 comes from the unescaped search (tech-debt B1); when B1 is fixed, drop that row.
+No row has a 500: no request gives one without a bug.
 
 
 | Result | Scenario | Method | Path | Body | Status? |
@@ -17,4 +17,3 @@ The 500 comes from the unescaped search (tech-debt B1); when B1 is fixed, drop t
 | ✅ passes | Unknown path | GET | /nope |  | 404 |
 | ✅ passes | Wrong method | DELETE | /speakers |  | 405 |
 | ✅ passes | Email taken | POST | /speakers | {"name":"Ada","email":"$taken"} | 409 |
-| ✅ passes | Server error | GET | /speakers/search?q=%27 |  | 500 |
