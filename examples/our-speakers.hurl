@@ -51,6 +51,26 @@ POST {{base_url}}/speakers
 {"name": "Ada Lovelace", "email": "ada lovelace@example.com"}
 HTTP 400
 
+# R3: a local part of 64 characters (28 x 'a' and a UUID of 36), the most RFC 5321 allows
+POST {{base_url}}/speakers
+{"name": "Ada Lovelace", "email": "aaaaaaaaaaaaaaaaaaaaaaaaaaaa{{newUuid}}@example.com"}
+HTTP 201
+
+# R3: a local part of 65 characters
+POST {{base_url}}/speakers
+{"name": "Ada Lovelace", "email": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa@example.com"}
+HTTP 400
+
+# R3: a domain of 255 characters (251 x 'e' and .com), the most RFC 5321 allows
+POST {{base_url}}/speakers
+{"name": "Ada Lovelace", "email": "ada-{{newUuid}}@eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee.com"}
+HTTP 201
+
+# R3: a domain of 256 characters
+POST {{base_url}}/speakers
+{"name": "Ada Lovelace", "email": "ada@eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee.com"}
+HTTP 400
+
 # R4: bio of 500 x 'x'
 POST {{base_url}}/speakers
 {"name": "Ada Lovelace", "email": "ada-{{newUuid}}@example.com", "bio": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"}
