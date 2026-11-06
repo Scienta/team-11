@@ -6,15 +6,16 @@ import java.util.Set;
 
 /**
  * Where a talk is in the acceptance state machine, and which moves between the statuses the rules allow
- * (Acceptance R1–R4, R7, R8), and whether a workshop with this status takes registrations (Workshop registration
- * R3). Each status is declared after the statuses it can come from.
+ * (Acceptance R1–R4, R7, R8), whether a workshop with this status takes registrations (Workshop registration
+ * R3), and whether a talk with this status goes on the programme (Scheduling R3). Each status is declared after the
+ * statuses it can come from.
  */
 public enum TalkStatus {
-    SUBMITTED(Set.of(), 0, true, true, false),
-    WAITLISTED(Set.of(SUBMITTED), 0, true, true, false),
-    ACCEPTED(Set.of(SUBMITTED, WAITLISTED), 2, false, true, true),
-    REJECTED(Set.of(SUBMITTED, WAITLISTED), 0, false, true, false),
-    WITHDRAWN(Set.of(SUBMITTED, WAITLISTED, ACCEPTED), 0, false, false, false);
+    SUBMITTED(Set.of(), 0, true, true, false, false),
+    WAITLISTED(Set.of(SUBMITTED), 0, true, true, false, false),
+    ACCEPTED(Set.of(SUBMITTED, WAITLISTED), 2, false, true, true, true),
+    REJECTED(Set.of(SUBMITTED, WAITLISTED), 0, false, true, false, false),
+    WITHDRAWN(Set.of(SUBMITTED, WAITLISTED, ACCEPTED), 0, false, false, false, false);
 
     private static final Set<TalkStatus> DECISIONS = EnumSet.of(ACCEPTED, REJECTED, WAITLISTED);
 
@@ -23,14 +24,16 @@ public enum TalkStatus {
     private final boolean openForRating;
     private final boolean countsTowardLimit;
     private final boolean takesRegistrations;
+    private final boolean goesOnProgramme;
 
     TalkStatus(Set<TalkStatus> reachableFrom, int reviewersNeeded, boolean openForRating, boolean countsTowardLimit,
-               boolean takesRegistrations) {
+               boolean takesRegistrations, boolean goesOnProgramme) {
         this.reachableFrom = reachableFrom;
         this.reviewersNeeded = reviewersNeeded;
         this.openForRating = openForRating;
         this.countsTowardLimit = countsTowardLimit;
         this.takesRegistrations = takesRegistrations;
+        this.goesOnProgramme = goesOnProgramme;
     }
 
     /** The statuses from which a talk can move to this status (R2, R4). */
@@ -60,6 +63,11 @@ public enum TalkStatus {
     /** Whether a workshop with this status takes new registrations (Workshop registration R3). */
     public boolean takesRegistrations() {
         return takesRegistrations;
+    }
+
+    /** Whether a talk with this status can be put on the programme (Scheduling R3). */
+    public boolean goesOnProgramme() {
+        return goesOnProgramme;
     }
 
     /** The committee's decision from a request body value: only the three decisions of R1. */

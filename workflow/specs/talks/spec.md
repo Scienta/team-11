@@ -39,6 +39,7 @@ The feature request does not give these. They describe what the service does tod
 | Case | Decision | Why |
 |------|----------|-----|
 | Title empty, only spaces or missing | 400 | R3: not a real title. |
+| Title longer than 200 characters | 400 | R3: a real title is not a text of any length. A character is one Unicode code point, as for the 500-character bio (Speakers R4). Security review S12, decided by The Hand 2026-11-06: a long title came back in every list and in the CSV. The harness sends titles of at most 51 characters (request log, 2026-11-06 13:14 to 13:28 UTC). |
 | Format or level not in the list, in lower case, or missing | 400 | R5 |
 | `speakerId` missing | 400 | A missing field. |
 | `speakerId` of a speaker who is not registered | 400 | R3. The ID is a field in the body, not a resource in the path, so it is a bad request, not a 404. |
@@ -61,6 +62,10 @@ product owners is in `docs/specs/talks/`.
 | empty | 400 |
 | only spaces | 400 |
 | missing | 400 |
+| `x` × 200 | 201 |
+| `x` × 201 | 400 |
+| `😀` × 200 | 201 |
+| `😀` × 201 | 400 |
 
 ### R4: the format sets the duration
 

@@ -71,3 +71,19 @@ CREATE TABLE IF NOT EXISTS workshop_registration (
     email   TEXT NOT NULL                          -- as the attendee typed it
 );
 CREATE UNIQUE INDEX IF NOT EXISTS ux_workshop_registration_email ON workshop_registration (talk_id, lower(email));
+
+-- 2026-11 programme scheduling (scheduling R1-R8). No foreign key, like the other tables.
+-- One fixed row per slot: a PUT or DELETE locks it with FOR UPDATE, so the changes to one slot in all three rooms
+-- take turns (R6, R8). Advisory locks are not available on the platform.
+CREATE TABLE IF NOT EXISTS programme_slot (
+    slot TEXT PRIMARY KEY
+);
+INSERT INTO programme_slot (slot) VALUES ('S1'), ('S2'), ('S3'), ('S4'), ('S5') ON CONFLICT DO NOTHING;
+-- The primary key backs "one talk per room and slot", the unique index "a talk is on the programme only once" (R5).
+CREATE TABLE IF NOT EXISTS programme_entry (
+    room    TEXT NOT NULL,
+    slot    TEXT NOT NULL,
+    talk_id BIGINT NOT NULL,
+    PRIMARY KEY (room, slot)
+);
+CREATE UNIQUE INDEX IF NOT EXISTS ux_programme_entry_talk ON programme_entry (talk_id);
