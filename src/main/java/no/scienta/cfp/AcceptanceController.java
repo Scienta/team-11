@@ -38,13 +38,13 @@ public class AcceptanceController {
     }
 
     private static TalkDto answer(StatusChange change) {
-        if (change instanceof StatusChange.Moved moved) {
-            return moved.talk();
+        if (change instanceof StatusChange.Refusal refused) {
+            throw refusal(refused);
         }
-        throw refusal(change);
+        return ((StatusChange.Moved) change).talk();
     }
 
-    private static ResponseStatusException refusal(StatusChange change) {
+    private static ResponseStatusException refusal(StatusChange.Refusal change) {
         if (change instanceof StatusChange.NotFound) {
             return new ResponseStatusException(HttpStatus.NOT_FOUND, "talk not found");
         }
@@ -60,6 +60,6 @@ public class AcceptanceController {
             return new ResponseStatusException(HttpStatus.CONFLICT,
                     "a talk needs ratings from " + next.reviewersNeeded() + " different reviewers to become " + next);
         }
-        throw new IllegalArgumentException("unknown status change " + change);
+        throw new IllegalArgumentException("unknown status change refusal " + change);
     }
 }

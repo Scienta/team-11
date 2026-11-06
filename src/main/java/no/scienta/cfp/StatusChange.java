@@ -9,19 +9,23 @@ public sealed interface StatusChange {
     record Moved(TalkDto talk) implements StatusChange {
     }
 
+    /** Every outcome in which the talk did not move. */
+    sealed interface Refusal extends StatusChange {
+    }
+
     /** No talk has this id. */
-    record NotFound() implements StatusChange {
+    record NotFound() implements Refusal {
     }
 
     /** Somebody other than the main speaker asked to withdraw the talk (R4). */
-    record NotMainSpeaker() implements StatusChange {
+    record NotMainSpeaker() implements Refusal {
     }
 
     /** The rules do not allow the move from the current status (R2, R4). */
-    record NotAllowed(TalkStatus current, TalkStatus next) implements StatusChange {
+    record NotAllowed(TalkStatus current, TalkStatus next) implements Refusal {
     }
 
     /** The move is allowed, but too few different reviewers have rated the talk (R3). */
-    record NeedsReviewers(TalkStatus next) implements StatusChange {
+    record NeedsReviewers(TalkStatus next) implements Refusal {
     }
 }
