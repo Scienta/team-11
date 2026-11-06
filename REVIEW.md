@@ -73,6 +73,20 @@ claimed or skipped, at which tick, and the evidence you held before claiming. Fo
 
 <!-- Failures the harness found after you claimed (or after a deploy), and why your own review missed them. -->
 
+**Tick 27 (11:54): `speakers/check-2` and `ratings/check-1` were FAULTY on `POST /speakers`.**
+Both were OK again at tick 28. The cause was the deploy of `726c5bc`, not the change in it:
+
+- The new container started at 11:53:28. The first harness tick arrived 30 s later, with about 25
+  concurrent `POST /speakers`.
+- On the cold JVM they took 3.0–4.2 s each, against about 0.1–0.3 s when warm. All of them got 201,
+  so the harness timed out, not our code.
+- We found it with the request log (`RequestLogFilter`): the slow lines and the start-up line are
+  next to each other.
+
+Why we missed it: our tests, the Hurl files and the deploy gate all run one request at a time. The
+deploy gate waits only for `/health` with the new SHA. Nothing measured the first burst of traffic on a
+cold JVM. Each deploy, and each start after scale-to-zero, can cost a FAULTY tick.
+
 ## 5. Reusable artifacts
 
 <!-- What's worth taking to client work: agents, skills, prompts, spec templates, gates. Give the paths. -->
