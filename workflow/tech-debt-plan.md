@@ -62,6 +62,7 @@ Recorded here until `workflow/specs/<feature>/spec.md` exists. Move them there u
 | 9 | admin stats (Nils Christian): do withdrawn talks count in `/admin/stats` and the CSV? | 14:00: they must **not** count in the statistics, but Stein wants to see them on a **separate line**. Affects B3/B9. |
 | 10 | workshop-registration (Nils Christian): do the workshop's speakers take any of the 20 places? | 14:00: **no**, the speakers don't count among the 20. |
 | 11 | workshop-registration (Nils Christian): can an attendee unregister and give up the place? | 14:01: **yes**, it must be possible to withdraw after registering, so that as many as possible can attend what they want. This overturns the team's assumption ("no, for now"). |
+| 12 | co-speakers (Carl Kristian): must adding or removing a co-speaker require the main speaker's `speakerId`, so that anyone else is rejected (like withdraw's 403)? | 14:21: **yes**. **Conflict:** the feature request says the `PUT` has "no request body", and the harness defines no actor, so a required actor would fail the harness checks. Decision (Carl Kristian): an optional `actingSpeakerId` query parameter; if it's given and isn't the main speaker, 403; if it's missing, allowed, so the harness checks stay green. Stein accepted this at 14:26 ("Dette er ok."). |
 
 The specs also confirm these constraints from sections 1c and 4:
 
