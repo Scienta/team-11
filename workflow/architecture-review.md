@@ -184,7 +184,9 @@ No blocker. A push still deploys once from `deploy.yml`; only the `publish` job 
 `pages: write` and `id-token: write`. Merge fix 10 for Spring Boot 4: `report.yml` also needs Java 25.
 
 The same review covers `81344e6` (`paths-ignore` for docs-only pushes) with the report workflow
-realigned as `b1a4061`: a push that touches `src/**`, `pom.xml`, `Dockerfile`, `.github/**`, `.mvn/**`
+realigned as `b1a4061`. `81344e6` was dropped: Carl Kristian's PR #13 (`129e28c`) is on `main` instead. It
+is equivalent and a little broader: it ignores `**.md` anywhere, plus `docs/**`, `workflow/**`,
+`examples/**` and `.claude/**`. For both: a push that touches `src/**`, `pom.xml`, `Dockerfile`, `.github/**`, `.mvn/**`
 or `mvnw` still deploys. After a docs-only push, `/health` reports the SHA of the last code push, so
 evidence for a claim names the deployed SHA.
 
