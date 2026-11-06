@@ -25,16 +25,20 @@ import org.springframework.web.util.ContentCachingResponseWrapper;
 public class RequestLogFilter extends OncePerRequestFilter {
 
     static final int MAX_BODY_CHARS = 2000;
+    /** The request log never holds more of a request body than this. */
+    static final int MAX_CACHED_BODY_BYTES = 8000;
 
     private static final Logger log = LoggerFactory.getLogger(RequestLogFilter.class);
     private static final String NOT_IN_AN_EMAIL = "[^\\s@\"'\\\\,;:<>()\\[\\]{}]";
     private static final Pattern EMAIL = Pattern.compile(
-            "(" + NOT_IN_AN_EMAIL + ")" + NOT_IN_AN_EMAIL + "*@(" + NOT_IN_AN_EMAIL + "+)");
+            "(" + NOT_IN_AN_EMAIL + ")" + NOT_IN_AN_EMAIL + "{0,63}@(" + NOT_IN_AN_EMAIL + "{1,255})");
+    /** The longest email: 64 characters before the @, and 255 after it. */
+    private static final int LONGEST_EMAIL_CHARS = 64 + 1 + 255;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
             throws ServletException, IOException {
-        ContentCachingRequestWrapper cachedRequest = new ContentCachingRequestWrapper(request);
+        ContentCachingRequestWrapper cachedRequest = new ContentCachingRequestWrapper(request, MAX_CACHED_BODY_BYTES);
         ContentCachingResponseWrapper cachedResponse = new ContentCachingResponseWrapper(response);
         long started = System.nanoTime();
         try {
@@ -54,12 +58,26 @@ public class RequestLogFilter extends OncePerRequestFilter {
         return query == null ? request.getRequestURI() : request.getRequestURI() + "?" + query;
     }
 
+    /**
+     * The start of the body, on one line and with each email masked. Only the start goes through the regular
+     * expressions, so a large body costs no more time than a small one. The start includes room for one more email,
+     * so the cut never leaves part of an email unmasked.
+     */
     private static String shortened(byte[] body) {
-        String text = withMaskedEmails(new String(body, StandardCharsets.UTF_8)).replaceAll("\\s*[\\r\\n]+\\s*", " ");
+        String text = new String(body, StandardCharsets.UTF_8);
+        String start = withMaskedEmails(onOneLine(firstChars(text, MAX_BODY_CHARS + LONGEST_EMAIL_CHARS)));
         if (text.length() <= MAX_BODY_CHARS) {
-            return text;
+            return start;
         }
-        return text.substring(0, MAX_BODY_CHARS) + "…(+" + (text.length() - MAX_BODY_CHARS) + " chars)";
+        return firstChars(start, MAX_BODY_CHARS) + "…(+" + (text.length() - MAX_BODY_CHARS) + " chars)";
+    }
+
+    private static String firstChars(String text, int count) {
+        return text.length() <= count ? text : text.substring(0, count);
+    }
+
+    private static String onOneLine(String text) {
+        return text.replaceAll("\\s*[\\r\\n]+\\s*", " ");
     }
 
     /** Keeps the first character and the domain of each email: "ada@example.com" becomes "a***@example.com". */
