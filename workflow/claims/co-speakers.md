@@ -4,7 +4,7 @@ The rows come from [`../claim-checklist.md`](../claim-checklist.md). A person cl
 row says "waiting" or "gap". The product owner reads a claim request in three sections: security,
 architecture and functionality.
 
-Claim: **waiting for the person.** Deployed commit: `c43bbaf` (`origin/main`, `GET /health` at 13:27:14Z).
+Claim: **waiting for the person.** Deployed commit: `3318bf1` (`GET /health` at 13:41:50Z and 13:42:00Z). It has the R4 and R9 Hurl rows (`c8e30de`, the pushed copy of `ec38273`) and the ratings-query fix `88e5d86`.
 Co-speakers came from Carl Kristian's team (PR #4, merged in `b729a5e`).
 
 PO approval: **waiting**.
@@ -32,14 +32,14 @@ withdrawn or rejected talk.
 | Check | Evidence | State |
 |-------|----------|-------|
 | Every rule in `spec.md` has at least one example row | Rules R1–R10, each with an example table. Open questions: none, the product owner answered in Slack #team-11 (13:11–13:14). | done |
-| Every example row has a Hurl request | `examples/our-co-speakers.hurl`, 66 requests, covers every example row of R1–R9, from `ec38273` on (the R9 table and the R4 rows for the answers of `PUT /talks/{id}/status` and `POST /talks/{id}/withdraw` and for `GET /talks?includeWithdrawn=false`). The R6 row for `GET /talks?speakerId={Ada}` was in the file from the start. 66/66 against a local build of `c43bbaf`, and 66/66 in `examples/run.sh` against a local build of `9818089`. R10 (at the same time) is JUnit only, because Hurl sends one request at a time. | **waiting**: a run against the team URL after `ec38273` is deployed |
-| The JUnit tests pass in CI | [Actions run 42224526394](https://github.com/Scienta/team-11/actions/runs/42224526394), commit `c43bbaf`: job `tests`, step "Unit tests" success | done |
-| The deploy workflow is green for the commit | [Actions run 42224526394](https://github.com/Scienta/team-11/actions/runs/42224526394) for `c43bbaf`: job `deploy` success | done |
-| `GET /health` on the team URL shows that SHA as `version` | `curl -s "$TEAM_URL/health"`: `version` `c43bbaffad4d…` at 13:27:14Z | done |
-| `examples/run.sh "$TEAM_URL"` passes, all files | One run at 13:27:33Z on `c43bbaf` (Fuglen): `our-co-speakers.hurl` 36/36. 7 of 8 files passed, 278 requests. The one failure is `our-workshop-registration.hurl`: workshop registration is not deployed yet. | done for this feature |
+| Every example row has a Hurl request | `examples/our-co-speakers.hurl` on `3318bf1`, 66 requests, covers every example row of R1–R9. The R9 table and the R4 rows for the answers of `PUT /talks/{id}/status` and `POST /talks/{id}/withdraw` and for `GET /talks?includeWithdrawn=false` came in `c8e30de`. R10 (at the same time) is JUnit only, because Hurl sends one request at a time. | done |
+| The JUnit tests pass in CI | [Actions run 42226853638](https://github.com/Scienta/team-11/actions/runs/42226853638), commit `3318bf1`: job `tests` success | done |
+| The deploy workflow is green for the commit | [Actions run 42226853638](https://github.com/Scienta/team-11/actions/runs/42226853638) for `3318bf1`: job `deploy` success | done |
+| `GET /health` on the team URL shows that SHA as `version` | `3318bf1c2a48…` at 13:41:50Z, before the run, and at 13:42:00Z, after it | done |
+| Our examples pass on the team URL | One run at 13:41:50Z (Fuglen), files from `3318bf1`: `our-co-speakers.hurl` 66/66 in 6.6 s. The earlier run at 13:27:33Z on `c43bbaf` passed the 36 requests of the file before `c8e30de`. | done |
 | The review agent found no open defect | | **waiting**: a spec review of the co-speakers code against `spec.md` |
-| The base features still pass their examples | The same run: `speakers.hurl`, `talks.hurl`, `ratings.hurl`, `our-speakers.hurl` and `our-ratings.hurl` passed. | done |
-| No FAULTY check on the harness for this feature or the base features | `workflow/harness.sh feedback`: tick 121, all 15 checks OK, 484.05 points, base features only. The harness has no checks for co-speakers until it is claimed: the timeline for `co-speakers/check-1` answers 404 "No such check among your claimed features". | done for the base features |
-| Claim risk: response times on the team URL | An unfiltered `GET /talks` takes 12–17 s on `c43bbaf` (4017 talks, 1.1 MB). Co-speakers R4 shows `coSpeakerIds` in every list, so a harness check that lists all talks can time out after the claim. Frekken's ratings query fixes it in the next push. | **risk**: until that push is deployed |
+| The base features still pass their examples | `ratings.hurl` from `3318bf1` 8/8 at 13:41:50Z. `speakers.hurl`, `talks.hurl`, `our-speakers.hurl` (18) and `our-ratings.hurl` passed on the same deploy at 13:39:51Z–13:40:45Z. | done |
+| No FAULTY check on the harness for this feature or the base features | `workflow/harness.sh feedback` at tick 133: all 20 checks OK (speakers 4, talks 6, ratings 5, acceptance 5), 550.05 points. The harness has no checks for co-speakers until it is claimed. | done for the claimed features |
+| Claim risk: response times on the team URL | Closed by `88e5d86` on `3318bf1`: in the 13:41:50Z run, an unfiltered `GET /talks` took 418 ms and `GET /talks?sort=rating` 284 ms (before: 12–17 s). | closed |
 
 When the person has claimed, copy the evidence into the claim log in `REVIEW.md` section 3.

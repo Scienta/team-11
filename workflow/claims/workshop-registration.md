@@ -42,7 +42,7 @@ the email. The spec now asks for a cancellation token (`b8b5077`, not deployed).
 | The deploy workflow is green for the commit | [Actions run 42226345319](https://github.com/Scienta/team-11/actions/runs/42226345319) for `c4fe79c`: job `deploy` success | done |
 | `GET /health` on the team URL shows that SHA as `version` | `c4fe79cc5257…` at 13:39:37Z. `3318bf1c2a48…` at 13:39:51Z, before the run, and at 13:40:21Z, after it. | done |
 | Our examples pass on the team URL | One run at 13:39:51Z (Fuglen). `git show c4fe79c:examples/our-workshop-registration.hurl`: 211/211 in 26.9 s. The version did not change during the run. | done |
-| The review agent found no open defect | | **waiting**: a spec review of the workshop code against `spec.md` |
+| The review agent found no open defect | Frekken's spec review of `3121e67` against `spec.md` and `review-rubric.md` items 1–7: no open defect. 3 notes, closed in `2da3f58`, `ae718e8` and `851a206`. Frode's design review: see Architecture. | done |
 | The base features still pass their examples | The same run, files from `c4fe79c`: `speakers.hurl` 4/4, `talks.hurl` 5/5, `our-speakers.hurl` 14/14, `our-ratings.hurl` 16/16. Also `our-speakers.hurl` from `3318bf1`, 18/18, at 13:40:45Z. `ratings.hurl` did not run: it has an unfiltered `GET /talks?sort=rating`, and we limit those on the team URL. | done |
 | No FAULTY check on the harness for this feature or the base features | `workflow/harness.sh feedback` at tick 133: all 20 checks OK (speakers 4, talks 6, ratings 5, acceptance 5), 550.05 points. The harness has no checks for workshop-registration until it is claimed. | done for the claimed features |
 
