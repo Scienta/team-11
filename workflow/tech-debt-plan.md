@@ -1,10 +1,33 @@
-# Technical debt plan for team-11 (CFP service, Java 11 / Spring Boot 2.7)
+# Technical debt plan for team-11 (CFP service, Java 17 / Spring Boot 2.7)
 
 I read every file under `src/`, all the tests, `pom.xml`, the `Dockerfile`, both workflows, `rollout.sh`, the Hurl examples and the workflow docs. I changed nothing.
 
 The inventory was written before the harness token was available, from the published Hurl examples. The **B** items have since been checked against the harness specs: see "Checked against the harness specs" below.
 
-Paths are relative to `/Users/cke/gits/scienta/team-11`. `CS` means `src/main/java/no/scienta/cfp/ConferenceService.java`.
+Paths are relative to `/Users/cke/gits/scienta/team-11`. `CS` means `src/main/java/no/scienta/cfp/ConferenceService.java`. Line numbers refer to `8cebff2`. `ConferenceService.java`, `Utils.java`, `SpeakerForm.java`, `pom.xml`, `Dockerfile` and `deploy.yml` have changed since, so look those lines up again.
+
+---
+
+## Status after `main` at `d3c9b88` (2026-11-06)
+
+Since the plan was written, `main` has 19 new commits. These items are done:
+
+| Item | Commit | What changed |
+|---|---|---|
+| B4 | `717cefa`, `8421601` | `POST` and `PUT /speakers` share `requireBioWithinLimit`: at most 500 characters, counted as code points. `@Size` is gone from `SpeakerForm`. |
+| B5 (email) | `2b48135`, `ae70e66` | One rule, `Utils.EMAIL`, on both `POST` and `PUT`: `local@label.label`, no whitespace (Unicode whitespace included). Matches the product owner's answer (question 1). |
+| Step 21, `usShort` part | `514f3b6` | `ratedAtDisplay` uses the explicit pattern `"M/d/yy, h:mm a"`, with a test. The JDK 20+ risk in section 4 is gone. |
+| Section 4, Java 17 | `597c1f5` | `pom.xml`, `Dockerfile` and CI run Java 17. Records, switch expressions and text blocks are now available. |
+| Reviewer IDs above 2147483647 | `9b66dc9` | `rating.reviewer_id` is now `BIGINT`, through an `ALTER TABLE` in `schema.sql` (Ratings R1). Not in the original inventory. |
+| Specs | `d0ebbf9` and others | `workflow/specs/speakers` and `ratings` have `spec.md` with "Our decisions". `talks` has only `request.md`. |
+
+Changes to the basis for the plan:
+
+- **`schema.sql` is now the migration path.** `9b66dc9` changes a column with an `ALTER TABLE` that does nothing on later runs. That's allowed: in-place changes that are safe to run again are fine, but D20 and "Skip during the game" still apply (no Flyway, no foreign keys).
+- **TableTest (`05631f5`, `fac091d`, `d3c9b88`)**: JUnit is 5.14, `@TableTest` is the team's format for example tables, and CI publishes the report on GitHub Pages for the product owners. The characterisation tests in Phase 0 are written as `@TableTest` wherever the case is a table.
+- **New tests and Hurl files** (`RatingsTest`, more in `SpeakersTest` and `UtilsTest`, plus `examples/our-speakers.hurl` and `our-ratings.hurl`) cover part of D15. Steps 4 and 5 get smaller.
+
+Still exactly as in the plan: B1 (SQL injection, `SpeakerDao.java:52`), D16 (tests after deploy with `continue-on-error`), B2 (`Utils.MAX_TALKS = 5`), B3 and B9 in `/admin/stats`, D1 (`ConferenceService` has grown), `isNumeric` and the `@Disabled` test (D9, D11).
 
 ---
 
@@ -16,8 +39,8 @@ Specs: `talks` V1, `speakers` V1, `ratings` V2. At tick 15 all 15 harness checks
 |---|---|---|
 | B2 | Talks: "A speaker may submit at most **3** talks", and the limit holds under concurrent submissions. | The code is right. `Utils.MAX_TALKS = 5` and the README are wrong: remove the constant and fix the README (steps 10 and 25). |
 | B3 | Ratings: `averageRating` rounds halves up "wherever a talk is shown"; ranking uses the average "as shown, rounded". | Talk averages and ranking are right (`CS:199` compares the rounded value). `/admin/stats` is in no spec. **Product owner (via Stein, #team-11, 2026-11-06 12:59):** round halves up there too (4.25 becomes 4.3). Behavioural fix: `/admin/stats` `averageRating` switches from `Utils.roundRating` (floor) to the same HALF_UP rounding as talks, and `UtilsTest` changes with it. The method (an average of each talk's average) is confirmed under B9. |
-| B4 | Speakers: "A bio is at most **500** characters." | `PUT /speakers` allowing 1000 (`CS:94`) contradicts the rule, although `PUT` itself is not in the spec. Probably a bug: fix to 500. |
-| B5 | Speakers: "A speaker needs a real name and a real email to register." | `POST /speakers` checks only `@NotBlank` on email. **Product owner (via Stein, #team-11, 2026-11-06 12:58):** for now an address shaped like `noe@noe.domene` (something@something.domain) is enough. Keep the rule in one place so it's easy to change later. Behavioural fix: validate this on `POST` (and `PUT`) with one shared rule. |
+| B4 | Speakers: "A bio is at most **500** characters." | **Fixed** in `717cefa` and `8421601`: `PUT` has the same 500 limit as `POST`. |
+| B5 | Speakers: "A speaker needs a real name and a real email to register." | `POST /speakers` checks only `@NotBlank` on email. **Product owner (via Stein, #team-11, 2026-11-06 12:58):** for now an address shaped like `noe@noe.domene` (something@something.domain) is enough. Keep the rule in one place so it's easy to change later. **Fixed** in `2b48135` and `ae70e66` with one shared rule (`Utils.EMAIL`). Still open from B5: `PUT` accepts a name of only spaces (`name.equals("")` in `updateSpeaker`), while `POST` rejects it. |
 | B6 | Not covered. | Our decision. |
 | B7 | Talks: "nothing else is a format or a level". | 400 for `KEYNOTE` is right. Closed. |
 | B8, B10, B11 | `/admin/*` and `/speakers/search` are in no spec. | Our decision. The harness does not check them. B1 (SQL injection) still stands as a security fix. |
@@ -41,7 +64,7 @@ The specs also confirm these constraints from sections 1c and 4:
 
 - **Trailing slash**: `/speakers/` and `/speakers/{id}/` "must keep working". Spring Boot 3 would break this unless we add a workaround.
 - **`submittedAt`** must be `yyyy-MM-dd'T'HH:mm:ss.SSS+00:00`, never `Z`, and `submittedOn` must be `yyyy-MM-dd`. Switching the JSON to `java.time` types is ruled out.
-- **`ratedAtDisplay`** must be `M/d/yy, h:mm AM` with "exactly one ordinary space" before AM/PM. Java 20+ breaks this unless step 21 comes first.
+- **`ratedAtDisplay`** must be `M/d/yy, h:mm AM` with "exactly one ordinary space" before AM/PM. Met on every JDK since `514f3b6`.
 - **Email uniqueness ignores case**: already met (`schema.sql:47`, `SpeakerDao.java:32`).
 
 ---
@@ -105,15 +128,15 @@ Checked and fine: no session `SET` anywhere, the pool is capped at 5 (`applicati
 
 ## 2. Ordered plan
 
-Each step is one commit and passes `./mvnw package`. Key: **S** = structural, **B** = behavioural (needs a person's decision), **T** = adds tests only.
+Each step is one commit and passes `./mvnw package`. Write the cases as `@TableTest` where they're a table. Key: **S** = structural, **B** = behavioural (needs a person's decision), **T** = adds tests only.
 
 ### Phase 0: safety net (tests and CI only, no production code)
 
 1. **T** `test: extract shared HTTP client for API tests`. Pull `request()`/`send()` out of `SpeakersTest`, `TalksTest` and `HealthTest` into one package-private `ApiClient`. Guarded by those three tests.
 2. **T** `test: characterise talk submission and reads`. Exact body for each of the 4 formats (durations 10/20/45/120). Each 400 with its exact `message`, including the **exact `format must be one of [...]` string** (D3). Unknown speaker gives 400. 4th talk gives 409 with its message. `GET /talks/{id}` 404. Unknown JSON fields are ignored.
 3. **T** `test: characterise talk listing and rating sort`. Covers `CS:180-213`: average descending, then count descending, then id ascending, unrated last; `sort=bogus` gives 400; the `speakerId` filter; unknown `speakerId` gives `[]`; `/speakers/{id}/talks` gives 404.
-4. **T** `test: characterise ratings`. Upsert; score 0/6/`3.0`/`"3"`/missing; `reviewerId` 0; bad score on a missing talk gives **400, not 404** (validation order, `CS:270-283`); `ratedAtDisplay` regex; HALF_UP averages (scores 4,4,5 give 4.3).
-5. **T** `test: characterise speaker update and validation`. `PUT` with blank/invalid email, bio of 1001 characters, a 409 conflict, and a case-only change of the speaker's own email. `POST` binding-error body; bio of 501 characters gives 400; trailing-slash GET.
+4. **T** `test: characterise ratings`. `RatingsTest` (`9b66dc9`, `fac091d`) already covers reviewer IDs (R1). Add whatever is missing from this list: upsert; score 0/6/`3.0`/`"3"`/missing; `reviewerId` 0; bad score on a missing talk gives **400, not 404** (validation order, `CS:270-283`); `ratedAtDisplay` regex; HALF_UP averages (scores 4,4,5 give 4.3).
+5. **T** `test: characterise speaker update and validation`. `SpeakersTest` already covers the email rule and the bio limit on both `POST` and `PUT`. Add the rest: `PUT` with a name of only spaces, a 409 conflict, and a case-only change of the speaker's own email. `POST` binding-error body; bio of 501 characters gives 400; trailing-slash GET.
 6. **T** `test: characterise admin stats and CSV`. Keys and order, `totalHours` truncation, floored `averageRating`, CSV header, a row with `;` and `"` in it, `Content-Type` and `Content-Disposition`.
 7. **T** `test: pin error response body shape`. One test asserts the full JSON keys for a `ResponseStatusException` 404 and for a `@Valid` 400.
 8. **S (CI)** `ci: run tests before deploy`. Move the `tests` job ahead of deploy, add `needs: tests` and drop `continue-on-error` (`deploy.yml:75-98`). Don't touch the env/secret lines (`:34-42`). A person approves this. Risk: `HealthTest` pauses containers, which could make the gate flaky on GitHub runners. If it does, keep the gate and fix the test; don't drop the gate.
@@ -133,22 +156,22 @@ Each step is one commit and passes `./mvnw package`. Key: **S** = structural, **
 16. **S** `refactor: extract TalkService`. Moves submit/get/list.
 17. **S** `refactor: extract ConferenceStatistics and TalkCsvExport`. Moves `statistics()` and the CSV body out of `ReportController` (D10). Then delete `ConferenceService` and split its test file to match.
    Steps 14 to 17 are guarded by Phase 0 plus `SpeakersTest`/`TalksTest`. Keep every `ResponseStatusException` message byte-for-byte.
-18. **S** `refactor: replace speaker maps with an immutable Speaker type` (D5). Java 11 has no records, so use a final class with a constructor and getters plus `@JsonPropertyOrder({"id","name","email","bio"})`. Guarded by steps 5 and 6.
-19. **S** `refactor: split TalkDto into Talk and TalkResponse`. `Talk` is immutable and comes from `TalkDao`. `TalkResponse` is built by a pure factory, `TalkResponse.of(Talk, RatingSummary)`, which removes the mutation at `CS:215`. Keep `Date`/`java.sql.Date` and the current property order. Guarded by steps 2, 3 and 6 plus the `talks.hurl` regexes.
+18. **S** `refactor: replace speaker maps with an immutable Speaker type` (D5). A `record Speaker(long id, String name, String email, String bio)` (Java 17) with `@JsonPropertyOrder({"id","name","email","bio"})`. Guarded by steps 5 and 6.
+19. **S** `refactor: split TalkDto into Talk and TalkResponse`. `Talk` and `TalkResponse` are records. `Talk` is immutable and comes from `TalkDao`. `TalkResponse` is built by a pure factory, `TalkResponse.of(Talk, RatingSummary)`, which removes the mutation at `CS:215`. Keep `Date`/`java.sql.Date` and the current property order. Guarded by steps 2, 3 and 6 plus the `talks.hurl` regexes.
 20. **S** `refactor: move classes into feature packages`. Packages: `speaker`, `talk`, `rating`, `report`, `platform` (health, request log, version info). Pure moves, with the tests moved alongside. `RequestLogFilter.MAX_BODY_CHARS` is package-private, so its test moves with it.
 
 ### Phase 3: worth doing once the above is in
 
-21. **S** `refactor: inject a Clock and use java.time for timestamps`. Split `Utils` into `Timestamps` (now/today via `Clock`), `DisplayFormats` (`usShort`, `norwegianDate`), `CsvField`, `EmailAddress` and `RatingAverage`. For `usShort`, use an **explicit pattern** `"M/d/yy, h:mm a"` with `Locale.US`; this also removes the JDK-upgrade risk described in section 4. Prove the output is identical to today's on JDK 11 with a test pinned to a fixed `Clock`. Restore the "now" test using the fixed clock. Remove the format/parse/format round trip at `CS:284-291`.
+21. **S** `refactor: inject a Clock and use java.time for timestamps`. Split `Utils` into `Timestamps` (now/today via `Clock`), `DisplayFormats` (`usShort`, `norwegianDate`), `CsvField`, `EmailAddress` and `RatingAverage`. `usShort` already has the explicit pattern (`514f3b6`). Prove the output is identical to today's with a test pinned to a fixed `Clock`. Restore the "now" test using the fixed clock. Remove the format/parse/format round trip at `CS:284-291`.
 22. **S** `perf: load rating summaries in one query` (D7). Add `SELECT talk_id, COUNT(*), COALESCE(SUM(score),0) ... GROUP BY talk_id` for lists, and join speaker names for the CSV. Guarded by steps 3 and 6, which need several talks with ratings. This cuts connection hold time with the pool at 5.
 23. **S** `refactor: keep the transaction boundary in the service`. Remove `@Transactional` from `TalkDao.java:59`; the service already opens the transaction at `CS:110`. Guarded by `TalksTest.concurrentSubmissionsNeverExceedThreeTalks`.
 24. **S** `refactor: use parameterised logging without emails` (D12) and `refactor: constructor-inject NotificationService` (D13). These change log output only, not the HTTP contract.
 25. **S** `docs: update README for the current service` (D19). Edit only below `fagdag:end`, and fix the Hurl header comments. Fill in the talk limit once B2 is settled.
-26. **S** `build: declare the Java release once` (D17).
+26. **S** `build: declare the Java release once` (D17). Since `597c1f5` the compiler plugin reads `${maven.compiler.release}`, but `java.version` and `maven.compiler.release` are both still declared.
 
 ### Behavioural queue (one `fix:` commit per item, after a person decides, each with a failing test first)
 
-B2, B3, B4, B5, B6, B7, then B8 to B13 as the specs or the product owner settle them. Put each decision in `workflow/specs/<base>/spec.md` "Our decisions" (rules file) and cite the rule IDs in commit messages.
+B4 and B5 (email) are done. Ready to build: B2 (the spec says 3), B3 and B9 (decided by the product owner: round halves up in `/admin/stats` too, and round `totalHours` normally), and the name check from B5. Then B6, B8 and B10–B12 once we've decided them. Put each decision in `workflow/specs/<base>/spec.md` "Our decisions" (rules file) and cite the rule IDs in commit messages.
 
 ---
 
@@ -183,6 +206,8 @@ Do 14 to 20 in a lull between drips: each is a few minutes, but they touch every
 
 ## 4. Version upgrades (optional, keep separate)
 
+**Done in `597c1f5`: the service runs Java 17 on Boot 2.7.18.** The original assessment is kept below. The TableTest report plugin needs JDK 21, so CI runs it on 21 after the tests (on 17).
+
 **Java 11 to 17, staying on Boot 2.7.18: worth it, but only after Phase 0, in its own commits, during a quiet period.** Boot 2.7.18 runs on Java 17 (and up to 21). The gains apply directly here: records (steps 18 and 19 shrink to a few lines and match the immutability rule), switch expressions, pattern matching `instanceof` (`CS:274`), `Stream.toList()` and text blocks for the SQL.
 
 Changes needed:
@@ -194,7 +219,7 @@ Deploy-contract risks:
 - The image build. The rollout rolls back automatically if `/health` doesn't return the new SHA within 60 s, but the push still costs a deploy.
 - Locale data. CLDR changes `DateFormat` output between JDKs. On 17 the US SHORT format is unchanged.
 
-**Do not go to Java 21 (or anything from 20 up) without step 21 first.** From JDK 20, CLDR 42 puts a narrow no-break space (U+202F) before "PM". `ratedAtDisplay` (`Utils.java:53-57`) would change, and `ratings.hurl:46` (and probably the harness) expects a normal space. `norwegianDate` could also change. The explicit pattern in step 21 removes this risk.
+**Fixed for `ratedAtDisplay` in `514f3b6`; `norwegianDate` still uses the locale.** Original warning: **Do not go to Java 21 (or anything from 20 up) without step 21 first.** From JDK 20, CLDR 42 puts a narrow no-break space (U+202F) before "PM". `ratedAtDisplay` (`Utils.java:53-57`) would change, and `ratings.hurl:46` (and probably the harness) expects a normal space. `norwegianDate` could also change. The explicit pattern in step 21 removes this risk.
 
 **Spring Boot 2.7 to 3.x: not during the game.** It needs Java 17, and it breaks things:
 - `javax.*` to `jakarta.*` (`RequestLogFilter.java:6-9`, `SpeakerController.java:6`, `SpeakerForm.java:3-4`, `RequestLogFilterTest.java:10-12`).

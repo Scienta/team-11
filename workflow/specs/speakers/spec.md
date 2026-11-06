@@ -78,4 +78,4 @@ None. The talks and ratings features read speakers only by ID.
 ## Open questions for the product owner
 
 - [ ] Is a character a code point or a grapheme (a family emoji is 7 code points)? We count code points.
-- [ ] Must we accept an email with a one-label domain, such as `ada@localhost`? We reject it.
+- [x] Must we accept an email with a one-label domain, such as `ada@localhost`? We reject it. Product owner (Stein, #team-11, 2026-11-06 12:58): for now "noe@noe.domene" (something@something.domain) is enough, and the rule should sit in one place so it's easy to change. That's `Utils.EMAIL`.
