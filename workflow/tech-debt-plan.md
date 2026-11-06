@@ -17,7 +17,7 @@ Specs: `talks` V1, `speakers` V1, `ratings` V2. At tick 15 all 15 harness checks
 | B2 | Talks: "A speaker may submit at most **3** talks", and the limit holds under concurrent submissions. | The code is right. `Utils.MAX_TALKS = 5` and the README are wrong: remove the constant and fix the README (steps 10 and 25). |
 | B3 | Ratings: `averageRating` rounds halves up "wherever a talk is shown"; ranking uses the average "as shown, rounded". | Talk averages and ranking are right (`CS:199` compares the rounded value). `/admin/stats` is in no spec, so its floor rounding is our decision. |
 | B4 | Speakers: "A bio is at most **500** characters." | `PUT /speakers` allowing 1000 (`CS:94`) contradicts the rule, although `PUT` itself is not in the spec. Probably a bug: fix to 500. |
-| B5 | Speakers: "A speaker needs a real name and a real email to register." | `POST /speakers` checks only `@NotBlank` on email. What counts as a "real" email is an open question for the product owner. The harness has not flagged it. |
+| B5 | Speakers: "A speaker needs a real name and a real email to register." | `POST /speakers` checks only `@NotBlank` on email. **Product owner (via Stein, #team-11, 2026-11-06 12:58):** for now an address shaped like `noe@noe.domene` (something@something.domain) is enough. Keep the rule in one place so it's easy to change later. Behavioural fix: validate this on `POST` (and `PUT`) with one shared rule. |
 | B6 | Not covered. | Our decision. |
 | B7 | Talks: "nothing else is a format or a level". | 400 for `KEYNOTE` is right. Closed. |
 | B8–B11 | `/admin/*` and `/speakers/search` are in no spec. | Our decision. The harness does not check them. B1 (SQL injection) still stands as a security fix. |
