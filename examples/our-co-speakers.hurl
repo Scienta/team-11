@@ -393,6 +393,30 @@ HTTP 400
 DELETE {{base_url}}/talks/{{second_talk}}/co-speakers/{{bob}}?actingSpeakerId=abc
 HTTP 400
 
+# R12: an empty actingSpeakerId counts as absent, so anyone may act. Bob is already a co-speaker: still 200 (R5).
+PUT {{base_url}}/talks/{{second_talk}}/co-speakers/{{bob}}?actingSpeakerId=
+HTTP 200
+[Asserts]
+jsonpath "$.coSpeakerIds" count == 2
+jsonpath "$.coSpeakerIds[1]" == {{bob}}
+
+# R12: an acting id of 0 or below is no main speaker
+PUT {{base_url}}/talks/{{second_talk}}/co-speakers/{{cy}}?actingSpeakerId=0
+HTTP 403
+[Asserts]
+jsonpath "$.message" == "only the main speaker can change the co-speakers"
+
+DELETE {{base_url}}/talks/{{second_talk}}/co-speakers/{{bob}}?actingSpeakerId=-1
+HTTP 403
+[Asserts]
+jsonpath "$.message" == "only the main speaker can change the co-speakers"
+
+# R12 before R9: on a WITHDRAWN talk, someone other than the main speaker gets 403, not 409
+PUT {{base_url}}/talks/{{withdrawn}}/co-speakers/{{bob}}?actingSpeakerId={{ada}}
+HTTP 403
+[Asserts]
+jsonpath "$.message" == "only the main speaker can change the co-speakers"
+
 # R12: an unknown talk is 404 before who acts is checked
 PUT {{base_url}}/talks/2147483647/co-speakers/{{cy}}?actingSpeakerId={{cy}}
 HTTP 404
