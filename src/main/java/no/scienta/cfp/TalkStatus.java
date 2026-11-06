@@ -6,14 +6,15 @@ import java.util.Set;
 
 /**
  * Where a talk is in the acceptance state machine, and which moves between the statuses the rules allow
- * (Acceptance R1–R4, R7, R8). Each status is declared after the statuses it can come from.
+ * (Acceptance R1–R4, R7, R8), and whether a workshop with this status takes registrations (Workshop registration
+ * R3). Each status is declared after the statuses it can come from.
  */
 public enum TalkStatus {
-    SUBMITTED(Set.of(), 0, true, true),
-    WAITLISTED(Set.of(SUBMITTED), 0, true, true),
-    ACCEPTED(Set.of(SUBMITTED, WAITLISTED), 2, false, true),
-    REJECTED(Set.of(SUBMITTED, WAITLISTED), 0, false, true),
-    WITHDRAWN(Set.of(SUBMITTED, WAITLISTED, ACCEPTED), 0, false, false);
+    SUBMITTED(Set.of(), 0, true, true, false),
+    WAITLISTED(Set.of(SUBMITTED), 0, true, true, false),
+    ACCEPTED(Set.of(SUBMITTED, WAITLISTED), 2, false, true, true),
+    REJECTED(Set.of(SUBMITTED, WAITLISTED), 0, false, true, false),
+    WITHDRAWN(Set.of(SUBMITTED, WAITLISTED, ACCEPTED), 0, false, false, false);
 
     private static final Set<TalkStatus> DECISIONS = EnumSet.of(ACCEPTED, REJECTED, WAITLISTED);
 
@@ -21,12 +22,15 @@ public enum TalkStatus {
     private final int reviewersNeeded;
     private final boolean openForRating;
     private final boolean countsTowardLimit;
+    private final boolean takesRegistrations;
 
-    TalkStatus(Set<TalkStatus> reachableFrom, int reviewersNeeded, boolean openForRating, boolean countsTowardLimit) {
+    TalkStatus(Set<TalkStatus> reachableFrom, int reviewersNeeded, boolean openForRating, boolean countsTowardLimit,
+               boolean takesRegistrations) {
         this.reachableFrom = reachableFrom;
         this.reviewersNeeded = reviewersNeeded;
         this.openForRating = openForRating;
         this.countsTowardLimit = countsTowardLimit;
+        this.takesRegistrations = takesRegistrations;
     }
 
     /** The statuses from which a talk can move to this status (R2, R4). */
@@ -51,6 +55,11 @@ public enum TalkStatus {
     /** Whether a talk with this status counts towards the speaker's limit of talks (R7). */
     public boolean countsTowardLimit() {
         return countsTowardLimit;
+    }
+
+    /** Whether a workshop with this status takes new registrations (Workshop registration R3). */
+    public boolean takesRegistrations() {
+        return takesRegistrations;
     }
 
     /** The committee's decision from a request body value: only the three decisions of R1. */

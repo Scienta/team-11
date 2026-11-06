@@ -21,7 +21,7 @@ public record WorkshopTalk(String format, TalkStatus status) {
         if (!isWorkshop()) {
             return Optional.of(new RegistrationOutcome.NotAWorkshop());
         }
-        if (status != TalkStatus.ACCEPTED) {
+        if (!status.takesRegistrations()) {
             return Optional.of(new RegistrationOutcome.Closed(status));
         }
         if (seatsTaken >= SEATS) {
