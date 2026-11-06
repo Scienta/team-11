@@ -3,8 +3,6 @@ package no.scienta.cfp;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 
-import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -19,9 +17,9 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.StreamSupport;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.node.ObjectNode;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -498,16 +496,8 @@ public class WorkshopRegistrationTest {
 
     private void keepTheTokenOf(HttpResponse<String> response) {
         if (response.statusCode() == 201) {
-            JsonNode created = readJson(response.body());
+            JsonNode created = JSON.readTree(response.body());
             tokens.put(created.get("id").asLong(), created.path("cancellationToken").asText(null));
-        }
-    }
-
-    private static JsonNode readJson(String text) {
-        try {
-            return JSON.readTree(text);
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
         }
     }
 

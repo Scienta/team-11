@@ -93,7 +93,7 @@ jobs:
       - uses: actions/setup-java@v5
         with:
           distribution: temurin
-          java-version: "17"
+          java-version: "25"
       - name: Cache ~/.m2
         uses: actions/cache@v4
         with:
@@ -109,7 +109,7 @@ jobs:
         if: ${{ !cancelled() }}
         with:
           distribution: temurin
-          java-version: "21" # the report plugin needs 21; the tests above ran on 17
+          java-version: "21" # the report plugin needs 21; the tests above ran on 25
       - name: TableTest report
         if: ${{ !cancelled() }}
         run: ./mvnw -B org.tabletest:tabletest-reporter-maven-plugin:report -Dtabletest.report.format=html -Dtabletest.report.outputDirectory=target/generated-docs/tabletest

@@ -89,7 +89,7 @@ class RatingDecisionRaceTest {
             conference.rate(talk, 3, Map.of("score", 4));
             return 200;
         } catch (ResponseStatusException refused) {
-            return refused.getStatus().value();
+            return refused.getStatusCode().value();
         }
     }
 

@@ -15,8 +15,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.stream.IntStream;
 import java.util.stream.StreamSupport;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -413,7 +413,7 @@ class CoSpeakersTest {
     }
 
     private static String lastFieldOf(JsonNode shown) {
-        List<String> names = StreamSupport.stream(((Iterable<String>) shown::fieldNames).spliterator(), false).toList();
+        List<String> names = List.copyOf(shown.propertyNames());
         return names.get(names.size() - 1);
     }
 

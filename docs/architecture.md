@@ -1,6 +1,6 @@
 # Architecture
 
-The CFP backend is one Spring Boot 2.7 service (Java 17) with one Postgres database. It runs as one
+The CFP backend is one Spring Boot 4.1 service (Java 25) with one Postgres database. It runs as one
 Scaleway serverless container. The code is in one package, `no.scienta.cfp`, in three layers:
 controllers, one service and DAOs on `JdbcTemplate`. There is no JPA.
 
@@ -76,5 +76,10 @@ flowchart LR
 - `averageRating` and `ratingCount` come from one query per talk. `GET /talks` makes 1 + N queries.
 - `ratedAtDisplay` uses the explicit pattern `M/d/yy, h:mm a` with `Locale.US`. Do not use the
   locale's SHORT style: from Java 20 it puts a narrow no-break space before AM/PM.
+- Spring 6+ does not match a trailing slash. `TrailingSlashConfig` strips it, so `/speakers/{id}/`
+  keeps working (Speakers R7).
+- JSON is Jackson 3 with Boot's Jackson 2 defaults (`spring.jackson.use-jackson2-defaults`), so
+  `submittedAt` stays `…+00:00`. `SqlDateJsonModule` keeps `submittedOn` as `yyyy-MM-dd`.
+- The compiler runs with `-parameters`: Spring reads `@PathVariable` names from it.
 - `/admin/*` and `/speakers/search` are not in the specs. `/speakers/search` builds its SQL with
   string concatenation.

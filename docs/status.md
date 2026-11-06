@@ -1,10 +1,10 @@
 # Teststatus
 
-Laget 6. november 2026 kl. 15:26 fra versjon [1e8572f](https://github.com/Scienta/team-11/commit/1e8572f40555843a295815f615ccee373094803b).
+Laget 6. november 2026 kl. 15:37 fra versjon [f7e311e](https://github.com/Scienta/team-11/commit/f7e311eea669dec94c82c8caf0a67647c617794c).
 
-✅ Våre tester: alle 82 regler er i orden (370 av 370 eksempler).
+✅ Våre tester: alle 88 regler er i orden (411 av 411 eksempler).
 
-❌ Arrangørenes kontroller: 2 av 33 er ikke i orden (Medforedragsholdere).
+⏳ Arrangørenes kontroller: 30 av 33 er i orden. 3 har ikke kjørt ennå (Karakterer, Medforedragsholdere).
 
 Hver linje er en regel vi tester. Et eksempel er ett konkret tilfelle av regelen.
 Arrangørenes kontroller sjekker tjenesten som kjører nå, og bare funksjoner vi har meldt ferdige.
@@ -115,3 +115,9 @@ Alle detaljer står i [testrapporten](specs/index.md).
 - ✅ I eksporten til regneark blir en verdi som ligner en formel, lagret som tekst. — 6 av 6 eksempler · [se eksemplene](specs/utils-test/exports-a-value-that-starts-like-a-formula-as-text.md)
 - ✅ I eksporten til regneark får en verdi med semikolon eller linjeskift anførselstegn rundt seg. — 4 av 4 eksempler · [se eksemplene](specs/utils-test/quotes-a-value-with-a-semicolon-or-a-line-break.md)
 - ✅ Tjenesten avviser en forespørsel som er større enn 1 MB. — 3 av 3 eksempler · [se eksemplene](specs/request-limits/refuses-a-request-body-larger-than-1-mb.md)
+- ✅ **R1** Tjenesten kjører på Spring Boot 4 og Java 25. — 3 av 3 eksempler · [se eksemplene](specs/spring-boot-4-upgrade/r1-runs-on-spring-boot-4-and-java-25.md)
+- ✅ **R2** En nettadresse med skråstrek til slutt virker som uten, også etter oppgraderingen. — 13 av 13 eksempler · [se eksemplene](specs/spring-boot-4-upgrade/r2-answers-a-path-with-a-trailing-slash-like-the-path-without-it.md)
+- ✅ **R2** Feilsvar kommer som JSON i UTF-8, med de samme feltene som før. — 9 av 9 eksempler · [se eksemplene](specs/spring-boot-4-upgrade/r2-answers-every-error-as-json-in-utf-8-with-the-boot-error-body.md)
+- ✅ **R2** Grensen på 1 MB for en forespørsel gjelder også med skråstrek til slutt i nettadressen. — 3 av 3 eksempler · [se eksemplene](specs/spring-boot-4-upgrade/r2-limits-the-request-body-on-a-path-with-a-trailing-slash-too.md)
+- ✅ **R2** Tjenesten leser forespørsler like romslig som før oppgraderingen. — 5 av 5 eksempler · [se eksemplene](specs/spring-boot-4-upgrade/r2-reads-request-bodies-as-leniently-as-before.md)
+- ✅ **R2** En karakter må fortsatt være et helt tall. — 8 av 8 eksempler · [se eksemplene](specs/spring-boot-4-upgrade/r2-takes-only-a-json-whole-number-as-a-score.md)
