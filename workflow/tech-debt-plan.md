@@ -21,9 +21,21 @@ Specs: `talks` V1, `speakers` V1, `ratings` V2. At tick 15 all 15 harness checks
 | B6 | Not covered. | Our decision. |
 | B7 | Talks: "nothing else is a format or a level". | 400 for `KEYNOTE` is right. Closed. |
 | B8, B10, B11 | `/admin/*` and `/speakers/search` are in no spec. | Our decision. The harness does not check them. B1 (SQL injection) still stands as a security fix. |
-| B9 | `/admin/stats` is in no spec. | **Product owner (via Stein, #team-11, 2026-11-06 13:00–13:01):** `averageRating` is the average of each talk's average, which is today's behaviour and stays. `totalHours`: "for now, whole hours", but store the data so it's easy to show decimals later. Today `totalHours` is computed from the stored minutes, so decimals stay easy to add. **Still open:** whether whole hours should be truncated (today, 185 min becomes 3) or rounded. Not answered; ask again before changing anything. |
+| B9 | `/admin/stats` is in no spec. | **Product owner (via Stein, #team-11, 2026-11-06 13:00–13:01):** `averageRating` is the average of each talk's average, which is today's behaviour and stays. `totalHours`: "for now, whole hours", but store the data so it's easy to show decimals later. Today `totalHours` is computed from the stored minutes, so decimals stay easy to add. **Product owner (13:06):** round with standard mathematical rules, everywhere: 185 min gives 3 and 210 min gives 4, where today it truncates. Behavioural fix. Stein asked not to be asked about rounding again without a special reason. |
 | B12 | The status codes for an unknown speaker are not specified. | Our decision. Write it in "Our decisions". |
 | B13 | Ratings: "A score is a whole number from 1 to 5. Nothing else is a score." | Rejecting `3.0` and `"3"` is right. Closed. |
+
+### Product-owner answers for the drip features
+
+Recorded here until `workflow/specs/<feature>/spec.md` exists. Move them there under "Our decisions" / "Open questions".
+
+| # | Question | Answer (Stein, #team-11) |
+|---|---|---|
+| 4 | acceptance: do withdrawn or rejected talks count towards the limit of 3? | 13:07: a withdrawn talk does **not** count; a rejected talk **does** count. So a speaker who withdraws a talk can submit a new one. |
+| 5 | acceptance: rating withdrawn, rejected or accepted talks; are withdrawn talks still listed in `?sort=rating`? | Open. |
+| 6 | acceptance: may an accepted talk be withdrawn? | Open. |
+| 7 | co-speakers + acceptance: can a co-speaker withdraw a talk? | Open. |
+| 8 | co-speakers + acceptance: co-speakers on withdrawn, rejected or accepted talks | Open. |
 
 The specs also confirm these constraints from sections 1c and 4:
 
