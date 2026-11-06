@@ -8,8 +8,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.regex.Pattern;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.junit.jupiter.api.BeforeEach;
@@ -52,7 +52,7 @@ public class SpeakersTest {
 
     @BeforeEach
     void startWithNoSpeakers() {
-        jdbc.execute("TRUNCATE speaker, talk, rating RESTART IDENTITY");
+        jdbc.execute("TRUNCATE speaker, talk, rating, talk_co_speaker RESTART IDENTITY");
     }
 
     @DisplayName("R3: Registers a speaker only with a name")
@@ -73,7 +73,8 @@ public class SpeakersTest {
     @DisplayName("R3: Registers a speaker only with a real email address")
     @Description("""
             A real address has one @, a local part, and a domain of at least two labels split by dots,
-            with no spaces. A blank cell sends JSON null as the email.
+            with no spaces. The limits on length come from RFC 5321. A blank cell sends JSON null as
+            the email. A cell such as (64 × a) stands for the letter a written 64 times.
             """)
     @TableTest("""
         Scenario                        | Email                               | Status?
@@ -87,11 +88,15 @@ public class SpeakersTest {
         Two dots in a row in the domain | ada@example..com                    | 400
         Two @                           | ada@@example.com                    | 400
         Space in the local part         | ada lovelace@example.com            | 400
+        Local part of 64 characters     | (64 × a)@example.com                | 201
+        Local part of 65 characters     | (65 × a)@example.com                | 400
+        Domain of 255 characters        | ada@(251 × e).com                   | 201
+        Domain of 256 characters        | ada@(252 × e).com                   | 400
         Empty                           | ''                                  | 400
         Only spaces                     | '   '                               | 400
         No email                        |                                     | 400
         """)
-    void registersASpeakerOnlyWithARealEmail(String email, int status) throws Exception {
+    void registersASpeakerOnlyWithARealEmail(EmailAddress email, int status) throws Exception {
         assertEquals(status, register(email, null).statusCode());
     }
 
@@ -143,48 +148,21 @@ public class SpeakersTest {
         assertEquals(status, res.statusCode(), res.body());
     }
 
-    @DisplayName("R4: Applies the bio limit when an admin updates a speaker")
+    @DisplayName("Refuses to change a registered speaker")
     @Description("""
-            The admin update is PUT /speakers/{id}. Each row updates the bio of a registered speaker
-            and keeps the name and the email.
+            Speaker 1 registers as Grace Hopper. The request asks to change the name to Ada Lovelace.
+            No spec has an endpoint to change a speaker, and the old admin update had no
+            authorisation (security review, 2026-11-06).
             """)
     @TableTest("""
-        Scenario           | Bio      | Status?
-        Emoji at the limit | 500 × 😀 | 200
-        One past the limit | 501 × x  | 400
+        Scenario      | Path         | Status? | Name After?
+        Without slash | /speakers/1  | 405     | Grace Hopper
+        With slash    | /speakers/1/ | 405     | Grace Hopper
         """)
-    void limitsTheBioTo500CharactersOnUpdate(Bio bio, int status) throws Exception {
-        String id = JSON.readTree(register("grace@example.com", null).body()).get("id").asText();
-        HttpResponse<String> res = api.send("PUT", "/speakers/" + id, speaker("grace@example.com", bio));
-        assertEquals(status, res.statusCode(), res.body().substring(0, Math.min(200, res.body().length())));
-    }
-
-    @DisplayName("R3, R5: Updates a speaker by the rules of registration")
-    @Description("""
-            The admin update is PUT /speakers/{id}. Each row registers grace@example.com (ID 1) and
-            ada@example.com (ID 2) first. The reason is the message field of the error body.
-            """)
-    @TableTest("""
-        Scenario                    | Speaker ID | Name         | Email             | Status? | Message?
-        Own email in another case   | 1          | Grace Hopper | GRACE@example.com | 200     |
-        Another speaker's email     | 1          | Grace Hopper | ADA@example.com   | 409     | email already registered
-        Not an email                | 1          | Grace Hopper | not-an-email      | 400     | invalid email
-        No name                     | 1          |              | grace@example.com | 400     | name is required
-        Name of only spaces         | 1          | '   '        | grace@example.com | 400     | name is required
-        Unknown speaker             | 3          | Grace Hopper | grace@example.com | 404     | speaker not found
-        """)
-    void updatesASpeakerByTheRulesOfRegistration(String speakerId, String name, String email, int status,
-                                                 String message) throws Exception {
+    void refusesToChangeARegisteredSpeaker(String path, int status, String nameAfter) throws Exception {
         assertEquals(201, register("grace@example.com", null).statusCode());
-        assertEquals(201, register("ada@example.com", null).statusCode());
-        HttpResponse<String> res = api.send("PUT", "/speakers/" + speakerId, speaker(name, email, null));
-        assertEquals(status, res.statusCode(), res.body());
-        JsonNode body = JSON.readTree(res.body());
-        if (message == null) {
-            assertEquals(email, body.get("email").asText());
-        } else {
-            assertEquals(message, body.get("message").asText());
-        }
+        assertEquals(status, api.send("PUT", path, speaker("Ada Lovelace", "grace@example.com", null)).statusCode());
+        assertEquals(nameAfter, JSON.readTree(api.get("/speakers/1").body()).get("name").asText());
     }
 
     @DisplayName("R5: Refuses a second speaker with the same email")
@@ -248,6 +226,22 @@ public class SpeakersTest {
     public static Bio parseBio(String cell) {
         String[] countAndCharacter = cell.split(" × ");
         return new Bio(countAndCharacter[1].repeat(Integer.parseInt(countAndCharacter[0])));
+    }
+
+    /** An email address written in a table, where {@code (64 × a)} stands for 64 letters a. */
+    record EmailAddress(String text) {
+    }
+
+    private static final Pattern REPEATED_CHARACTER = Pattern.compile("\\((\\d+) × (.)\\)");
+
+    @TypeConverter
+    public static EmailAddress parseEmailAddress(String cell) {
+        return new EmailAddress(REPEATED_CHARACTER.matcher(cell)
+                .replaceAll(run -> run.group(2).repeat(Integer.parseInt(run.group(1)))));
+    }
+
+    private HttpResponse<String> register(EmailAddress email, Bio bio) throws Exception {
+        return register(email == null ? null : email.text(), bio);
     }
 
     private HttpResponse<String> register(String email, Bio bio) throws Exception {

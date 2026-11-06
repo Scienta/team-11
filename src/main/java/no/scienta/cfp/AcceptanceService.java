@@ -1,61 +1,60 @@
 package no.scienta.cfp;
 
-import java.util.Map;
+import java.util.Optional;
 
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * The committee's decisions on a talk and the speaker's withdrawal (Acceptance R1–R6). A refused change leaves the
- * talk as it was.
+ * talk as it was. Each change runs in one transaction, so it holds one database connection.
  */
 @Service
 public class AcceptanceService {
 
     private final TalkService conference;
+    private final TalkDao talkDao;
     private final TalkStatusDao statusDao;
 
-    public AcceptanceService(TalkService conference, TalkStatusDao statusDao) {
+    public AcceptanceService(TalkService conference, TalkDao talkDao, TalkStatusDao statusDao) {
         this.conference = conference;
+        this.talkDao = talkDao;
         this.statusDao = statusDao;
     }
 
-    public TalkResponse decide(long talkId, Map<String, Object> body) {
-        TalkStatus decision = TalkStatus.parseDecision(body.get("status"))
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                        "status must be ACCEPTED, REJECTED or WAITLISTED"));
-        conference.getTalk(talkId);
-        return moveTo(talkId, decision);
+    @Transactional
+    public StatusChange decide(long talkId, Decision decision) {
+        return findTalk(talkId)
+                .map(talk -> moveTo(talk, decision.status()))
+                .orElseGet(StatusChange.NotFound::new);
     }
 
-    public TalkResponse withdraw(long talkId, Map<String, Object> body) {
-        long speakerId = speakerIdOf(body.get("speakerId"));
-        TalkResponse talk = conference.getTalk(talkId);
-        if (talk.speakerId() != speakerId) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "only the main speaker can withdraw the talk");
+    @Transactional
+    public StatusChange withdraw(long talkId, Withdrawal withdrawal) {
+        return findTalk(talkId)
+                .map(talk -> withdrawFor(talk, withdrawal.speakerId()))
+                .orElseGet(StatusChange.NotFound::new);
+    }
+
+    private StatusChange withdrawFor(Talk talk, long speakerId) {
+        return talk.speakerId() == speakerId ? moveTo(talk, TalkStatus.WITHDRAWN) : new StatusChange.NotMainSpeaker();
+    }
+
+    /**
+     * Moves the talk if the rules allow it. A refusal is explained from the status that the talk had when it was
+     * read; if another request changed the talk in between, the reason can be out of date, but the talk is not
+     * changed either way.
+     */
+    private StatusChange moveTo(Talk talk, TalkStatus next) {
+        if (statusDao.moveTo(talk.id(), next)) {
+            return new StatusChange.Moved(conference.getTalk(talk.id()));
         }
-        return moveTo(talkId, TalkStatus.WITHDRAWN);
+        TalkStatus current = talk.status();
+        return current.canMoveTo(next) ? new StatusChange.NeedsReviewers(next) : new StatusChange.NotAllowed(current, next);
     }
 
-    private TalkResponse moveTo(long talkId, TalkStatus next) {
-        if (!statusDao.moveTo(talkId, next)) {
-            TalkStatus current = TalkStatus.valueOf(conference.getTalk(talkId).status());
-            throw new ResponseStatusException(HttpStatus.CONFLICT, refusal(current, next));
-        }
-        return conference.getTalk(talkId);
-    }
-
-    private static String refusal(TalkStatus current, TalkStatus next) {
-        return current.canMoveTo(next)
-                ? "a talk needs ratings from " + next.reviewersNeeded() + " different reviewers to become " + next
-                : "a talk that is " + current + " cannot become " + next;
-    }
-
-    private static long speakerIdOf(Object value) {
-        if (value instanceof Integer || value instanceof Long) {
-            return ((Number) value).longValue();
-        }
-        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "speakerId must be a whole number");
+    /** The talk without its ratings. */
+    private Optional<Talk> findTalk(long talkId) {
+        return talkDao.findById(talkId);
     }
 }

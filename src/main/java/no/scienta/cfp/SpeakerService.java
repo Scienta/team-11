@@ -11,7 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 /**
- * Registering, looking up, updating and searching speakers.
+ * Registering, looking up and searching speakers.
  */
 @Service
 public class SpeakerService {
@@ -51,23 +51,6 @@ public class SpeakerService {
     public Speaker getSpeaker(long id) {
         return speakerDao.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "speaker not found"));
-    }
-
-    @Transactional
-    public Speaker updateSpeaker(long id, String name, String email, String bio) {
-        Speaker existing = getSpeaker(id);
-        if (name == null || name.trim().isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "name is required");
-        }
-        if (!EmailAddress.isValid(email)) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "invalid email");
-        }
-        requireBioWithinLimit(bio);
-        if (!email.equalsIgnoreCase(existing.email()) && speakerDao.emailTaken(email)) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "email already registered");
-        }
-        speakerDao.update(id, name, email, bio);
-        return getSpeaker(id);
     }
 
     /** A character is one Unicode code point, so an emoji counts once. */

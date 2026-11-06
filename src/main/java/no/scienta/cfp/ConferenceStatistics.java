@@ -8,6 +8,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Statistics for the programme committee.
@@ -25,6 +26,7 @@ public class ConferenceStatistics {
         this.timestamps = timestamps;
     }
 
+    @Transactional(readOnly = true)
     public Map<String, Object> statistics() {
         List<TalkResponse> talks = talkService.listTalks(null, null);
         Map<String, Integer> byFormat = new LinkedHashMap<>();
@@ -38,7 +40,7 @@ public class ConferenceStatistics {
         for (TalkResponse t : talks) {
             byFormat.put(t.format(), byFormat.getOrDefault(t.format(), 0) + 1);
             byLevel.put(t.level(), byLevel.getOrDefault(t.level(), 0) + 1);
-            byStatus.put(t.status(), byStatus.getOrDefault(t.status(), 0) + 1);
+            byStatus.put(t.status().name(), byStatus.getOrDefault(t.status().name(), 0) + 1);
             if (!speakersWithTalks.contains(t.speakerId()) && registered.contains(t.speakerId())) {
                 speakersWithTalks.add(t.speakerId());
             }

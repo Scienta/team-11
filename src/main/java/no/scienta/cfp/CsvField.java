@@ -8,15 +8,24 @@ public final class CsvField {
     private CsvField() {
     }
 
-    /** Quoted when it holds a {@code ;} or a {@code "}, with each {@code "} replaced by {@code '}. Null is empty. */
+    /**
+     * Safe for a spreadsheet: shown as text, never as a formula, and kept in one cell. A value that starts like a
+     * formula gets a leading {@code '}. Quoted when it holds a {@code ;}, a {@code "} or a line break, with each
+     * {@code "} replaced by {@code '}. Null is empty.
+     */
     public static String text(String value) {
         if (value == null) {
             return "";
         }
-        if (value.contains(";") || value.contains("\"")) {
-            return "\"" + value.replace("\"", "'") + "\"";
+        String text = startsLikeAFormula(value) ? "'" + value : value;
+        if (text.contains(";") || text.contains("\"") || text.contains("\n") || text.contains("\r")) {
+            return "\"" + text.replace("\"", "'") + "\"";
         }
-        return value;
+        return text;
+    }
+
+    private static boolean startsLikeAFormula(String value) {
+        return !value.isEmpty() && "=+-@\t\r".indexOf(value.charAt(0)) >= 0;
     }
 
     /** "WORKSHOP" as "Workshop". Blank stays as it is. */

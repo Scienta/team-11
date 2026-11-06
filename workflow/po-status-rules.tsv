@@ -4,7 +4,7 @@
 speakers/r3-registers-a-speaker-only-with-a-name	En foredragsholder må ha et navn.
 speakers/r3-registers-a-speaker-only-with-a-real-email-address	En foredragsholder må ha en gyldig e-postadresse.
 speakers/r4-limits-the-bio-to-500-characters	Beskrivelsen av en foredragsholder kan ha høyst 500 tegn.
-speakers/r4-applies-the-bio-limit-when-an-admin-updates-a-speaker	Grensen på 500 tegn gjelder også når en administrator endrer beskrivelsen.
+speakers/refuses-to-change-a-registered-speaker	Ingen kan endre en foredragsholder etter registreringen.
 speakers/r5-refuses-a-second-speaker-with-the-same-email	To foredragsholdere kan ikke ha samme e-postadresse.
 speakers/r7-treats-a-trailing-slash-like-the-path-without-it	En nettadresse med skråstrek til slutt virker som uten.
 speakers/finds-a-registered-speaker-by-id	Vi finner en registrert foredragsholder igjen.
@@ -32,6 +32,21 @@ acceptance/r8-takes-ratings-only-for-a-talk-that-is-still-open	Et foredrag får 
 acceptance/r9-shows-withdrawn-talks-after-the-others	Trukne foredrag kommer sist i listene.
 acceptance/r9-takes-only-true-or-false-to-leave-out-withdrawn-talks	Man kan velge å skjule trukne foredrag. Valget er ja eller nei.
 acceptance/answers-404-for-a-talk-that-does-not-exist	Vi sier tydelig fra når et foredrag ikke finnes.
+workshop-registration/r1-registers-an-attendee-only-with-a-name-and-a-real-email	En påmelding må ha et navn og en gyldig e-postadresse.
+workshop-registration/answers-400-for-a-request-it-cannot-use	En påmelding som ikke kan leses, avvises med en tydelig feil.
+workshop-registration/r2-takes-registrations-only-for-a-workshop	Bare workshoper tar imot påmeldinger.
+workshop-registration/r3-takes-registrations-only-for-an-accepted-workshop	Man kan bare melde seg på en workshop som komiteen har godtatt.
+workshop-registration/r4-keeps-the-attendees-of-a-withdrawn-workshop	Når en workshop trekkes, står de påmeldte fortsatt på listen.
+workshop-registration/r5-takes-at-most-20-attendees-for-a-workshop	En workshop har plass til høyst 20 deltakere.
+workshop-registration/r5-keeps-20-seats-when-many-register-at-the-same-time	Også når mange melder seg på samtidig, får bare 20 plass.
+workshop-registration/r6-r7-registers-an-email-once-for-each-workshop	En e-postadresse kan bare meldes på én gang per workshop, uansett store eller små bokstaver. Samme person kan melde seg på flere workshoper.
+workshop-registration/r6-registers-one-of-the-same-email-sent-at-the-same-time	Kommer samme påmelding flere ganger samtidig, teller den bare én gang.
+workshop-registration/r8-lists-the-attendees-in-the-order-they-registered	Arrangørene ser deltakerne i den rekkefølgen de meldte seg på.
+workshop-registration/r9-frees-the-seat-when-an-attendee-unregisters	En deltaker kan melde seg av, og plassen blir ledig for en annen.
+workshop-registration/r9-unregisters-a-registration-once-from-its-own-workshop	En påmelding kan bare meldes av én gang, og bare fra sin egen workshop.
+workshop-registration/r6-r9-registers-an-email-again-after-it-unregistered	Den som har meldt seg av, kan melde seg på igjen.
+workshop-registration/r9-gives-a-freed-seat-to-one-attendee-only	En ledig plass går til én deltaker, også når mange melder seg på samtidig.
+workshop-registration/r10-unregisters-only-with-the-registration-s-cancellation-token	Den som melder seg på, får en hemmelig avmeldingskode. Bare med den koden kan påmeldingen meldes av.
 warm-up/r1-sends-each-warm-up-request-through-the-http-port	Ved oppstart varmer tjenesten seg opp med de samme forespørslene som brukerne sender.
 warm-up/r2-leaves-every-table-as-empty-as-it-found-it	Oppvarmingen etterlater ingen data.
 warm-up/r3-writes-the-number-of-requests-when-the-warm-up-ends	Tjenesten skriver i loggen hvor mange forespørsler oppvarmingen sendte.
@@ -44,3 +59,23 @@ co-speakers/r6-a-co-speaker-s-own-talk-list-shows-only-their-own-talks	En foredr
 co-speakers/r8-removes-a-co-speaker-never-the-main-speaker	En medforedragsholder kan fjernes igjen. Hovedforedragsholderen kan ikke fjernes.
 co-speakers/r9-a-withdrawn-or-rejected-talk-can-t-be-changed	Et foredrag som er trukket eller avvist, kan ikke få nye eller færre medforedragsholdere.
 co-speakers/answers-404-for-an-unknown-talk-and-400-for-a-talk-id-that-is-not-a-number	Et ukjent foredrag gir en tydelig feilmelding.
+co-speakers/r12-only-the-main-speaker-changes-the-co-speakers-when-the-request-says-who-acts	Når forespørselen sier hvem som gjør endringen, kan bare hovedforedragsholderen legge til eller fjerne medforedragsholdere.
+co-speakers/r12-who-acts-is-checked-after-the-talk-is-found-and-before-the-other-rules	Et ukjent foredrag gir fortsatt 404. Hvem som gjør endringen, sjekkes før foredragets status.
+error-answers/answers-a-database-failure-without-its-details	Ved en feil i databasen svarer tjenesten uten å vise tekniske detaljer.
+error-answers/refuses-a-text-field-that-holds-a-nul-character	Tekst som inneholder et ugyldig nulltegn, avvises.
+request-log-filter-test/masks-each-email-in-the-logged-bodies	E-postadresser skjules i loggen.
+request-log-filter-test/masks-each-cancellation-token-in-the-logged-bodies	Avmeldingskoder skjules i loggen.
+request-log-filter-test/logs-a-large-body-in-a-short-time	Også en stor forespørsel blir logget raskt.
+utils-test/exports-a-value-that-starts-like-a-formula-as-text	I eksporten til regneark blir en verdi som ligner en formel, lagret som tekst.
+utils-test/quotes-a-value-with-a-semicolon-or-a-line-break	I eksporten til regneark får en verdi med semikolon eller linjeskift anførselstegn rundt seg.
+request-limits/refuses-a-request-body-larger-than-1-mb	Tjenesten avviser en forespørsel som er større enn 1 MB.
+programme-scheduling/r1-gives-each-slot-its-fixed-start-and-end	Programmet har tre rom med de samme fem tidspunktene i hvert rom. Start og slutt er faste.
+programme-scheduling/r1-refuses-a-room-or-slot-outside-the-venue	Bare rommene og tidspunktene som finnes, kan brukes. Andre avvises.
+programme-scheduling/r2-puts-a-talk-in-a-place-looks-it-up-takes-it-out	Komiteen kan sette et foredrag i et rom på et tidspunkt, se hva som står der, og ta det ut igjen.
+programme-scheduling/r2-puts-a-talk-only-for-a-body-with-a-talk-id	For å sette et foredrag på programmet må komiteen oppgi et foredrag som finnes.
+programme-scheduling/r3-puts-only-an-accepted-talk-on-the-programme	Bare godtatte foredrag kommer på programmet.
+programme-scheduling/r4-puts-a-workshop-only-in-the-long-slot	En workshop må ligge på det lange tidspunktet, fra 13:30 til 15:30. Andre foredrag passer på alle tidspunkter.
+programme-scheduling/r5-keeps-one-talk-per-place-and-each-talk-once	Det er ett foredrag per rom og tidspunkt, og et foredrag står bare én gang på programmet. For å flytte et foredrag tar man det ut først.
+programme-scheduling/r6-keeps-each-speaker-in-one-room-at-a-time	Ingen foredragsholder eller medforedragsholder skal være i to rom på samme tidspunkt.
+programme-scheduling/r7-leaves-the-programme-as-it-is-when-a-talk-changes	Når et foredrag endres etterpå, for eksempel trekkes, står programmet som før. Komiteen kan ta det ut.
+programme-scheduling/r8-keeps-the-rules-when-requests-come-at-the-same-time	Også når flere i komiteen endrer programmet samtidig, holder reglene.

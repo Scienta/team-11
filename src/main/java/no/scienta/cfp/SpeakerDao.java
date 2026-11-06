@@ -41,10 +41,6 @@ public class SpeakerDao {
                 Long.class, name, email, bio, timestamps.today());
     }
 
-    public int update(long id, String name, String email, String bio) {
-        return jdbc.update("UPDATE speaker SET name = ?, email = ?, bio = ? WHERE id = ?", name, email, bio, id);
-    }
-
     public List<Speaker> findAll() {
         return jdbc.query("SELECT id, name, email, bio FROM speaker", SPEAKER);
     }

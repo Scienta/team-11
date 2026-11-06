@@ -7,5 +7,5 @@ import java.util.List;
  * A talk as stored. {@code submittedOn} is the UTC day of {@code submittedAt}; the reporting tool wants a plain date.
  */
 public record Talk(long id, String title, String format, String level, long speakerId, int durationMinutes,
-                   String status, Date submittedAt, java.sql.Date submittedOn, List<Long> coSpeakerIds) {
+                   TalkStatus status, Date submittedAt, java.sql.Date submittedOn, List<Long> coSpeakerIds) {
 }

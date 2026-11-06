@@ -1,7 +1,6 @@
 package no.scienta.cfp;
 
 import java.util.List;
-import java.util.Map;
 
 import javax.validation.Valid;
 
@@ -9,7 +8,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -37,12 +35,6 @@ public class SpeakerController {
     @GetMapping("/{id}")
     public Speaker get(@PathVariable Long id) {
         return service.getSpeaker(id);
-    }
-
-    // used by the admin UI to fix typos
-    @PutMapping("/{id}")
-    public Speaker update(@PathVariable("id") Long id, @RequestBody Map<String, String> body) {
-        return service.updateSpeaker(id, body.get("name"), body.get("email"), body.get("bio"));
     }
 
     @GetMapping("/{id}/talks")

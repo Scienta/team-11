@@ -137,7 +137,10 @@ The specs in `workflow/specs/<feature>/` are the source of truth. In short:
 | PUT | `/talks/{id}/ratings/{reviewerId}` | Rate a talk from 1 to 5 |
 | PUT | `/talks/{id}/status` | The committee accepts, rejects or waitlists a talk |
 | POST | `/talks/{id}/withdraw` | The main speaker withdraws a talk |
-| PUT, DELETE | `/talks/{id}/co-speakers/{speakerId}` | Add or remove a co-speaker |
+| PUT, DELETE | `/talks/{id}/co-speakers/{speakerId}` | Add or remove a co-speaker; `?actingSpeakerId=` must be the main speaker when sent |
+| POST, GET | `/workshops/{id}/registrations` | Register for an accepted workshop (max 20), or list its attendees |
+| DELETE | `/workshops/{id}/registrations/{registrationId}` | Unregister with the registration's cancellation token |
+| PUT, GET, DELETE | `/programme/{room}/{slot}` | Put an accepted talk on the programme, look it up, take it out |
 | GET | `/admin/stats`, `/admin/talks.csv` | Statistics and a CSV export for the committee (not in a spec) |
 | GET | `/health` | 200 with the deployed version while the database answers |
 

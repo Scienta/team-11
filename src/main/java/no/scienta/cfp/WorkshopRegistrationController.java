@@ -1,0 +1,97 @@
+package no.scienta.cfp;
+
+import java.util.List;
+import java.util.Map;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
+
+/**
+ * The HTTP API of workshop registration. Parses the request and maps each {@link RegistrationOutcome} to its status
+ * code, as decided in workflow/specs/workshop-registration/spec.md.
+ */
+@RestController
+public class WorkshopRegistrationController {
+
+    private final WorkshopRegistrationService service;
+
+    public WorkshopRegistrationController(WorkshopRegistrationService service) {
+        this.service = service;
+    }
+
+    @PostMapping("/workshops/{id}/registrations")
+    public ResponseEntity<RegistrationConfirmation> register(@PathVariable long id, @RequestBody Map<String, Object> body) {
+        RegistrationRequest request = RegistrationRequest.parse(body)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "a registration needs a name and a real email"));
+        return created(service.register(id, request));
+    }
+
+    @GetMapping("/workshops/{id}/registrations")
+    public List<Registration> attendees(@PathVariable long id) {
+        AttendeesOutcome outcome = service.attendees(id);
+        if (outcome instanceof AttendeesOutcome.Attendees attendees) {
+            return attendees.registrations();
+        }
+        if (outcome instanceof AttendeesOutcome.NotAWorkshop) {
+            return List.of();
+        }
+        throw notAWorkshop();
+    }
+
+    /**
+     * Unregisters when the body gives the registration's cancellation token (R9, R10). A wrong or missing token gets the
+     * same 404 as an unknown registration, so the answer does not tell whether the registration exists.
+     */
+    @DeleteMapping("/workshops/{id}/registrations/{registrationId}")
+    public ResponseEntity<Void> unregister(@PathVariable long id, @PathVariable long registrationId,
+                                           @RequestBody Map<String, Object> body) {
+        boolean unregistered = CancellationToken.parse(body)
+                .map(token -> service.unregister(id, registrationId, token))
+                .filter(UnregistrationOutcome.Unregistered.class::isInstance)
+                .isPresent();
+        if (unregistered) {
+            return ResponseEntity.noContent().build();
+        }
+        throw new ResponseStatusException(HttpStatus.NOT_FOUND, "no such registration for this workshop");
+    }
+
+    private static ResponseEntity<RegistrationConfirmation> created(RegistrationOutcome outcome) {
+        if (outcome instanceof RegistrationOutcome.Refusal refused) {
+            throw refusal(refused);
+        }
+        RegistrationConfirmation confirmation = ((RegistrationOutcome.Registered) outcome).confirmation();
+        return ResponseEntity.status(HttpStatus.CREATED).body(confirmation);
+    }
+
+    private static ResponseStatusException refusal(RegistrationOutcome.Refusal outcome) {
+        if (outcome instanceof RegistrationOutcome.NoSuchTalk) {
+            return notAWorkshop();
+        }
+        if (outcome instanceof RegistrationOutcome.NotAWorkshop) {
+            return new ResponseStatusException(HttpStatus.CONFLICT, "only a workshop takes registrations");
+        }
+        if (outcome instanceof RegistrationOutcome.Closed closed) {
+            return new ResponseStatusException(HttpStatus.CONFLICT,
+                    "a workshop that is " + closed.status() + " takes no registrations");
+        }
+        if (outcome instanceof RegistrationOutcome.Full full) {
+            return new ResponseStatusException(HttpStatus.CONFLICT, "all " + full.seats() + " seats are taken");
+        }
+        if (outcome instanceof RegistrationOutcome.AlreadyRegistered) {
+            return new ResponseStatusException(HttpStatus.CONFLICT, "this email is already registered");
+        }
+        throw new IllegalArgumentException("unknown registration refusal " + outcome);
+    }
+
+    private static ResponseStatusException notAWorkshop() {
+        return new ResponseStatusException(HttpStatus.NOT_FOUND, "no workshop with this id");
+    }
+}

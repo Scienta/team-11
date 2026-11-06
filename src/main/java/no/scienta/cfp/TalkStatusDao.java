@@ -1,10 +1,6 @@
 package no.scienta.cfp;
 
-import java.util.List;
 import java.util.Optional;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
@@ -17,9 +13,11 @@ import org.springframework.stereotype.Repository;
 public class TalkStatusDao {
 
     private final JdbcTemplate jdbc;
+    private final TalkDao talkDao;
 
-    public TalkStatusDao(JdbcTemplate jdbc) {
+    public TalkStatusDao(JdbcTemplate jdbc, TalkDao talkDao) {
         this.jdbc = jdbc;
+        this.talkDao = talkDao;
     }
 
     /**
@@ -27,16 +25,13 @@ public class TalkStatusDao {
      * rated it. Returns whether the talk moved. A reviewer has one rating row per talk, so the rows count reviewers.
      */
     public boolean moveTo(long talkId, TalkStatus next) {
-        List<String> from = next.reachableFrom().stream().map(Enum::name).collect(Collectors.toList());
-        if (from.isEmpty()) {
+        String[] from = next.reachableFrom().stream().map(Enum::name).toArray(String[]::new);
+        if (from.length == 0) {
             return false;
         }
-        String placeholders = from.stream().map(status -> "?").collect(Collectors.joining(", "));
-        Object[] args = Stream.of(Stream.of(next.name(), talkId), from.stream(), Stream.of(talkId, next.reviewersNeeded()))
-                .flatMap(Function.identity())
-                .toArray();
-        int moved = jdbc.update("UPDATE talk SET status = ? WHERE id = ? AND status IN (" + placeholders + ") "
-                + "AND (SELECT COUNT(*) FROM rating WHERE talk_id = ?) >= ?", args);
+        int moved = jdbc.update("UPDATE talk SET status = ? WHERE id = ? AND status = ANY(?) "
+                        + "AND (SELECT COUNT(*) FROM rating WHERE talk_id = ?) >= ?",
+                next.name(), talkId, from, talkId, next.reviewersNeeded());
         return moved == 1;
     }
 
@@ -45,7 +40,10 @@ public class TalkStatusDao {
      * a rating cannot land on a talk that a decision has just closed (R8). Must run inside a transaction.
      */
     public Optional<TalkStatus> lockStatus(long talkId) {
-        List<String> status = jdbc.queryForList("SELECT status FROM talk WHERE id = ? FOR SHARE", String.class, talkId);
-        return status.stream().findFirst().map(TalkStatus::valueOf);
+        if (!talkDao.lock(talkId, TalkDao.Lock.SHARE)) {
+            return Optional.empty();
+        }
+        return Optional.of(TalkStatus.valueOf(
+                jdbc.queryForObject("SELECT status FROM talk WHERE id = ?", String.class, talkId)));
     }
 }

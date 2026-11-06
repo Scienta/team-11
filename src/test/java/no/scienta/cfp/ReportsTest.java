@@ -47,7 +47,7 @@ class ReportsTest {
 
     @BeforeEach
     void startWithNoSpeakers() {
-        jdbc.execute("TRUNCATE speaker, talk, rating RESTART IDENTITY");
+        jdbc.execute("TRUNCATE speaker, talk, rating, talk_co_speaker RESTART IDENTITY");
     }
 
     @Test

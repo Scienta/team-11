@@ -20,6 +20,7 @@ import org.springframework.web.server.ResponseStatusException;
 public class TalkService {
 
     private static final int MAX_TALKS_PER_SPEAKER = 3;
+    private static final int MAX_TITLE_CHARACTERS = 200;
 
     /** The order the 400 message has always listed the formats in; clients may compare the message. */
     private static final List<TalkFormat> FORMATS_IN_ERROR_MESSAGE = List.of(
@@ -51,6 +52,10 @@ public class TalkService {
         if (form.title == null || form.title.trim().isEmpty()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "title is required");
         }
+        if (form.title.codePointCount(0, form.title.length()) > MAX_TITLE_CHARACTERS) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "title is longer than " + MAX_TITLE_CHARACTERS + " characters");
+        }
         TalkFormat format = constantNamed(TalkFormat.class, form.format).orElseThrow(() ->
                 new ResponseStatusException(HttpStatus.BAD_REQUEST, "format must be one of " + FORMATS_IN_ERROR_MESSAGE));
         if (constantNamed(TalkLevel.class, form.level).isEmpty()) {
@@ -81,23 +86,21 @@ public class TalkService {
                 timestamps.now().toEpochMilli());
     }
 
+    @Transactional(readOnly = true)
     public TalkResponse getTalk(long id) {
-        return talkDao.findById(id).map(this::withRatings)
+        return talkDao.findById(id).map(talk -> withRatings(List.of(talk)).get(0))
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "talk not found"));
-    }
-
-    private TalkResponse withRatings(Talk talk) {
-        return TalkResponse.of(talk, ratings.summaryOf(talk.id()));
     }
 
     /** One query for the ratings of all the talks, not one per talk. */
     private List<TalkResponse> withRatings(List<Talk> talks) {
-        Map<Long, RatingSummary> summaries = ratings.summariesByTalk();
+        Map<Long, RatingSummary> summaries = ratings.summariesFor(talks.stream().map(Talk::id).toList());
         return talks.stream()
                 .map(talk -> TalkResponse.of(talk, summaries.getOrDefault(talk.id(), RatingSummary.NONE)))
                 .toList();
     }
 
+    @Transactional(readOnly = true)
     public List<TalkResponse> getTalksForSpeaker(long speakerId) {
         if (speakerDao.findById(speakerId).isEmpty()) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "speaker not found");
@@ -106,6 +109,7 @@ public class TalkService {
     }
 
     /** The talk list without the withdrawn talks when {@code includeWithdrawn} is false (Acceptance R9). */
+    @Transactional(readOnly = true)
     public List<TalkResponse> listTalks(String sort, Long speakerId, boolean includeWithdrawn) {
         return listTalks(sort, speakerId).stream()
                 .filter(talk -> includeWithdrawn || !isWithdrawn(talk))
@@ -113,6 +117,7 @@ public class TalkService {
     }
 
     /** The talks in the order of Ratings R5 or R6, with the withdrawn talks after the others (Acceptance R9). */
+    @Transactional(readOnly = true)
     public List<TalkResponse> listTalks(String sort, Long speakerId) {
         Map<Boolean, List<TalkResponse>> byWithdrawn = orderedTalks(sort, speakerId).stream()
                 .collect(Collectors.partitioningBy(TalkService::isWithdrawn));
@@ -122,7 +127,7 @@ public class TalkService {
     }
 
     private static boolean isWithdrawn(TalkResponse talk) {
-        return TalkStatus.WITHDRAWN.name().equals(talk.status());
+        return talk.status() == TalkStatus.WITHDRAWN;
     }
 
     private List<TalkResponse> orderedTalks(String sort, Long speakerId) {

@@ -28,6 +28,21 @@ final class TestDatabase {
         pointAt(registry, POSTGRES, name);
     }
 
+    /** Creates an empty database, runs the setup in it before the app starts, and points the app's datasource at it. */
+    static void freshWith(DynamicPropertyRegistry registry, Work setup) {
+        String name = "cfp_" + COUNTER.incrementAndGet();
+        createDatabase(name);
+        inDatabase(name, setup);
+        pointAt(registry, POSTGRES, name);
+    }
+
+    /** Runs the work in a new empty database, without the app. */
+    static void inNewDatabase(Work work) {
+        String name = "cfp_" + COUNTER.incrementAndGet();
+        createDatabase(name);
+        inDatabase(name, work);
+    }
+
     /** Points the app at a database through the deploy contract's PG* variables, as on Scaleway. */
     static void pointAt(DynamicPropertyRegistry registry, PostgreSQLContainer<?> postgres, String database) {
         registry.add("PGHOST", postgres::getHost);
@@ -48,5 +63,20 @@ final class TestDatabase {
         } catch (SQLException e) {
             throw new IllegalStateException("could not create test database " + name, e);
         }
+    }
+
+    private static void inDatabase(String name, Work work) {
+        String url = "jdbc:postgresql://" + POSTGRES.getHost() + ":" + POSTGRES.getMappedPort(5432) + "/" + name;
+        try (Connection c = DriverManager.getConnection(url, POSTGRES.getUsername(), POSTGRES.getPassword())) {
+            work.run(c);
+        } catch (SQLException e) {
+            throw new IllegalStateException("could not work in test database " + name, e);
+        }
+    }
+
+    /** Statements to run in a test database. */
+    @FunctionalInterface
+    interface Work {
+        void run(Connection connection) throws SQLException;
     }
 }

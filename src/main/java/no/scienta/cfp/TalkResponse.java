@@ -11,7 +11,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 @JsonPropertyOrder({"id", "title", "format", "level", "speakerId", "durationMinutes", "status", "submittedAt",
         "submittedOn", "averageRating", "ratingCount", "coSpeakerIds"})
 public record TalkResponse(long id, String title, String format, String level, long speakerId, int durationMinutes,
-                           String status, Date submittedAt, java.sql.Date submittedOn, Double averageRating,
+                           TalkStatus status, Date submittedAt, java.sql.Date submittedOn, Double averageRating,
                            int ratingCount, List<Long> coSpeakerIds) {
 
     static TalkResponse of(Talk talk, RatingSummary ratings) {

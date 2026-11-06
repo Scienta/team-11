@@ -2,6 +2,7 @@ package no.scienta.cfp;
 
 import java.time.Instant;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.springframework.http.HttpStatus;
@@ -54,13 +55,8 @@ public class RatingService {
         return result;
     }
 
-    /** The summaries of all rated talks, by talk id; a talk that is not in it has no ratings. */
-    public Map<Long, RatingSummary> summariesByTalk() {
-        return ratingDao.summariesByTalk();
-    }
-
-    public RatingSummary summaryOf(long talkId) {
-        Map<String, Object> stats = ratingDao.stats(talkId);
-        return RatingSummary.of(((Number) stats.get("cnt")).intValue(), ((Number) stats.get("total")).longValue());
+    /** The summaries of the rated talks among the given talks, by talk id; a talk that is not in it has no ratings. */
+    public Map<Long, RatingSummary> summariesFor(List<Long> talkIds) {
+        return ratingDao.summariesFor(talkIds);
     }
 }

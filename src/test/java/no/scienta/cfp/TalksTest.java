@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.regex.Pattern;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -19,6 +20,7 @@ import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.tabletest.junit.Description;
 import org.tabletest.junit.TableTest;
+import org.tabletest.junit.TypeConverter;
 
 /**
  * Talk submission: the format sets the duration, only the listed formats and levels are accepted, and a speaker submits
@@ -27,7 +29,7 @@ import org.tabletest.junit.TableTest;
  */
 @DisplayName("Talks")
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-class TalksTest {
+public class TalksTest {
 
     private static final ObjectMapper JSON = new ObjectMapper();
 
@@ -93,16 +95,22 @@ class TalksTest {
     @DisplayName("R3: Accepts a talk only with a real title")
     @Description("""
             A blank cell sends JSON null as the title. Each row is the first talk of a newly
-            registered speaker, a PRESENTATION at level BEGINNER.
+            registered speaker, a PRESENTATION at level BEGINNER. A cell such as (200 × x) stands
+            for the letter x written 200 times. A character is one Unicode code point, so the emoji
+            😀 counts once, although JSON and Java count it as two UTF-16 units.
             """)
     @TableTest("""
-        Scenario     | Title               | Status?
-        A real title | Legacy is a feeling | 201
-        Empty        | ''                  | 400
-        Only spaces  | '   '               | 400
-        No title     |                     | 400
+        Scenario             | Title               | Status?
+        A real title         | Legacy is a feeling | 201
+        Empty                | ''                  | 400
+        Only spaces          | '   '               | 400
+        No title             |                     | 400
+        200 characters       | (200 × x)           | 201
+        201 characters       | (201 × x)           | 400
+        200 emoji characters | (200 × 😀)          | 201
+        201 emoji characters | (201 × 😀)          | 400
         """)
-    void acceptsATalkOnlyWithARealTitle(String title, int status) throws Exception {
+    void acceptsATalkOnlyWithARealTitle(TalkTitle title, int status) throws Exception {
         assertEquals(status, submit(title, "PRESENTATION", "BEGINNER").statusCode());
     }
 
@@ -194,6 +202,22 @@ class TalksTest {
     /** Submits one talk for a newly registered speaker. */
     private HttpResponse<String> submit(String format, String level) throws Exception {
         return submit("Legacy is a feeling", format, level);
+    }
+
+    /** A talk title written in a table, where {@code (200 × x)} stands for 200 letters x. */
+    record TalkTitle(String text) {
+    }
+
+    private static final Pattern REPEATED_CHARACTER = Pattern.compile("\\((\\d+) × (\\X)\\)");
+
+    @TypeConverter
+    public static TalkTitle parseTalkTitle(String cell) {
+        return new TalkTitle(REPEATED_CHARACTER.matcher(cell)
+                .replaceAll(run -> run.group(2).repeat(Integer.parseInt(run.group(1)))));
+    }
+
+    private HttpResponse<String> submit(TalkTitle title, String format, String level) throws Exception {
+        return submit(title == null ? null : title.text(), format, level);
     }
 
     private HttpResponse<String> submit(String title, String format, String level) throws Exception {

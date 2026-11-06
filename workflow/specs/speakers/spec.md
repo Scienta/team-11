@@ -29,12 +29,13 @@ Source: `request.md` in this folder (the base spec from the harness, not edited)
 | Email missing, empty or only spaces | 400 | R3 |
 | Email that is not an address | 400 | R3. An address is: one `@`, a local part, and a domain with at least two labels split by dots. No spaces. |
 | Email `ada@localhost` | 400 | The domain has one label. A conference speaker has a public address. |
+| Email with a local part over 64 characters, or a domain over 255 | 400 | R3. RFC 5321 sets these limits, so a longer address is not a real address. The log masks only addresses inside the limits (security review, 2026-11-06). The harness sends local parts of 14 characters. |
 | Bio of 501 characters | 400 | R4 |
 | What a "character" is | One Unicode code point | An emoji is one character, not two UTF-16 units. |
 | The same email, other letter case | 409 | R5. A conflict with an existing speaker, not a bad request. |
 | Unknown speaker ID | 404 | |
 | Speaker ID that is not a number | 400 | |
-| `PUT /speakers/{id}` (admin, not in the spec) | Same name, email and bio rules as POST: a name of only spaces is 400 `name is required` | One rule for one business concept. The old limit for the bio was 1000, and the old name check let a name of spaces through. |
+| `PUT /speakers/{id}` (admin, not in the spec) | Removed: 405, the speaker does not change | It had no authorisation, so anybody could change any speaker's name and email (security review, 2026-11-06). No spec asks for it. |
 | Name, email and bio | Stored and returned as sent, not trimmed | R2: "exactly as registered" |
 | `GET /speakers/search?q=` (admin, not in the spec) | `q` is bound as a parameter, so `O'Brien` finds O'Brien. `%` and `_` in `q` still act as wildcards. | B1: the term was pasted into the SQL (injection). Escaping wildcards would be a second behaviour change; nobody has asked for it. |
 
@@ -54,6 +55,10 @@ Source: `request.md` in this folder (the base spec from the harness, not edited)
 | `ada@example..com` | 400 |
 | `ada@@example.com` | 400 |
 | `ada lovelace@example.com` | 400 |
+| `a` × 64 + `@example.com` | 201 |
+| `a` × 65 + `@example.com` | 400 |
+| `ada@` + `e` × 251 + `.com` (domain of 255) | 201 |
+| `ada@` + `e` × 252 + `.com` (domain of 256) | 400 |
 
 ### R4: a bio is at most 500 characters
 

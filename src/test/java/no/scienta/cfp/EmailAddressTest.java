@@ -2,7 +2,11 @@ package no.scienta.cfp;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import java.util.regex.Pattern;
+
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.converter.ConvertWith;
+import org.junit.jupiter.params.converter.SimpleArgumentConverter;
 import org.junit.jupiter.params.provider.CsvSource;
 
 class EmailAddressTest {
@@ -21,9 +25,23 @@ class EmailAddressTest {
             "ada@@example.com,                    false",
             "ada lovelace@example.com,            false",
             "' ada@example.com',                  false",
-            "ada\u00a0lovelace@example.com,       false",
+            "ada lovelace@example.com,       false",
+            "(64 × a)@example.com,                true",
+            "(65 × a)@example.com,                false",
+            "ada@(251 × e).com,                   true",
+            "ada@(252 × e).com,                   false",
     })
-    void acceptsOnlyARealEmailAddress(String email, boolean valid) {
+    void acceptsOnlyARealEmailAddress(@ConvertWith(RepeatedCharacters.class) String email, boolean valid) {
         assertEquals(valid, EmailAddress.isValid(email));
+    }
+
+    /** Expands a run written as {@code (64 × a)} into the letter a written 64 times. */
+    static class RepeatedCharacters extends SimpleArgumentConverter {
+        private static final Pattern RUN = Pattern.compile("\\((\\d+) × (.)\\)");
+
+        @Override
+        protected Object convert(Object source, Class<?> targetType) {
+            return RUN.matcher((String) source).replaceAll(run -> run.group(2).repeat(Integer.parseInt(run.group(1))));
+        }
     }
 }

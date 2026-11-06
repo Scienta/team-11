@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 /**
@@ -24,6 +25,7 @@ public class TalkCsvExport {
         this.speakerDao = speakerDao;
     }
 
+    @Transactional(readOnly = true)
     public String csv() {
         List<TalkResponse> talks = talkService.listTalks(null, null);
         Map<Long, Speaker> speakersById = speakerDao.findAll().stream()

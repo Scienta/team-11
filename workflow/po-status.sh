@@ -13,14 +13,17 @@ out="$root/docs/status.md"
 
 [[ -f "$specs/index.md" ]] || { echo "No report in $specs: run the reporter first" >&2; exit 1; }
 
-sections="Foredragsholdere Foredrag Karakterer Godkjenning Oppstart Annet"
+sections="Foredragsholdere Foredrag Karakterer Godkjenning Workshoper Program Oppstart Annet"
 
 section_of() {
   case "$1" in
     speakers) echo Foredragsholdere ;;
     talks) echo Foredrag ;;
+    co-speakers) echo Foredrag ;;
     ratings | ratings-*) echo Karakterer ;;
     acceptance) echo Godkjenning ;;
+    workshop-registration) echo Workshoper ;;
+    programme-scheduling) echo Program ;;
     warm-up | warm-up-*) echo Oppstart ;;
     *) echo Annet ;;
   esac
@@ -34,6 +37,7 @@ feature_name() {
     acceptance) echo Godkjenning ;;
     co-speakers) echo Medforedragsholdere ;;
     workshop-registration) echo "Påmelding til workshop" ;;
+    scheduling) echo Programplanlegging ;;
     spring-boot-4) echo "Teknisk oppgradering" ;;
     *) echo "$1" ;;
   esac
@@ -63,7 +67,7 @@ examples() {
 rule_line() {
   local page="$1" file="$specs/$1.md" title id text pass fail icon count
   title="$(sed -n 's/^## //p' "$file" | head -1)"
-  id="$(printf '%s' "$title" | sed -n 's/^\(R[0-9][0-9]*\):.*/\1/p')"
+  id="$(printf '%s' "$title" | sed -n 's/^\(R[0-9][0-9]*\(, R[0-9][0-9]*\)*\):.*/\1/p')"
   text="$(rule_text "$page")"
   if [[ -z "$text" ]]; then
     echo "No Norwegian text for $page in $rules" >&2
@@ -109,13 +113,17 @@ harness_line() {
     echo "⚪ Arrangørenes kontroller: ikke lest, fordi vi ikke fikk kontakt."
     return
   fi
-  local down total ok checked failed
+  local down total ok pending checked failed waiting
   down="$(jq -r '.down.current' <<<"$feedback")"
   total="$(jq '[.features[].checks // [] | .[]] | length' <<<"$feedback")"
   ok="$(jq '[.features[].checks // [] | .[] | select(.status == "OK")] | length' <<<"$feedback")"
+  # A check without a status has not run yet, for example just after a claim. It is not a failure.
+  pending="$(jq '[.features[].checks // [] | .[] | select(.status == null)] | length' <<<"$feedback")"
   checked="$(jq -r '.features[] | select(.checks != null) | .slug' <<<"$feedback" \
     | while read -r slug; do feature_name "$slug"; done | paste -sd, - | sed 's/,/, /g')"
-  failed="$(jq -r '.features[] | select([.checks // [] | .[] | select(.status != "OK")] | length > 0) | .slug' <<<"$feedback" \
+  failed="$(jq -r '.features[] | select([.checks // [] | .[] | select(.status != null and .status != "OK")] | length > 0) | .slug' <<<"$feedback" \
+    | while read -r slug; do feature_name "$slug"; done | paste -sd, - | sed 's/,/, /g')"
+  waiting="$(jq -r '.features[] | select([.checks // [] | .[] | select(.status == null)] | length > 0) | .slug' <<<"$feedback" \
     | while read -r slug; do feature_name "$slug"; done | paste -sd, - | sed 's/,/, /g')"
   if [[ "$down" == "true" ]]; then
     echo "❌ Arrangørenes kontroller når ikke tjenesten vår akkurat nå."
@@ -123,8 +131,10 @@ harness_line() {
     echo "⚪ Arrangørenes kontroller: ingen kontroller ennå."
   elif (( ok == total )); then
     echo "✅ Arrangørenes kontroller: alle $total er i orden ($checked)."
+  elif (( ok + pending == total )); then
+    echo "⏳ Arrangørenes kontroller: $ok av $total er i orden. $pending har ikke kjørt ennå ($waiting)."
   else
-    echo "❌ Arrangørenes kontroller: $((total - ok)) av $total er ikke i orden ($failed)."
+    echo "❌ Arrangørenes kontroller: $((total - ok - pending)) av $total er ikke i orden ($failed)."
   fi
 }
 

@@ -47,7 +47,7 @@ class TalkListsTest {
 
     @BeforeEach
     void startWithNoTalks() {
-        jdbc.execute("TRUNCATE speaker, talk, rating RESTART IDENTITY");
+        jdbc.execute("TRUNCATE speaker, talk, rating, talk_co_speaker RESTART IDENTITY");
     }
 
     @DisplayName("R6: Ranks talks by shown average, then rating count, then age")
