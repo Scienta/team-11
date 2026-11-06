@@ -62,7 +62,7 @@ CREATE TABLE IF NOT EXISTS talk_co_speaker (
     PRIMARY KEY (talk_id, speaker_id)
 );
 
--- 2026-11 workshop registration (workshop-registration R1-R8). No foreign key, like the other tables.
+-- 2026-11 workshop registration (workshop-registration R1-R8). No foreign key.
 -- The unique index backs "one registration per email per workshop, whatever the letter case" (R6).
 CREATE TABLE IF NOT EXISTS workshop_registration (
     id      BIGSERIAL PRIMARY KEY,
@@ -72,7 +72,7 @@ CREATE TABLE IF NOT EXISTS workshop_registration (
 );
 CREATE UNIQUE INDEX IF NOT EXISTS ux_workshop_registration_email ON workshop_registration (talk_id, lower(email));
 
--- 2026-11 programme scheduling (scheduling R1-R8). No foreign key, like the other tables.
+-- 2026-11 programme scheduling (scheduling R1-R8). No foreign key.
 -- One fixed row per slot: a PUT or DELETE locks it with FOR UPDATE, so the changes to one slot in all three rooms
 -- take turns (R6, R8). Advisory locks are not available on the platform.
 CREATE TABLE IF NOT EXISTS programme_slot (
