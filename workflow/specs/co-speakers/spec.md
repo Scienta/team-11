@@ -12,7 +12,7 @@ Source: `request.md` in this folder (the feature request from the harness, not e
 | R4 | Every talk shows `coSpeakerIds`, in the order they were added, `[]` when none, wherever a talk is shown: `POST /talks`, `GET /talks/{id}`, `GET /talks` (with and without `speakerId` and `sort=rating`), `GET /speakers/{id}/talks`, and the answers of `PUT /talks/{id}/status` and `POST /talks/{id}/withdraw` (acceptance). |
 | R5 | Adding someone who is already a co-speaker changes nothing. |
 | R6 | A speaker's own talk list shows only the talks where they are the main speaker. |
-| R7 | The limit of 3 talks counts only the talks where the speaker is the main speaker. A speaker who has reached it can still co-speak. |
+| R7 | Replaced by the change request [submission-cap-cr](../submission-cap-cr/spec.md): the limit of 3 talks counts the talks where the speaker is the main speaker or a co-speaker, and a speaker at the limit can't be added as co-speaker to a talk in the running (409 `this speaker already has 3 talks`). |
 | R8 | Co-speakers can be removed again. The main speaker can't be removed. (Product owner, see below.) |
 | R9 | A talk that is withdrawn or rejected can't be changed: no co-speakers added or removed. (Product owner, see below.) |
 | R10 | Simultaneous adds and double-clicks never give a talk more than two co-speakers, and never the same co-speaker twice. |
@@ -44,7 +44,7 @@ ids), placed last.
 | Removing the main speaker | 409 `the main speaker can't be removed`, unchanged at tick 171 | R8. Coordinator's decision at tick 171 (question from Fiffi): no harness check has rejected it. The alternative would be 404, because the main speaker is never a co-speaker. Risky but passing; keep (decision audit, The Hand, 2026-11-06): no state ever allows this request, and 404 would match "not a co-speaker" (check-1), but the active co-speakers checks have passed for several ticks and very likely remove the main speaker. Change it only if a transcript shows that the harness rejects 409. |
 | Removing a co-speaker and adding them again | They go last | R4: the order they were added. |
 | Withdrawn or rejected talk | 409 `a withdrawn or rejected talk can't be changed` | R9. A talk gets these statuses through the `acceptance` endpoints, `POST /talks/{id}/withdraw` and `PUT /talks/{id}/status`. The talk row lock makes a co-speaker change and a status change wait for each other. Checked after the 404s, before the other rules. |
-| Order of checks | `actingSpeakerId` 400, talk 404, R12 403, speaker 404, R9, R3 (PUT, 400) or R8 (DELETE, 409), then for PUT R5, R2 and for DELETE "not a co-speaker" 404 | The most basic error first. R5 before R2, so re-adding a co-speaker at the limit is still 200. R12 is placed as acceptance places the withdrawal's 403: after the talk 404 and before the status (R9), so someone who may not act learns nothing about the talk's status or the speaker in the path. |
+| Order of checks | `actingSpeakerId` 400, talk 404, R12 403, speaker 404, R9, R3 (PUT, 400) or R8 (DELETE, 409), then for PUT R5, R2, the speaker's limit of talks (409, submission-cap-cr) and for DELETE "not a co-speaker" 404 | The most basic error first. R5 before R2, so re-adding a co-speaker at the limit is still 200. R12 is placed as acceptance places the withdrawal's 403: after the talk 404 and before the status (R9), so someone who may not act learns nothing about the talk's status or the speaker in the path. |
 | A co-speaker's own talk list | Unchanged: main-speaker talks only | R6. Applies to `GET /speakers/{id}/talks` and `GET /talks?speakerId=`. |
 | Request body on PUT or DELETE | Ignored | The request says no body. |
 | Who acts (R12) | Optional query parameter `actingSpeakerId` on PUT and DELETE. Absent, or an empty value (`actingSpeakerId=`): no check, as before R12. | Product owner (Stein, 2026-11-06 14:21): yes, only the main speaker. The request defines no body for PUT, and the harness sends no actor, so a required actor would break the harness checks. An empty value counts as absent, as `includeWithdrawn=` does in acceptance. |
@@ -105,12 +105,12 @@ unregistered speaker id.
 | Ada co-speaks on Main's talk | `GET /speakers/{Ada}/talks` | [] |
 | Ada co-speaks on Main's talk | `GET /talks?speakerId={Ada}` | [] |
 
-### R7: the limit of 3 counts main-speaker talks only
+### R7: the limit of 3 counts co-speaker places too (submission-cap-cr)
 
 | Given | Request | Status |
 |-------|---------|--------|
-| Ada has submitted 3 talks | PUT Ada as co-speaker on Main's talk | 200 |
-| Ada co-speaks on Main's talk | Ada submits 3 talks | 201 each |
+| Ada has submitted 3 talks | PUT Ada as co-speaker on Main's talk | 409 |
+| Ada co-speaks on Main's talk | Ada submits 3 talks | 201, 201, 409 |
 
 ### R9: a withdrawn or rejected talk can't be changed
 

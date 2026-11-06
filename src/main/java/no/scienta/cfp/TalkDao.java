@@ -16,6 +16,13 @@ public class TalkDao {
             + "ARRAY(SELECT c.speaker_id::bigint FROM talk_co_speaker c WHERE c.talk_id = talk.id ORDER BY c.added_order)"
             + " AS co_speaker_ids";
 
+    /**
+     * The talks that count towards a speaker's limit (submission-cap-cr R1, R2): talks in a status that counts, where
+     * the speaker is the main speaker or a co-speaker. Takes the statuses outside the limit, then the speaker id twice.
+     */
+    private static final String TALKS_THAT_COUNT = "SELECT COUNT(*) FROM talk t WHERE t.status <> ALL(?) "
+            + "AND (t.speaker_id = ? OR EXISTS (SELECT 1 FROM talk_co_speaker c WHERE c.talk_id = t.id AND c.speaker_id = ?))";
+
     private final JdbcTemplate jdbc;
 
     private final RowMapper<TalkDto> mapper = (rs, rowNum) -> {
@@ -86,24 +93,44 @@ public class TalkDao {
     }
 
     /**
-     * Inserts the talk only if the speaker has fewer than {@code max} talks that count towards the limit
-     * ({@link TalkStatus#countsTowardLimit()}). Returns the new id, or null.
-     * The speaker row is locked first so two submissions for the same speaker can't both see room under the limit.
+     * Inserts the talk only if the speaker has fewer than {@code max} talks that count towards the limit, as main
+     * speaker or co-speaker ({@link TalkStatus#countsTowardLimit()}, submission-cap-cr R1, R2). Returns the new id, or
+     * null. The speaker row is locked first, so a submission and a co-speaker place for the same speaker can't both see
+     * room under the limit (submission-cap-cr R6).
      */
     @Transactional
     public Long insertIfBelow(int max, String title, String format, int duration, String level, long speakerId, long submittedAt) {
-        jdbc.queryForList("SELECT id FROM speaker WHERE id = ? FOR UPDATE", speakerId);
-        String[] outsideTheLimit = Arrays.stream(TalkStatus.values())
-                .filter(status -> !status.countsTowardLimit())
-                .map(Enum::name)
-                .toArray(String[]::new);
+        lockSpeaker(speakerId);
         List<Long> ids = jdbc.queryForList(
                 "INSERT INTO talk (title, format, duration, level, status, speaker_id, submitted_at) "
                         + "SELECT ?, ?, ?, ?, 'SUBMITTED', ?, ? "
-                        + "WHERE (SELECT COUNT(*) FROM talk WHERE speaker_id = ? AND status <> ALL(?)) < ? "
+                        + "WHERE (" + TALKS_THAT_COUNT + ") < ? "
                         + "RETURNING id",
-                Long.class, title, format, duration, level, speakerId, submittedAt, speakerId, outsideTheLimit, max);
+                Long.class, title, format, duration, level, speakerId, submittedAt,
+                outsideTheLimit(), speakerId, speakerId, max);
         return ids.isEmpty() ? null : ids.get(0);
+    }
+
+    /**
+     * Locks the speaker row until the transaction ends, then counts the speaker's talks that count towards the limit
+     * (submission-cap-cr R1, R2, R6). The count is a later statement, so it sees what a waited-for transaction
+     * committed. Must run inside a transaction.
+     */
+    public int lockSpeakerAndCountTalksTowardLimit(long speakerId) {
+        lockSpeaker(speakerId);
+        Integer count = jdbc.queryForObject(TALKS_THAT_COUNT, Integer.class, outsideTheLimit(), speakerId, speakerId);
+        return count == null ? 0 : count;
+    }
+
+    private void lockSpeaker(long speakerId) {
+        jdbc.queryForList("SELECT id FROM speaker WHERE id = ? FOR UPDATE", speakerId);
+    }
+
+    private static String[] outsideTheLimit() {
+        return Arrays.stream(TalkStatus.values())
+                .filter(status -> !status.countsTowardLimit())
+                .map(Enum::name)
+                .toArray(String[]::new);
     }
 
     // old version, raced when the mobile app double-posted

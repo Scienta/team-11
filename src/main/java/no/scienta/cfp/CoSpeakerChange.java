@@ -45,4 +45,8 @@ public sealed interface CoSpeakerChange {
     /** The talk already has the most co-speakers it can have (R2). */
     record Full(int coSpeakers) implements Refusal {
     }
+
+    /** The speaker already has as many talks as the limit allows, as main speaker or co-speaker (submission-cap-cr R5). */
+    record SpeakerAtLimit(int talks) implements Refusal {
+    }
 }

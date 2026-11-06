@@ -43,13 +43,20 @@ public class CoSpeakerService {
                 .orElseGet(CoSpeakerChange.TalkNotFound::new);
     }
 
-    /** Adds the speaker last, unless they already are a co-speaker (R5) or the talk is full (R2). */
+    /**
+     * Adds the speaker last, unless they already are a co-speaker (R5), the talk is full (R2), or the speaker is at the
+     * limit of talks (submission-cap-cr R5). The speaker row is locked after the talk row, so a submission and this
+     * place for the same speaker take turns (submission-cap-cr R6).
+     */
     private CoSpeakerChange addTo(TalkDto talk, long speakerId) {
         if (talk.coSpeakerIds.contains(speakerId)) {
             return changed(talk);
         }
         if (talk.coSpeakerIds.size() >= MAX_CO_SPEAKERS) {
             return new CoSpeakerChange.Full(MAX_CO_SPEAKERS);
+        }
+        if (talkDao.lockSpeakerAndCountTalksTowardLimit(speakerId) >= ConferenceService.MAX_TALKS_PER_SPEAKER) {
+            return new CoSpeakerChange.SpeakerAtLimit(ConferenceService.MAX_TALKS_PER_SPEAKER);
         }
         coSpeakerDao.add(talk.id, speakerId);
         return changed(talk);

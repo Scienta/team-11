@@ -217,19 +217,19 @@ class CoSpeakersTest {
     }
 
     @Test
-    @DisplayName("R7: A speaker with 3 talks of their own can still co-speak")
-    void aSpeakerAtTheLimitCanStillCoSpeak() throws Exception {
+    @DisplayName("R7: Refuses a co-speaker who has 3 talks of their own")
+    void refusesACoSpeakerWith3TalksOfTheirOwn() throws Exception {
         for (int i = 0; i < 3; i++) {
             submit(speakers.get("Ada"));
         }
-        assertEquals(200, send("PUT", coSpeakerPath("Ada"), null).statusCode());
+        assertAnswer(409, "this speaker already has 3 talks", send("PUT", coSpeakerPath("Ada"), null));
     }
 
     @Test
-    @DisplayName("R7: Co-speaking does not count towards the limit of 3")
-    void coSpeakingDoesNotCountTowardsTheLimit() throws Exception {
+    @DisplayName("R7: Counts co-speaking towards the limit of 3")
+    void countsCoSpeakingTowardsTheLimit() throws Exception {
         add(List.of("Ada"));
-        for (int i = 0; i < 3; i++) {
+        for (int i = 0; i < 2; i++) {
             assertEquals(201, send("POST", "/talks", talkBody(speakers.get("Ada"))).statusCode());
         }
         assertEquals(409, send("POST", "/talks", talkBody(speakers.get("Ada"))).statusCode());

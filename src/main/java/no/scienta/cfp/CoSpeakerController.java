@@ -67,6 +67,10 @@ public class CoSpeakerController {
         if (change instanceof CoSpeakerChange.NotCoSpeaker) {
             return new ResponseStatusException(HttpStatus.NOT_FOUND, "this speaker is not a co-speaker of the talk");
         }
+        if (change instanceof CoSpeakerChange.SpeakerAtLimit atLimit) {
+            return new ResponseStatusException(HttpStatus.CONFLICT,
+                    "this speaker already has " + atLimit.talks() + " talks");
+        }
         if (change instanceof CoSpeakerChange.Full full) {
             return new ResponseStatusException(HttpStatus.CONFLICT,
                     "a talk has at most " + full.coSpeakers() + " co-speakers");

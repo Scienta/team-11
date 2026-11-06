@@ -27,6 +27,8 @@ public class ConferenceService {
 
     private static final Logger log = LoggerFactory.getLogger(ConferenceService.class);
 
+    /** The most talks a speaker can have, as main speaker or co-speaker (Talks R7, submission-cap-cr R1). */
+    public static final int MAX_TALKS_PER_SPEAKER = 3;
     private static final int MAX_BIO_CHARACTERS = 500;
     private static final int MAX_TITLE_CHARACTERS = 200;
 
@@ -143,7 +145,8 @@ public class ConferenceService {
 
         Long id = checkSubmissionLimit(form, duration);
         if (id == null) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "a speaker can submit at most 3 talks");
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "a speaker can submit at most " + MAX_TALKS_PER_SPEAKER + " talks");
         }
         Map<String, Object> speaker = speakerDao.findById(form.speakerId);
         notifications.talkSubmitted((String) speaker.get("email"), form.title);
@@ -154,7 +157,7 @@ public class ConferenceService {
      * Checks that the speaker is below the limit of 3 talks.
      */
     private Long checkSubmissionLimit(TalkForm form, int duration) {
-        return talkDao.insertIfBelow(3, form.title, form.format, duration, form.level, form.speakerId,
+        return talkDao.insertIfBelow(MAX_TALKS_PER_SPEAKER, form.title, form.format, duration, form.level, form.speakerId,
                 System.currentTimeMillis());
     }
 

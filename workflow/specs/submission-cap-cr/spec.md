@@ -39,7 +39,7 @@ new rule.
 | A freed place (R3) | Free at once, in the same request flow: a withdrawal, a rejection or a `DELETE` of the co-speaker, then a new submission or PUT gets 201 or 200. | The request says "straight away". The count reads the current rows; nothing is cached. |
 | Concurrency (R6) | `POST /talks` locks the speaker row (`FOR UPDATE`), counts and inserts in one transaction, as before. A co-speaker PUT locks the talk row, then the added speaker's row (`FOR UPDATE`), counts and inserts in one transaction. | Both requests for one speaker take turns on the speaker row. The lock order is always talk, then speaker, and `POST /talks` locks no existing talk, so no deadlock. A withdrawal or rejection only lowers a count, so it needs no speaker lock. |
 | A speaker's talk list (R8) | Unchanged: main-speaker talks only | Co-speakers R6. |
-| Adding a co-speaker to a `REJECTED` or `WITHDRAWN` talk | 409 `a withdrawn or rejected talk can't be changed`, as today (Co-speakers R9) | Open question 1. The limit does not count such a talk in any case. |
+| Adding a co-speaker to a `REJECTED` or `WITHDRAWN` talk | 409 `a withdrawn or rejected talk can't be changed`, as today (Co-speakers R9) | The product owner, Stein, 2026-11-06 15:36:33 (Slack #team-11, ts `1793975793.452099`): "It shall not be allowed to add co-authors [co-speakers] to talks that are rejected or withdrawn. This gives no value." So the request's "is fine" means only that the limit does not block it. The limit does not count such a talk in any case. |
 
 ## Examples
 
@@ -66,7 +66,7 @@ co-speaker.
 | 2 as main speaker, 1 as co-speaker | `SUBMITTED` | 409 |
 | 3, one of them as co-speaker on this talk | `SUBMITTED` (Ada again) | 200 |
 | 3 as main speaker, 1 of them `REJECTED` | `SUBMITTED` | 200 |
-| 3 as main speaker | `REJECTED` or `WITHDRAWN` | 409 (Co-speakers R9, open question 1) |
+| 3 as main speaker | `REJECTED` or `WITHDRAWN` | 409 (Co-speakers R9, the product owner's answer) |
 
 ### R3: a freed place
 
@@ -98,13 +98,15 @@ co-speaker.
 - Co-speakers R7 is replaced. Tests: `CoSpeakersTest` `aSpeakerAtTheLimitCanStillCoSpeak` and
   `coSpeakingDoesNotCountTowardsTheLimit` change to the opposite. Hurl: `examples/our-co-speakers.hurl`
   "a speaker with 3 talks of their own can still co-speak, and co-speaking doesn't count".
+- Scheduling: R6 setups that give a speaker 2 talks of their own and 2 co-speaker places now pass the
+  limit. `SchedulingTest` still passes (81 tests); the Hurl setup for R6 (Ada) needs another speaker.
+- Programme export (`b700b6e`, not on `origin/main` yet): `ProgrammeExportTest` (24) and
+  `ProgrammeCsvTest` (18) pass with this change on a trial merge. The Hurl setup for R4 (Grace: 3
+  talks of her own and 1 co-speaker place) needs another speaker.
 - Until this change is deployed, a harness check for this change request fails, and a talks or
   co-speakers check that expects the old rule may pass. After the deploy, the opposite.
 
 ## Open questions for the product owner
 
-1. The request says "Being added to a rejected or withdrawn talk is fine, since it doesn't count."
-   Co-speakers R9 (your answer earlier today) says that a withdrawn or rejected talk gets no new
-   co-speakers (409). Does the change request now allow it (200), or does R9 still hold and the
-   sentence only mean that the limit does not block it? Asked by The Hand in Slack #team-11. Until the
-   answer: R9 holds.
+- [x] Can a co-speaker be added to a rejected or withdrawn talk now? — No (Stein, 2026-11-06 15:36:33).
+  Co-speakers R9 holds. See "Our decisions".
