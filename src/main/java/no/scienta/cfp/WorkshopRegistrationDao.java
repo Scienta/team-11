@@ -14,6 +14,7 @@ import org.springframework.stereotype.Repository;
 @Repository
 public class WorkshopRegistrationDao {
 
+    private static final String SELECT_TALK = "SELECT format, status FROM talk WHERE id = ?";
     private static final RowMapper<WorkshopTalk> TALK =
             (rs, row) -> new WorkshopTalk(rs.getString("format"), TalkStatus.valueOf(rs.getString("status")));
     private static final RowMapper<Registration> REGISTRATION = (rs, row) -> new Registration(
@@ -30,11 +31,11 @@ public class WorkshopRegistrationDao {
      * none can see a seat that another has just taken (R5, R6). Must run inside a transaction.
      */
     public Optional<WorkshopTalk> lockTalk(long talkId) {
-        return jdbc.query("SELECT format, status FROM talk WHERE id = ? FOR UPDATE", TALK, talkId).stream().findFirst();
+        return jdbc.query(SELECT_TALK + " FOR UPDATE", TALK, talkId).stream().findFirst();
     }
 
     public Optional<WorkshopTalk> findTalk(long talkId) {
-        return jdbc.query("SELECT format, status FROM talk WHERE id = ?", TALK, talkId).stream().findFirst();
+        return jdbc.query(SELECT_TALK, TALK, talkId).stream().findFirst();
     }
 
     public int seatsTaken(long talkId) {
