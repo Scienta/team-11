@@ -21,7 +21,7 @@ public class WorkshopRegistrationService {
     public RegistrationOutcome register(long workshopId, RegistrationRequest request) {
         return dao.lockTalk(workshopId)
                 .map(talk -> registerIfTaken(talk, workshopId, request))
-                .orElseGet(RegistrationOutcome.NotAWorkshop::new);
+                .orElseGet(RegistrationOutcome.NoSuchTalk::new);
     }
 
     /**

@@ -110,12 +110,13 @@ public class WorkshopRegistrationTest {
     @DisplayName("R2: Takes registrations only for a workshop")
     @Description("""
             Each row submits and accepts one talk in the given format, which gets ID 1. Talk 2 does not
-            exist.
+            exist. A talk of another format refuses a registration like a closed workshop, but has no
+            list of attendees.
             """)
     @TableTest("""
         Scenario       | Format                                     | Talk ID | Register? | List?
         A workshop     | WORKSHOP                                   | 1       | 201       | 200
-        Another format | {LIGHTNING_10, LIGHTNING_20, PRESENTATION} | 1       | 404       | 404
+        Another format | {LIGHTNING_10, LIGHTNING_20, PRESENTATION} | 1       | 409       | 404
         No such talk   | WORKSHOP                                   | 2       | 404       | 404
         """)
     void takesRegistrationsOnlyForAWorkshop(String format, long talkId, int register, int list) throws Exception {

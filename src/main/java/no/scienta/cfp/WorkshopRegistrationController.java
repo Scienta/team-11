@@ -68,8 +68,11 @@ public class WorkshopRegistrationController {
     }
 
     private static ResponseStatusException refusal(RegistrationOutcome.Refusal outcome) {
-        if (outcome instanceof RegistrationOutcome.NotAWorkshop) {
+        if (outcome instanceof RegistrationOutcome.NoSuchTalk) {
             return notAWorkshop();
+        }
+        if (outcome instanceof RegistrationOutcome.NotAWorkshop) {
+            return new ResponseStatusException(HttpStatus.CONFLICT, "only a workshop takes registrations");
         }
         if (outcome instanceof RegistrationOutcome.Closed closed) {
             return new ResponseStatusException(HttpStatus.CONFLICT,

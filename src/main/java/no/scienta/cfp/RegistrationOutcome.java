@@ -14,7 +14,11 @@ public sealed interface RegistrationOutcome {
     sealed interface Refusal extends RegistrationOutcome {
     }
 
-    /** No talk with this ID is a workshop (R2). */
+    /** No talk has this ID. */
+    record NoSuchTalk() implements Refusal {
+    }
+
+    /** The talk exists but is not a workshop, so it takes no registrations (R2). */
     record NotAWorkshop() implements Refusal {
     }
 
