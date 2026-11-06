@@ -33,6 +33,7 @@ Kristian's team. Co-speakers is reviewed by Carl Kristian's team.
 | ID | Severity | Finding | Where | Decision | Fix | Exploit re-run |
 |----|----------|---------|-------|----------|-----|----------------|
 | S1 | High | Anybody can change any speaker with `PUT /speakers/{id}`. It is in no spec. | `SpeakerController.java:41` | `c4c6205` | CLOSED on `b7f1b79` |
+| S14 | Low | `/programme.csv` writes titles and speaker names without the formula guard, so a title such as `=HYPERLINK(…)` can run as a formula in a spreadsheet. | Programme export (spec `workflow/specs/programme-export/spec.md`) | Accepted (The Hand, 2026-11-06): the request says fields are "otherwise written as they are", the harness may check exact bytes, and the file goes to the print shop, not to a spreadsheet. `/admin/talks.csv` keeps its guard (S6). Still required (C7): RFC 4180 quoting for a comma, a quote, CR or LF in any field, so that no value starts a new row. | none | accepted; quoting is checked in the code review |
 | S2 | Medium | A NUL character in a text field gives 500, and the answer shows the SQL. | `application.properties:14` | `6e37faf` | CLOSED on `b7f1b79`: 400, no SQL |
 | S2b | Low | 400 answers name Java classes. | `application.properties:14` |  | OPEN on `b7f1b79` |
 | S3 | Medium | No limit on the body size. A 120 MB body gives `OutOfMemoryError` at a 256 MB heap. | `RequestLogFilter.java:32` | `9157ed4`, `84a7fab` | CLOSED on `62eec68`: 413 above 1 MB, also chunked; no OOM with 80 parallel bodies of 1 MB |
@@ -66,3 +67,4 @@ Kristian's team. Co-speakers is reviewed by Carl Kristian's team.
 | 2026-11-06 | `b8b5077` (S5b) | S5b CLOSED. S11t: the token mask takes under 0.01 s on 600 KB of quotes and a 900 KB token. S5c (low) found. The exploit script is in `workflow/security/exploits.sh`. |
 | 2026-11-06 | `f0f237e`, `9fa3cc4`, `e8ff81d` | No blocker. S5 and S5b stay CLOSED. S5c CLOSED. Only S2b (low) OPEN. |
 | 2026-11-06 | `a242630`, `a697884`, `54f8f40` (push candidate `3393575`) | No blocker. 409 for an accepted talk that is not a workshop, no row saved; 404 for an unknown talk. Only S2b (low) OPEN. |
+| 2026-11-06 | programme export (spec) | S14 accepted: no formula guard in `/programme.csv`. RFC 4180 quoting stays required. |
