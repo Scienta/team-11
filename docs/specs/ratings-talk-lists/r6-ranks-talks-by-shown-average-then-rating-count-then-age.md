@@ -9,6 +9,6 @@ GET /talks?sort=rating.
 | --- | --- | --- | --- | --- | --- |
 | ✅ passes | Different averages | [3] | [5] | [4] | [B, C, A] |
 | ✅ passes | Same average, different counts | [4] | [4, 4] | [4, 4, 4] | [C, B, A] |
-| ✅ passes | Same average only after rounding | [4, 4, 4, 5] | [4, 4, 5] | [5] | [C, A, B] |
+| ✅ passes | Averages differ at 2 decimals | [4, 4, 4, 5] | [4, 4, 5] | [5] | [C, B, A] |
 | ✅ passes | Same average and count | [4] | [4] | [4] | [A, B, C] |
 | ✅ passes | Unrated talks | [] | [1] | [] | [B, A, C] |

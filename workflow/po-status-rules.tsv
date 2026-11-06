@@ -15,7 +15,11 @@ talks/r5-accepts-only-the-three-levels-in-capitals	Et foredrag har ett av de tre
 ratings/r1-accepts-a-reviewer-from-1-to-9223372036854775807	Hver vurderer har et nummer. Vi tar bare imot gyldige numre.
 ratings/r2-accepts-only-a-whole-number-from-1-to-5-as-score	Karakteren er et helt tall fra 1 til 5.
 ratings/r3-keeps-one-rating-per-reviewer-the-latest-score	Hver vurderer har én karakter per foredrag. Den siste karakteren gjelder.
-ratings/r4-shows-the-average-score-with-one-decimal-halves-up	Snittet vises med én desimal. En halv rundes opp.
+ratings/r4-shows-the-average-score-with-two-decimals-ratings-cr-r3	Snittet vises med to desimaler.
+ratings-change-request/r1-r2-r4-r6-leaves-out-one-highest-and-one-lowest-score-from-5-ratings	Med 5 karakterer eller flere teller ikke den høyeste og den laveste, bare én av hver. Antallet teller alle.
+ratings-change-request/r3-rounds-the-exact-average-to-2-decimals-ties-to-even	Snittet rundes av til to desimaler. Står det midt mellom, går det til det partallet som er nærmest (3,125 blir 3,12 og 3,375 blir 3,38).
+ratings-change-request/r1-r2-counts-a-reviewer-who-rates-again-once-with-the-latest-score	En vurderer som gir ny karakter, teller én gang, med den siste karakteren.
+ratings-change-request/r5-ranks-talks-by-the-rounded-average	Rangeringen går etter det avrundede snittet med to desimaler.
 ratings-talk-lists/r5-lists-all-talks-oldest-first-or-the-talks-of-one-speaker	Listen viser alle foredrag med det eldste først, eller bare foredragene til én foredragsholder.
 ratings-talk-lists/r6-ranks-talks-by-shown-average-then-rating-count-then-age	Rangeringen går etter snittet, så etter antall karakterer, så etter hvor gammelt foredraget er.
 ratings-talk-lists/ranks-talks-only-for-the-sort-order-rating	Listen er bare rangert når man ber om det. Ellers kommer det eldste foredraget først.
