@@ -37,7 +37,7 @@ by its subject with `git log --grep`.
 | A4 | `TalkDto.status` is a `String`, and the code compares enum names (P4). | Replace Type Code with Enum | done, `a030b26` (also in `CoSpeakerService`) |
 | A5 | `TalkStatus` has a `switch` and `this ==` checks (P1). | Replace Conditional with enum constructor fields | done, `5fba392` |
 | A6 | The R7 rule and `'SUBMITTED'` are SQL literals in `TalkDao` (P1). | Move Method `TalkStatus.countsTowardLimit()`, bound parameters | done, `aa01d71` |
-| A7 | Two `listTalks` overloads with a flag argument. | Replace Flag Argument with `TalkListQuery`; Extract Class `TalkListing` (D1, P8) | open: waited for the co-speakers merge, which is now in |
+| A7 | Two `listTalks` overloads with a flag argument. | Replace Flag Argument with `TalkListQuery`; Extract Class `TalkListing` (D1, P8) | done: `0380244`, `3df81ef`, `6bef5fa` (Frode; not on `origin/main` yet) |
 | A8 | `refusal()` reads the talk again to find the reason. | Goes away with A1 | done, `4d03267` |
 | A9 | Nested `Stream.of` and `flatMap` build the SQL arguments. | Extract Method | done, `2039ed6` |
 
@@ -63,8 +63,8 @@ No blocker. The 7 acceptance refactors change no status code. In a race, the 409
 | # | Finding | Refactoring | When | Status |
 |---|---------|-------------|------|--------|
 | G1 | `WorkshopTalk.status` is a `String`, but `TalkDto.status` is a `TalkStatus` (P4). The rule "takes registrations" is outside `TalkStatus` (P1). | Replace Type Code with Enum; Move Field into `TalkStatus` | tidy after | done: W1 `898c422`, W2 `334c8cc` |
-| G2 | `CoSpeakerService.UNCHANGEABLE_STATUSES` is a status rule outside `TalkStatus` (P1). | Move Field into `TalkStatus` | tidy after | Co-speakers code of Carl Kristian's team: the coordinator offers it in Slack. |
-| G3 | `CoSpeakerService` throws `ResponseStatusException` (404, 409): HTTP in a service (P2). | Replace Exception with Sealed Result | tidy after | Same as G2. |
+| G2 | `CoSpeakerService.UNCHANGEABLE_STATUSES` is a status rule outside `TalkStatus` (P1). | Move Field into `TalkStatus` | tidy after | done in PR #9, `4beca2a` (`TalkStatus.isOpenForCoSpeakerChanges`) |
+| G3 | `CoSpeakerService` throws `ResponseStatusException` (404, 409): HTTP in a service (P2). | Replace Exception with Sealed Result | tidy after | done in PR #9, `326a196` (sealed `CoSpeakerChange`) |
 | G4 | `TalkStatusDao.moveArguments` and `TalkDao.insertIfBelow` both build an `IN (?, ?, …)` list and its arguments. | Extract Method into one helper, or bind one array with `status <> ALL(?)` | tidy after | done, `95de0b5`: `status = ANY(?)` and `<> ALL(?)` with one `String[]` |
 | G5 | Three DAOs lock or read the talk row with their own SQL: `TalkStatusDao.lockStatus`, `TalkDao.findByIdForUpdate`, `WorkshopRegistrationDao.lockTalk`. | Consolidate into `TalkDao`: one locked read for each lock mode | tidy after | done, `753a7a2`: `TalkDao.lock(id, Lock.SHARE \| Lock.UPDATE)` |
 | G6 | `WorkshopRegistrationService.register` nests three `Optional` lambdas: more than one level of abstraction. | Extract Method `registerIn(talk, request)` | tidy after | done with W5, `0322902` |
@@ -112,7 +112,7 @@ No blocker in any of them.
 | G10 | `ProgrammeService.takeOut` returns a `boolean` (P2). | Replace the boolean with a sealed `TakeOutOutcome` | tidy after | done, `7791c00` |
 | G11 | `scheduleIfAllowed` hides the insert in a `\|\|` inside a ternary. | Extract Method `addUnlessThere` | tidy after | done, `a223c14` |
 | G12 | The literal `"WORKSHOP"` is in `Slot.fits`, `WorkshopTalk.isWorkshop` and `ConferenceService.DURATIONS`. | Replace Type Code with Enum: a `TalkFormat` with the duration and the long-slot rule | tidy after | open |
-| G13 | The `TalkStatus` constructor takes 6 positional parameters, 4 of them booleans. | Introduce Parameter Object, or a set of capabilities for each status | tidy after | open |
+| G13 | The `TalkStatus` constructor takes 6 positional parameters, 4 of them booleans. | Introduce Parameter Object, or a set of capabilities for each status | tidy after | open, worse after PR #9: 7 parameters, 5 of them booleans. Fix it before the next rule field. |
 | G14 | The controller builds `new CancellationToken(token)` from any string (P3). | Introduce Factory Method `CancellationToken.parse(body)` | tidy after | done, `f0f237e` |
 | G15 | `registerIfTaken` makes and hashes a token also for a refused request. | Move Statements into the branch that saves | tidy after | done, `9fa3cc4` |
 | G16 | `RequestBodyLimitFilter.ReadBodyRequest.getReader` calls `Charset.forName` on the client's charset: 500, not 400, for an unknown charset. No endpoint reads `getReader` today. | Catch the unknown charset and answer 400 | tidy after | open |
@@ -124,9 +124,62 @@ For the Spring Boot 4 merge (PR #5), add to the 7 merge fixes above:
 9. The `UrlHandlerFilter` bean has no `@Order`, so its order against `RequestBodyLimitFilter` (both at
    `LOWEST_PRECEDENCE`) is not defined. Give it an explicit, higher precedence.
 
+### 2026-11-06: co-speakers PR #9 at `7560729` (guardian)
+
+OK to merge. A scratch merge onto our `3393575` conflicted only in `schema.sql` (keep both blocks)
+and the generated `docs/status.md`. The full suite was green on Java 17: 545 tests, 0 failures.
+
+- Closes G2 (`4beca2a`) and G3 (`326a196`). R12 reads `actingSpeakerId` at the controller edge.
+- R11 adds cascading foreign keys to `talk_co_speaker` (`d9e5864`), against D20. A person accepted
+  R11, and D20 in `workflow/tech-debt-plan.md` now names the exception.
+
+| # | Finding | Refactoring | When | Status |
+|---|---------|-------------|------|--------|
+| G18 | `CoSpeakerService.refusal` returns `Optional<CoSpeakerChange>`, so it can return `Changed`. The same as W3. | Change Signature to `Optional<CoSpeakerChange.Refusal>` | tidy after | open |
+
+### 2026-11-06: A7, the talk list out of `ConferenceService` (guardian)
+
+No blocker. `0380244` (Introduce Parameter Object `TalkListQuery`), `3df81ef` (Extract Class
+`TalkRatings`), `6bef5fa` (Extract Class `TalkListing`). `ConferenceService` has 252 lines (D1).
+Frode showed byte-equal answers for 16 requests.
+
+| # | Finding | Refactoring | When | Status |
+|---|---------|-------------|------|--------|
+| G19 | `TalkListing`, a service, throws a 400 `ResponseStatusException` for an unknown sort, and `TalkListQuery.sort` is a `String` (P2, P3). | Replace Type Code with Enum `TalkOrder`, parsed by `TalkListQuery.parse` in the controller | tidy after | open |
+| G20 | The ranking in `TalkListing.orderedTalks` is a `for` loop with a hand-written comparator. | Replace Loop with Pipeline: `partitioningBy` and `Comparator.comparing(…).thenComparing(…)` | tidy after | open |
+| G21 | `TalkRatings.addTo` changes each `TalkDto`. | Make `TalkDto` a record (P5) | later | open |
+
+### 2026-11-06: programme export `b700b6e` (guardian)
+
+No blocker. `Programme` and `ProgrammeCsv` are pure; one read-only query. `Utils.csv` and
+`ProgrammeCsv` are two CSV writers on purpose: different readers, different rules.
+
+| # | Finding | Refactoring | When | Status |
+|---|---------|-------------|------|--------|
+| G22 | `Programme` orders the rows by the declaration order of `Slot`. Only a JavaDoc line guards that order. | Compare by the slot's start time | tidy after | open |
+| G23 | `ProgrammeRow.format` is a `String`. | Part of G12 (`TalkFormat`) | tidy after | open |
+
+### 2026-11-06: hotfixes for harness checks (guardian)
+
+No blocker in any of them. Each one first split a result that meant two things.
+
+- `a242630` workshop POST: `RegistrationOutcome` splits `NoSuchTalk` (404) from `NotAWorkshop` (409).
+- `dc1a353` workshop GET: `AttendeesOutcome` splits `NoSuchTalk` (404) from `NotAWorkshop` (200 `[]`).
+  Open, small: spec row 59 (DELETE on a non-workshop) still gives "Same as GET" as its reason.
+- `05ac2c5` scheduling: an unknown room or slot gives 404 on PUT, GET and DELETE. A missing or
+  malformed body on PUT still gets Spring's 400 first, as the spec says.
+
+Lesson: before a status change, check that the result type does not hold two cases with different
+answers.
+
+### 2026-11-06: report workflow `0239da4` (guardian)
+
+No blocker. A push still deploys once from `deploy.yml`; only the `publish` job in `report.yml` has
+`pages: write` and `id-token: write`. Merge fix 10 for Spring Boot 4: `report.yml` also needs Java 25.
+
 ## Watch list
 
-- Spring Boot 4 (PR #5): after the merge, check that the 9 merge fixes above are in, the JIT flag
+- Spring Boot 4 (PR #5): after the merge, check that the 10 merge fixes above are in, the JIT flag
   first of all.
 - Merges from Carl Kristian's laptop: check only the fit with P1–P8 and what our features rely on.
   Do not repeat his team's feature review.
