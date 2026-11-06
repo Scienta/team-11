@@ -30,14 +30,16 @@ public class CoSpeakerService {
     @Transactional
     public CoSpeakerChange add(long talkId, long speakerId, Optional<Long> actingSpeakerId) {
         return lockedTalk(talkId)
-                .map(talk -> refusal(talk, speakerId, actingSpeakerId).orElseGet(() -> addTo(talk, speakerId)))
+                .map(talk -> refusal(talk, speakerId, actingSpeakerId, new CoSpeakerChange.MainSpeakerAsCoSpeaker())
+                        .orElseGet(() -> addTo(talk, speakerId)))
                 .orElseGet(CoSpeakerChange.TalkNotFound::new);
     }
 
     @Transactional
     public CoSpeakerChange remove(long talkId, long speakerId, Optional<Long> actingSpeakerId) {
         return lockedTalk(talkId)
-                .map(talk -> refusal(talk, speakerId, actingSpeakerId).orElseGet(() -> removeFrom(talk, speakerId)))
+                .map(talk -> refusal(talk, speakerId, actingSpeakerId, new CoSpeakerChange.MainSpeaker())
+                        .orElseGet(() -> removeFrom(talk, speakerId)))
                 .orElseGet(CoSpeakerChange.TalkNotFound::new);
     }
 
@@ -53,16 +55,22 @@ public class CoSpeakerService {
         return changed(talk);
     }
 
+    /** Removes the speaker, unless they are not a co-speaker of the talk, or no longer are one. */
     private CoSpeakerChange removeFrom(TalkDto talk, long speakerId) {
+        if (!talk.coSpeakerIds.contains(speakerId)) {
+            return new CoSpeakerChange.NotCoSpeaker();
+        }
         coSpeakerDao.remove(talk.id, speakerId);
         return changed(talk);
     }
 
     /**
      * The refusals that adding and removing share, in the order they are checked. Who acts is checked only when the
-     * request says (R12).
+     * request says (R12). The main speaker as the target gets the refusal of the request: R3 for adding, R8 for
+     * removing.
      */
-    private Optional<CoSpeakerChange> refusal(TalkDto talk, long speakerId, Optional<Long> actingSpeakerId) {
+    private Optional<CoSpeakerChange> refusal(TalkDto talk, long speakerId, Optional<Long> actingSpeakerId,
+                                              CoSpeakerChange.Refusal mainSpeakerRefusal) {
         if (actingSpeakerId.filter(acting -> !acting.equals(talk.speakerId)).isPresent()) {
             return Optional.of(new CoSpeakerChange.NotMainSpeaker());
         }
@@ -73,7 +81,7 @@ public class CoSpeakerService {
             return Optional.of(new CoSpeakerChange.Closed());
         }
         if (talk.speakerId == speakerId) {
-            return Optional.of(new CoSpeakerChange.MainSpeaker());
+            return Optional.of(mainSpeakerRefusal);
         }
         return Optional.empty();
     }

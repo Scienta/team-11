@@ -67,9 +67,9 @@ jsonpath "$.coSpeakerIds" count == 2
 PUT {{base_url}}/talks/{{talk}}/co-speakers/{{cy}}
 HTTP 409
 
-# R3: the main speaker
+# R3: the main speaker, a request the rules never allow (400 since tick 171, co-speakers/check-2)
 PUT {{base_url}}/talks/{{talk}}/co-speakers/{{main}}
-HTTP 409
+HTTP 400
 
 # An unregistered speaker
 PUT {{base_url}}/talks/{{talk}}/co-speakers/2147483647
@@ -151,8 +151,11 @@ HTTP 404
 DELETE {{base_url}}/talks/{{talk}}/co-speakers/abc
 HTTP 400
 
-# R8: removing a registered speaker who is not a co-speaker changes nothing
+# R8: removing a registered speaker who is not a co-speaker: 404 since tick 171 (co-speakers/check-1)
 DELETE {{base_url}}/talks/{{talk}}/co-speakers/{{cy}}
+HTTP 404
+
+GET {{base_url}}/talks/{{talk}}
 HTTP 200
 [Asserts]
 jsonpath "$.coSpeakerIds" count == 2
