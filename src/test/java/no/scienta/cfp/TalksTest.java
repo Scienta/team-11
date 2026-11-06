@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -103,6 +104,97 @@ class TalksTest {
         """)
     void acceptsATalkOnlyWithARealTitle(String title, int status) throws Exception {
         assertEquals(status, submit(title, "PRESENTATION", "BEGINNER").statusCode());
+    }
+
+    @DisplayName("R3, R5: Refuses an incomplete talk with the reason")
+    @Description("""
+            The reason is the message field of the error body. Speaker "registered" is a newly
+            registered speaker; an empty Speaker cell leaves speakerId out.
+            """)
+    @TableTest("""
+        Scenario        | Title  | Format       | Level    | Speaker    | Status? | Message?
+        No title        |        | PRESENTATION | BEGINNER | registered | 400     | title is required
+        Unknown format  | Legacy | KEYNOTE      | BEGINNER | registered | 400     | 'format must be one of [WORKSHOP, PRESENTATION, LIGHTNING_20, LIGHTNING_10]'
+        No format       | Legacy |              | BEGINNER | registered | 400     | 'format must be one of [WORKSHOP, PRESENTATION, LIGHTNING_20, LIGHTNING_10]'
+        Unknown level   | Legacy | PRESENTATION | EXPERT   | registered | 400     | unknown level
+        No speaker      | Legacy | PRESENTATION | BEGINNER |            | 400     | speakerId is required
+        Unknown speaker | Legacy | PRESENTATION | BEGINNER | 999999     | 400     | speaker 999999 does not exist
+        """)
+    void refusesAnIncompleteTalkWithTheReason(String title, String format, String level, String speaker, int status,
+                                              String message) throws Exception {
+        String talk = JSON.writeValueAsString(JSON.createObjectNode()
+                .put("title", title).put("format", format).put("level", level).put("speakerId", speakerIdFor(speaker)));
+        HttpResponse<String> res = api.send("POST", "/talks", talk);
+        assertEquals(status, res.statusCode(), res.body());
+        assertEquals(message, JSON.readTree(res.body()).get("message").asText());
+    }
+
+    @Test
+    void returnsTheSubmittedTalkWithItsFieldsInOrderAndReadsItBack() throws Exception {
+        String speaker = newSpeaker();
+        HttpResponse<String> created = api.send("POST", "/talks", "{\"title\":\"Characterise first\",\"format\":\"WORKSHOP\","
+                + "\"level\":\"BEGINNER\",\"speakerId\":" + speaker + "}");
+        assertEquals(201, created.statusCode(), created.body());
+        JsonNode talk = JSON.readTree(created.body());
+        assertEquals(List.of("id", "title", "format", "level", "speakerId", "durationMinutes", "status", "submittedAt",
+                "submittedOn", "averageRating", "ratingCount", "coSpeakerIds"), fieldNames(talk));
+        assertEquals("Characterise first", talk.get("title").asText());
+        assertEquals(speaker, talk.get("speakerId").asText());
+        assertEquals(120, talk.get("durationMinutes").asInt());
+        assertEquals("SUBMITTED", talk.get("status").asText());
+        String submittedAt = talk.get("submittedAt").asText();
+        assertTrue(submittedAt.matches("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}\\+00:00"), submittedAt);
+        assertEquals(submittedAt.substring(0, 10), talk.get("submittedOn").asText());
+        assertTrue(talk.get("averageRating").isNull(), created.body());
+        assertEquals(0, talk.get("ratingCount").asInt());
+
+        assertEquals(created.body(), api.get("/talks/" + talk.get("id").asText()).body());
+    }
+
+    @Test
+    void ignoresADurationChosenByTheClient() throws Exception {
+        HttpResponse<String> res = api.send("POST", "/talks", "{\"title\":\"Ten minutes\",\"format\":\"LIGHTNING_10\","
+                + "\"level\":\"ADVANCED\",\"speakerId\":" + newSpeaker() + ",\"durationMinutes\":90,\"room\":\"A\"}");
+        assertEquals(201, res.statusCode(), res.body());
+        assertEquals(10, JSON.readTree(res.body()).get("durationMinutes").asInt());
+    }
+
+    @Test
+    void refusesAFourthTalkWithTheReason() throws Exception {
+        String speaker = newSpeaker();
+        String talk = "{\"title\":\"Talk\",\"format\":\"PRESENTATION\",\"level\":\"BEGINNER\",\"speakerId\":" + speaker + "}";
+        for (int i = 0; i < 3; i++) {
+            assertEquals(201, api.send("POST", "/talks", talk).statusCode());
+        }
+        HttpResponse<String> fourth = api.send("POST", "/talks", talk);
+        assertEquals(409, fourth.statusCode(), fourth.body());
+        assertEquals("a speaker can submit at most 3 talks", JSON.readTree(fourth.body()).get("message").asText());
+    }
+
+    @DisplayName("R2, R8: Answers 404 for a talk or speaker that does not exist")
+    @TableTest("""
+        Scenario                    | Path                   | Status? | Message?
+        Unknown talk                | /talks/999999          | 404     | talk not found
+        Talks of an unknown speaker | /speakers/999999/talks | 404     | speaker not found
+        """)
+    void answersNotFoundForAnUnknownTalkOrSpeaker(String path, int status, String message) throws Exception {
+        HttpResponse<String> res = api.get(path);
+        assertEquals(status, res.statusCode(), res.body());
+        assertEquals(message, JSON.readTree(res.body()).get("message").asText());
+    }
+
+    /** A newly registered speaker for "registered", none for an empty cell, else the ID as written. */
+    private Long speakerIdFor(String speaker) throws Exception {
+        if (speaker == null) {
+            return null;
+        }
+        return Long.valueOf("registered".equals(speaker) ? newSpeaker() : speaker);
+    }
+
+    private static List<String> fieldNames(JsonNode node) {
+        List<String> names = new ArrayList<>();
+        node.fieldNames().forEachRemaining(names::add);
+        return names;
     }
 
     /** Submits one talk for a newly registered speaker. */
