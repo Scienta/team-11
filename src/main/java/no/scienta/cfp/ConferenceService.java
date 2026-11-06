@@ -91,23 +91,6 @@ public class ConferenceService {
         return speaker;
     }
 
-    @Transactional
-    public Map<String, Object> updateSpeaker(long id, String name, String email, String bio) {
-        Map<String, Object> existing = getSpeaker(id);
-        if (name == null || name.equals("")) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "name is required");
-        }
-        if (!Utils.isValidEmail(email)) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "invalid email");
-        }
-        requireBioWithinLimit(bio);
-        if (!email.equalsIgnoreCase((String) existing.get("email")) && speakerDao.emailTaken(email)) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "email already registered");
-        }
-        speakerDao.update(id, name, email, bio);
-        return getSpeaker(id);
-    }
-
     /** A character is one Unicode code point, so an emoji counts once. */
     private static void requireBioWithinLimit(String bio) {
         if (bio != null && bio.codePointCount(0, bio.length()) > MAX_BIO_CHARACTERS) {

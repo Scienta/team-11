@@ -4,7 +4,7 @@
 speakers/r3-registers-a-speaker-only-with-a-name	En foredragsholder må ha et navn.
 speakers/r3-registers-a-speaker-only-with-a-real-email-address	En foredragsholder må ha en gyldig e-postadresse.
 speakers/r4-limits-the-bio-to-500-characters	Beskrivelsen av en foredragsholder kan ha høyst 500 tegn.
-speakers/r4-applies-the-bio-limit-when-an-admin-updates-a-speaker	Grensen på 500 tegn gjelder også når en administrator endrer beskrivelsen.
+speakers/refuses-to-change-a-registered-speaker	Ingen kan endre en foredragsholder etter registreringen.
 speakers/r5-refuses-a-second-speaker-with-the-same-email	To foredragsholdere kan ikke ha samme e-postadresse.
 speakers/r7-treats-a-trailing-slash-like-the-path-without-it	En nettadresse med skråstrek til slutt virker som uten.
 speakers/finds-a-registered-speaker-by-id	Vi finner en registrert foredragsholder igjen.

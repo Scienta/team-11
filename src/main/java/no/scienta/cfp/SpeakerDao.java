@@ -39,10 +39,6 @@ public class SpeakerDao {
                 Long.class, name, email, bio, Utils.today());
     }
 
-    public int update(long id, String name, String email, String bio) {
-        return jdbc.update("UPDATE speaker SET name = ?, email = ?, bio = ? WHERE id = ?", name, email, bio, id);
-    }
-
     public int count() {
         return jdbc.queryForObject("SELECT COUNT(*) FROM speaker", Integer.class);
     }
