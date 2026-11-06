@@ -15,9 +15,6 @@ public class SpeakerForm {
 
     private String bio;
 
-    // TODO twitter handle, see CFP-112
-    // private String twitter;
-
     public String getName() {
         return name;
     }

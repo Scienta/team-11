@@ -7,7 +7,7 @@ package no.scienta.cfp;
 public sealed interface CoSpeakerChange {
 
     /** The talk's co-speakers are as asked (R1, R5, R8). The talk is as the API shows it, ratings included. */
-    record Changed(TalkDto talk) implements CoSpeakerChange {
+    record Changed(TalkResponse talk) implements CoSpeakerChange {
     }
 
     /** Every outcome in which the co-speakers did not change. */

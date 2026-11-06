@@ -2,8 +2,8 @@ package no.scienta.cfp;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import java.time.Instant;
 import java.time.OffsetDateTime;
-import java.util.Date;
 
 import org.junit.jupiter.api.DisplayName;
 import org.tabletest.junit.Description;
@@ -33,12 +33,12 @@ public class RatedAtDisplayTest {
         Seconds in the time             | 2026-11-04T13:05:59Z      | 11/4/26, 1:05 PM
         Time given in another time zone | 2026-11-04T23:30:00-02:00 | 11/5/26, 1:30 AM
         """)
-    void showsTheRatingTimeInUtc(Date ratedAt, String shown) {
-        assertEquals(shown, Utils.usShort(ratedAt));
+    void showsTheRatingTimeInUtc(Instant ratedAt, String shown) {
+        assertEquals(shown, DisplayFormats.usShort(ratedAt));
     }
 
     @TypeConverter
-    public static Date parseInstant(String isoDateTime) {
-        return Date.from(OffsetDateTime.parse(isoDateTime).toInstant());
+    public static Instant parseInstant(String isoDateTime) {
+        return OffsetDateTime.parse(isoDateTime).toInstant();
     }
 }

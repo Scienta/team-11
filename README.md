@@ -101,46 +101,61 @@ has the showcase brief. Your workflow artifacts go in `workflow/` and `.claude/`
 
 # CFP backend
 
-Backend for the conference call for papers. Speakers register and submit talks, the programme
-committee votes on them.
+Backend for the conference call for papers. Speakers register and submit talks, reviewers rate them, and the
+programme committee decides on them.
 
 ## Requirements
 
-- Java 8
-- Maven 3.5+
+- Java 17 (the build compiles for release 17)
+- Docker, for the local Postgres and for the tests (Testcontainers)
+
+The Maven wrapper (`./mvnw`) brings its own Maven.
 
 ## Running
 
 ```
-mvn spring-boot:run
+docker compose up -d
+./mvnw package
+java -jar target/cfp.jar
 ```
 
-The service starts on http://localhost:8081. It needs the local Postgres from `docker-compose.yml`
-(`docker-compose up -d`); the schema is created on start-up.
+The service starts on http://localhost:8080. It needs the local Postgres from `docker-compose.yml`; the schema is
+created on start-up from `src/main/resources/schema.sql`.
 
 ## API
+
+The specs in `workflow/specs/<feature>/` are the source of truth. In short:
 
 | Method | Path | Description |
 |---|---|---|
 | POST | `/speakers` | Register a speaker |
 | GET | `/speakers/{id}` | Get a speaker |
-| POST | `/talks` | Submit a talk (max 5 per speaker) |
+| GET | `/speakers/{id}/talks` | A speaker's talks, oldest first |
+| POST | `/talks` | Submit a talk (max 3 per speaker) |
 | GET | `/talks/{id}` | Get a talk |
-| POST | `/talks/{id}/votes` | Vote for a talk (1-3 stars) |
-| GET | `/talks/top` | Top 10 talks by votes |
+| GET | `/talks` | All talks, oldest first; `?speakerId=` for one speaker, `?sort=rating` for the ranking |
+| PUT | `/talks/{id}/ratings/{reviewerId}` | Rate a talk from 1 to 5 |
+| PUT | `/talks/{id}/status` | The committee accepts, rejects or waitlists a talk |
+| POST | `/talks/{id}/withdraw` | The main speaker withdraws a talk |
+| PUT, DELETE | `/talks/{id}/co-speakers/{speakerId}` | Add or remove a co-speaker; `?actingSpeakerId=` must be the main speaker when sent |
+| POST, GET | `/workshops/{id}/registrations` | Register for an accepted workshop (max 20), or list its attendees |
+| DELETE | `/workshops/{id}/registrations/{registrationId}` | Unregister with the registration's cancellation token |
+| PUT, GET, DELETE | `/programme/{room}/{slot}` | Put an accepted talk on the programme, look it up, take it out |
+| GET | `/admin/stats`, `/admin/talks.csv` | Statistics and a CSV export for the committee (not in a spec) |
+| GET | `/health` | 200 with the deployed version while the database answers |
 
-Formats: `LIGHTNING`, `PRESENTATION`, `WORKSHOP`, `KEYNOTE`.
+Formats: `LIGHTNING_10`, `LIGHTNING_20`, `PRESENTATION`, `WORKSHOP`. Levels: `BEGINNER`, `INTERMEDIATE`, `ADVANCED`.
 
 ## Tests
 
 ```
-mvn test
+./mvnw package
+examples/run.sh [base-url]
 ```
+
+`./mvnw package` runs the JUnit tests (Docker must be running). `examples/run.sh` runs the Hurl examples against a
+running service (default `http://localhost:8080`).
 
 ## Deploy
 
-Push to `master`, Jenkins builds and deploys to the test server. Ask Kjetil for access.
-
-## Contact
-
-cfp-team@example.com
+A push to `main` runs the tests and, when they pass, deploys (`.github/workflows/deploy.yml`).

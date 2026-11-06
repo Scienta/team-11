@@ -12,11 +12,11 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class AcceptanceService {
 
-    private final ConferenceService conference;
+    private final TalkService conference;
     private final TalkDao talkDao;
     private final TalkStatusDao statusDao;
 
-    public AcceptanceService(ConferenceService conference, TalkDao talkDao, TalkStatusDao statusDao) {
+    public AcceptanceService(TalkService conference, TalkDao talkDao, TalkStatusDao statusDao) {
         this.conference = conference;
         this.talkDao = talkDao;
         this.statusDao = statusDao;
@@ -36,8 +36,8 @@ public class AcceptanceService {
                 .orElseGet(StatusChange.NotFound::new);
     }
 
-    private StatusChange withdrawFor(TalkDto talk, long speakerId) {
-        return talk.speakerId == speakerId ? moveTo(talk, TalkStatus.WITHDRAWN) : new StatusChange.NotMainSpeaker();
+    private StatusChange withdrawFor(Talk talk, long speakerId) {
+        return talk.speakerId() == speakerId ? moveTo(talk, TalkStatus.WITHDRAWN) : new StatusChange.NotMainSpeaker();
     }
 
     /**
@@ -45,16 +45,16 @@ public class AcceptanceService {
      * read; if another request changed the talk in between, the reason can be out of date, but the talk is not
      * changed either way.
      */
-    private StatusChange moveTo(TalkDto talk, TalkStatus next) {
-        if (statusDao.moveTo(talk.id, next)) {
-            return new StatusChange.Moved(conference.getTalk(talk.id));
+    private StatusChange moveTo(Talk talk, TalkStatus next) {
+        if (statusDao.moveTo(talk.id(), next)) {
+            return new StatusChange.Moved(conference.getTalk(talk.id()));
         }
-        TalkStatus current = talk.status;
+        TalkStatus current = talk.status();
         return current.canMoveTo(next) ? new StatusChange.NeedsReviewers(next) : new StatusChange.NotAllowed(current, next);
     }
 
     /** The talk without its ratings. */
-    private Optional<TalkDto> findTalk(long talkId) {
-        return Optional.ofNullable(talkDao.findById(talkId));
+    private Optional<Talk> findTalk(long talkId) {
+        return talkDao.findById(talkId);
     }
 }

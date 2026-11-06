@@ -14,7 +14,7 @@ public record RegistrationRequest(String name, String email) {
         Object name = body.get("name");
         Object email = body.get("email");
         if (name instanceof String realName && !realName.isBlank()
-                && email instanceof String address && Utils.isValidEmail(address)) {
+                && email instanceof String address && EmailAddress.isValid(address)) {
             return Optional.of(new RegistrationRequest(realName, address));
         }
         return Optional.empty();

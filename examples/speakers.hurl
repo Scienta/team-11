@@ -1,5 +1,5 @@
 # Speakers: published examples (happy path only).
-# Run: hurl --test --variable base_url=http://localhost:8080 examples.hurl
+# Run: examples/run.sh [base-url]
 
 # R1: register a speaker
 POST {{base_url}}/speakers

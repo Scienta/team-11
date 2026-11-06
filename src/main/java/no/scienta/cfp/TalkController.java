@@ -17,25 +17,27 @@ import org.springframework.web.server.ResponseStatusException;
 @RestController
 public class TalkController {
 
-    private final ConferenceService service;
+    private final TalkService service;
+    private final RatingService ratings;
 
-    public TalkController(ConferenceService service) {
+    public TalkController(TalkService service, RatingService ratings) {
         this.service = service;
+        this.ratings = ratings;
     }
 
     @PostMapping("/talks")
     @ResponseStatus(HttpStatus.CREATED)
-    public TalkDto submit(@RequestBody TalkForm form) {
+    public TalkResponse submit(@RequestBody TalkForm form) {
         return service.submitTalk(form);
     }
 
     @GetMapping("/talks/{id}")
-    public TalkDto get(@PathVariable Long id) {
+    public TalkResponse get(@PathVariable Long id) {
         return service.getTalk(id);
     }
 
     @GetMapping("/talks")
-    public List<TalkDto> list(@RequestParam(required = false) String sort,
+    public List<TalkResponse> list(@RequestParam(required = false) String sort,
                               @RequestParam(required = false) Long speakerId,
                               @RequestParam(defaultValue = "true") String includeWithdrawn) {
         return service.listTalks(sort, speakerId, parseIncludeWithdrawn(includeWithdrawn));
@@ -52,6 +54,6 @@ public class TalkController {
     @PutMapping("/talks/{id}/ratings/{reviewerId}")
     public Map<String, Object> rate(@PathVariable Long id, @PathVariable Long reviewerId,
                                     @RequestBody Map<String, Object> body) {
-        return service.rate(id, reviewerId, body);
+        return ratings.rate(id, reviewerId, body);
     }
 }

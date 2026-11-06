@@ -3,17 +3,14 @@ package no.scienta.cfp;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -34,7 +31,6 @@ import org.tabletest.junit.TypeConverter;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class TalksTest {
 
-    private static final Pattern ID = Pattern.compile("\"id\":(\\d+)");
     private static final ObjectMapper JSON = new ObjectMapper();
 
     @DynamicPropertySource
@@ -42,10 +38,11 @@ public class TalksTest {
         TestDatabase.fresh(registry);
     }
 
-    @Value("${local.server.port}")
-    int port;
+    private final ApiClient api;
 
-    private final HttpClient http = HttpClient.newHttpClient();
+    TalksTest(@Value("${local.server.port}") int port) {
+        api = new ApiClient(port);
+    }
 
     @DisplayName("R4: Sets the duration from the format")
     @Description("""
@@ -117,6 +114,91 @@ public class TalksTest {
         assertEquals(status, submit(title, "PRESENTATION", "BEGINNER").statusCode());
     }
 
+    @DisplayName("R3, R5: Refuses an incomplete talk with the reason")
+    @Description("""
+            The reason is the message field of the error body. Speaker "registered" is a newly
+            registered speaker; an empty Speaker cell leaves speakerId out.
+            """)
+    @TableTest("""
+        Scenario        | Title  | Format       | Level    | Speaker    | Status? | Message?
+        No title        |        | PRESENTATION | BEGINNER | registered | 400     | title is required
+        Unknown format  | Legacy | KEYNOTE      | BEGINNER | registered | 400     | 'format must be one of [WORKSHOP, PRESENTATION, LIGHTNING_20, LIGHTNING_10]'
+        No format       | Legacy |              | BEGINNER | registered | 400     | 'format must be one of [WORKSHOP, PRESENTATION, LIGHTNING_20, LIGHTNING_10]'
+        Unknown level   | Legacy | PRESENTATION | EXPERT   | registered | 400     | unknown level
+        No speaker      | Legacy | PRESENTATION | BEGINNER |            | 400     | speakerId is required
+        Unknown speaker | Legacy | PRESENTATION | BEGINNER | 999999     | 400     | speaker 999999 does not exist
+        """)
+    void refusesAnIncompleteTalkWithTheReason(String title, String format, String level, String speaker, int status,
+                                              String message) throws Exception {
+        String talk = JSON.writeValueAsString(JSON.createObjectNode()
+                .put("title", title).put("format", format).put("level", level).put("speakerId", speakerIdFor(speaker)));
+        HttpResponse<String> res = api.send("POST", "/talks", talk);
+        assertEquals(status, res.statusCode(), res.body());
+        assertEquals(message, JSON.readTree(res.body()).get("message").asText());
+    }
+
+    @Test
+    void returnsTheSubmittedTalkWithItsFieldsInOrderAndReadsItBack() throws Exception {
+        String speaker = newSpeaker();
+        HttpResponse<String> created = api.send("POST", "/talks", "{\"title\":\"Characterise first\",\"format\":\"WORKSHOP\","
+                + "\"level\":\"BEGINNER\",\"speakerId\":" + speaker + "}");
+        assertEquals(201, created.statusCode(), created.body());
+        JsonNode talk = JSON.readTree(created.body());
+        assertEquals(List.of("id", "title", "format", "level", "speakerId", "durationMinutes", "status", "submittedAt",
+                "submittedOn", "averageRating", "ratingCount", "coSpeakerIds"), JsonFields.namesOf(talk));
+        assertEquals("Characterise first", talk.get("title").asText());
+        assertEquals(speaker, talk.get("speakerId").asText());
+        assertEquals(120, talk.get("durationMinutes").asInt());
+        assertEquals("SUBMITTED", talk.get("status").asText());
+        String submittedAt = talk.get("submittedAt").asText();
+        assertTrue(submittedAt.matches("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}\\+00:00"), submittedAt);
+        assertEquals(submittedAt.substring(0, 10), talk.get("submittedOn").asText());
+        assertTrue(talk.get("averageRating").isNull(), created.body());
+        assertEquals(0, talk.get("ratingCount").asInt());
+
+        assertEquals(created.body(), api.get("/talks/" + talk.get("id").asText()).body());
+    }
+
+    @Test
+    void ignoresADurationChosenByTheClient() throws Exception {
+        HttpResponse<String> res = api.send("POST", "/talks", "{\"title\":\"Ten minutes\",\"format\":\"LIGHTNING_10\","
+                + "\"level\":\"ADVANCED\",\"speakerId\":" + newSpeaker() + ",\"durationMinutes\":90,\"room\":\"A\"}");
+        assertEquals(201, res.statusCode(), res.body());
+        assertEquals(10, JSON.readTree(res.body()).get("durationMinutes").asInt());
+    }
+
+    @Test
+    void refusesAFourthTalkWithTheReason() throws Exception {
+        String speaker = newSpeaker();
+        String talk = "{\"title\":\"Talk\",\"format\":\"PRESENTATION\",\"level\":\"BEGINNER\",\"speakerId\":" + speaker + "}";
+        for (int i = 0; i < 3; i++) {
+            assertEquals(201, api.send("POST", "/talks", talk).statusCode());
+        }
+        HttpResponse<String> fourth = api.send("POST", "/talks", talk);
+        assertEquals(409, fourth.statusCode(), fourth.body());
+        assertEquals("a speaker can submit at most 3 talks", JSON.readTree(fourth.body()).get("message").asText());
+    }
+
+    @DisplayName("R2, R8: Answers 404 for a talk or speaker that does not exist")
+    @TableTest("""
+        Scenario                    | Path                   | Status? | Message?
+        Unknown talk                | /talks/999999          | 404     | talk not found
+        Talks of an unknown speaker | /speakers/999999/talks | 404     | speaker not found
+        """)
+    void answersNotFoundForAnUnknownTalkOrSpeaker(String path, int status, String message) throws Exception {
+        HttpResponse<String> res = api.get(path);
+        assertEquals(status, res.statusCode(), res.body());
+        assertEquals(message, JSON.readTree(res.body()).get("message").asText());
+    }
+
+    /** A newly registered speaker for "registered", none for an empty cell, else the ID as written. */
+    private Long speakerIdFor(String speaker) throws Exception {
+        if (speaker == null) {
+            return null;
+        }
+        return Long.valueOf("registered".equals(speaker) ? newSpeaker() : speaker);
+    }
+
     /** Submits one talk for a newly registered speaker. */
     private HttpResponse<String> submit(String format, String level) throws Exception {
         return submit("Legacy is a feeling", format, level);
@@ -144,7 +226,7 @@ public class TalksTest {
                 .put("format", format)
                 .put("level", level)
                 .put("speakerId", Long.parseLong(newSpeaker())));
-        return http.send(request("POST", "/talks", talk), HttpResponse.BodyHandlers.ofString());
+        return api.send("POST", "/talks", talk);
     }
 
     @DisplayName("R7: Keeps a speaker at 3 talks when 10 arrive at the same time")
@@ -153,9 +235,8 @@ public class TalksTest {
         String speaker = newSpeaker();
         List<CompletableFuture<HttpResponse<String>>> sent = new ArrayList<>();
         for (int i = 0; i < 10; i++) {
-            sent.add(http.sendAsync(request("POST", "/talks",
-                    "{\"title\":\"Talk " + i + "\",\"format\":\"PRESENTATION\",\"level\":\"BEGINNER\",\"speakerId\":" + speaker + "}"),
-                    HttpResponse.BodyHandlers.ofString()));
+            sent.add(api.sendAsync("POST", "/talks",
+                    "{\"title\":\"Talk " + i + "\",\"format\":\"PRESENTATION\",\"level\":\"BEGINNER\",\"speakerId\":" + speaker + "}"));
         }
         int created = 0;
         for (CompletableFuture<HttpResponse<String>> f : sent) {
@@ -166,34 +247,11 @@ public class TalksTest {
             }
         }
         assertEquals(3, created);
-        HttpResponse<String> talks = http.send(request("GET", "/speakers/" + speaker + "/talks", null),
-                HttpResponse.BodyHandlers.ofString());
-        assertEquals(3, count(talks.body()));
+        assertEquals(3, JSON.readTree(api.get("/speakers/" + speaker + "/talks").body()).size());
     }
 
     private String newSpeaker() throws Exception {
-        HttpResponse<String> res = http.send(request("POST", "/speakers",
-                "{\"name\":\"Grace Hopper\",\"email\":\"grace-" + UUID.randomUUID() + "@example.com\"}"),
-                HttpResponse.BodyHandlers.ofString());
-        assertEquals(201, res.statusCode(), res.body());
-        Matcher m = ID.matcher(res.body());
-        assertTrue(m.find(), res.body());
-        return m.group(1);
-    }
-
-    private static int count(String body) {
-        Matcher m = ID.matcher(body);
-        int n = 0;
-        while (m.find()) {
-            n++;
-        }
-        return n;
-    }
-
-    private HttpRequest request(String method, String path, String json) {
-        return HttpRequest.newBuilder(URI.create("http://localhost:" + port + path))
-                .header("Content-Type", "application/json")
-                .method(method, json == null ? HttpRequest.BodyPublishers.noBody() : HttpRequest.BodyPublishers.ofString(json))
-                .build();
+        return ApiClient.createdId(api.send("POST", "/speakers",
+                "{\"name\":\"Grace Hopper\",\"email\":\"grace-" + UUID.randomUUID() + "@example.com\"}"));
     }
 }

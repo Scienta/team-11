@@ -24,20 +24,20 @@ public class AcceptanceController {
     }
 
     @PutMapping("/talks/{id}/status")
-    public TalkDto decide(@PathVariable Long id, @RequestBody Map<String, Object> body) {
+    public TalkResponse decide(@PathVariable Long id, @RequestBody Map<String, Object> body) {
         Decision decision = Decision.parse(body).orElseThrow(() -> new ResponseStatusException(
                 HttpStatus.BAD_REQUEST, "status must be ACCEPTED, REJECTED or WAITLISTED"));
         return answer(service.decide(id, decision));
     }
 
     @PostMapping("/talks/{id}/withdraw")
-    public TalkDto withdraw(@PathVariable Long id, @RequestBody Map<String, Object> body) {
+    public TalkResponse withdraw(@PathVariable Long id, @RequestBody Map<String, Object> body) {
         Withdrawal withdrawal = Withdrawal.parse(body).orElseThrow(() -> new ResponseStatusException(
                 HttpStatus.BAD_REQUEST, "speakerId must be a whole number"));
         return answer(service.withdraw(id, withdrawal));
     }
 
-    private static TalkDto answer(StatusChange change) {
+    private static TalkResponse answer(StatusChange change) {
         if (change instanceof StatusChange.Refusal refused) {
             throw refusal(refused);
         }

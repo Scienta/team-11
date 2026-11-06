@@ -45,7 +45,7 @@ class RatingDecisionRaceTest {
     TalkStatusDao talkStatusDao;
 
     @Autowired
-    ConferenceService conference;
+    RatingService ratings;
 
     @DisplayName("R8: Refuses a rating that arrives while a decision closes the talk")
     @Test
@@ -86,7 +86,7 @@ class RatingDecisionRaceTest {
     /** The HTTP status that the rating would get: 200 when saved, else the refusal's status. */
     private int rateAsReviewer3(long talk) {
         try {
-            conference.rate(talk, 3, Map.of("score", 4));
+            ratings.rate(talk, 3, Map.of("score", 4));
             return 200;
         } catch (ResponseStatusException refused) {
             return refused.getStatusCode().value();

@@ -15,10 +15,10 @@ public record ProgrammeTalk(long id, String format, TalkStatus status, Set<Long>
     }
 
     /** The talk with its main speaker and co-speakers as speakers. */
-    public static ProgrammeTalk of(TalkDto talk) {
-        Set<Long> speakers = new HashSet<>(talk.coSpeakerIds);
-        speakers.add(talk.speakerId);
-        return new ProgrammeTalk(talk.id, talk.format, talk.status, speakers);
+    public static ProgrammeTalk of(Talk talk) {
+        Set<Long> speakers = new HashSet<>(talk.coSpeakerIds());
+        speakers.add(talk.speakerId());
+        return new ProgrammeTalk(talk.id(), talk.format(), talk.status(), speakers);
     }
 
     /**

@@ -17,10 +17,10 @@ public class CoSpeakerService {
     private final TalkDao talkDao;
     private final SpeakerDao speakerDao;
     private final CoSpeakerDao coSpeakerDao;
-    private final ConferenceService conference;
+    private final TalkService conference;
 
     public CoSpeakerService(TalkDao talkDao, SpeakerDao speakerDao, CoSpeakerDao coSpeakerDao,
-                            ConferenceService conference) {
+                            TalkService conference) {
         this.talkDao = talkDao;
         this.speakerDao = speakerDao;
         this.coSpeakerDao = coSpeakerDao;
@@ -48,26 +48,26 @@ public class CoSpeakerService {
      * limit of talks (submission-cap-cr R5). The speaker row is locked after the talk row, so a submission and this
      * place for the same speaker take turns (submission-cap-cr R6).
      */
-    private CoSpeakerChange addTo(TalkDto talk, long speakerId) {
-        if (talk.coSpeakerIds.contains(speakerId)) {
+    private CoSpeakerChange addTo(Talk talk, long speakerId) {
+        if (talk.coSpeakerIds().contains(speakerId)) {
             return changed(talk);
         }
-        if (talk.coSpeakerIds.size() >= MAX_CO_SPEAKERS) {
+        if (talk.coSpeakerIds().size() >= MAX_CO_SPEAKERS) {
             return new CoSpeakerChange.Full(MAX_CO_SPEAKERS);
         }
         if (talkDao.lockSpeakerAndCountTalksTowardLimit(speakerId) >= TalkLimit.PER_SPEAKER) {
             return new CoSpeakerChange.SpeakerAtLimit(TalkLimit.PER_SPEAKER);
         }
-        coSpeakerDao.add(talk.id, speakerId);
+        coSpeakerDao.add(talk.id(), speakerId);
         return changed(talk);
     }
 
     /** Removes the speaker, unless they are not a co-speaker of the talk, or no longer are one. */
-    private CoSpeakerChange removeFrom(TalkDto talk, long speakerId) {
-        if (!talk.coSpeakerIds.contains(speakerId)) {
+    private CoSpeakerChange removeFrom(Talk talk, long speakerId) {
+        if (!talk.coSpeakerIds().contains(speakerId)) {
             return new CoSpeakerChange.NotCoSpeaker();
         }
-        coSpeakerDao.remove(talk.id, speakerId);
+        coSpeakerDao.remove(talk.id(), speakerId);
         return changed(talk);
     }
 
@@ -76,29 +76,29 @@ public class CoSpeakerService {
      * request says (R12). The main speaker as the target gets the refusal of the request: R3 for adding, R8 for
      * removing.
      */
-    private Optional<CoSpeakerChange> refusal(TalkDto talk, long speakerId, Optional<Long> actingSpeakerId,
+    private Optional<CoSpeakerChange> refusal(Talk talk, long speakerId, Optional<Long> actingSpeakerId,
                                               CoSpeakerChange.Refusal mainSpeakerRefusal) {
-        if (actingSpeakerId.filter(acting -> !acting.equals(talk.speakerId)).isPresent()) {
+        if (actingSpeakerId.filter(acting -> !acting.equals(talk.speakerId())).isPresent()) {
             return Optional.of(new CoSpeakerChange.NotMainSpeaker());
         }
         if (!speakerDao.exists(speakerId)) {
             return Optional.of(new CoSpeakerChange.SpeakerNotFound());
         }
-        if (!talk.status.isOpenForCoSpeakerChanges()) {
+        if (!talk.status().isOpenForCoSpeakerChanges()) {
             return Optional.of(new CoSpeakerChange.Closed());
         }
-        if (talk.speakerId == speakerId) {
+        if (talk.speakerId() == speakerId) {
             return Optional.of(mainSpeakerRefusal);
         }
         return Optional.empty();
     }
 
-    private CoSpeakerChange changed(TalkDto talk) {
-        return new CoSpeakerChange.Changed(conference.getTalk(talk.id));
+    private CoSpeakerChange changed(Talk talk) {
+        return new CoSpeakerChange.Changed(conference.getTalk(talk.id()));
     }
 
     /** The talk, locked until the transaction ends. */
-    private Optional<TalkDto> lockedTalk(long talkId) {
-        return Optional.ofNullable(talkDao.findByIdForUpdate(talkId));
+    private Optional<Talk> lockedTalk(long talkId) {
+        return talkDao.findByIdForUpdate(talkId);
     }
 }

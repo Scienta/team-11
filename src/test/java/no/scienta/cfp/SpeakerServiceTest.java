@@ -17,43 +17,15 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
 @ExtendWith(OutputCaptureExtension.class)
-class ConferenceServiceTest {
+class SpeakerServiceTest {
 
     private SpeakerDao speakerDao;
-    private TalkDao talkDao;
-    private RatingDao ratingDao;
-    private ConferenceService service;
+    private SpeakerService service;
 
     @BeforeEach
     void setUp() {
         speakerDao = mock(SpeakerDao.class);
-        talkDao = mock(TalkDao.class);
-        ratingDao = mock(RatingDao.class);
-        service = new ConferenceService(speakerDao, talkDao, ratingDao, mock(TalkStatusDao.class),
-                mock(NotificationService.class));
-    }
-
-    @Test
-    void talkWithoutTitleIsRejected() {
-        TalkForm form = form();
-        form.title = " ";
-        ResponseStatusException e = assertThrows(ResponseStatusException.class, () -> service.submitTalk(form));
-        assertEquals(HttpStatus.BAD_REQUEST, e.getStatusCode());
-    }
-
-    @Test
-    void unknownFormatIsRejected() {
-        TalkForm form = form();
-        form.format = "KEYNOTE";
-        ResponseStatusException e = assertThrows(ResponseStatusException.class, () -> service.submitTalk(form));
-        assertEquals(HttpStatus.BAD_REQUEST, e.getStatusCode());
-    }
-
-    @Test
-    void unknownSpeakerIsRejected() {
-        when(speakerDao.exists(7L)).thenReturn(false);
-        ResponseStatusException e = assertThrows(ResponseStatusException.class, () -> service.submitTalk(form()));
-        assertEquals(HttpStatus.BAD_REQUEST, e.getStatusCode());
+        service = new SpeakerService(speakerDao, mock(NotificationService.class));
     }
 
     @Test
@@ -89,14 +61,5 @@ class ConferenceServiceTest {
 
         assertTrue(output.getOut().contains("registered speaker 42"), output.getOut());
         assertFalse(output.getOut().contains("ada@example.com"), output.getOut());
-    }
-
-    private TalkForm form() {
-        TalkForm form = new TalkForm();
-        form.title = "Legacy is a feeling";
-        form.format = "PRESENTATION";
-        form.level = "INTERMEDIATE";
-        form.speakerId = 7L;
-        return form;
     }
 }

@@ -2,9 +2,6 @@ package no.scienta.cfp;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -39,13 +36,14 @@ class TalkListsTest {
         TestDatabase.fresh(registry);
     }
 
-    @Value("${local.server.port}")
-    int port;
-
     @Autowired
     JdbcTemplate jdbc;
 
-    private final HttpClient http = HttpClient.newHttpClient();
+    private final ApiClient api;
+
+    TalkListsTest(@Value("${local.server.port}") int port) {
+        api = new ApiClient(port);
+    }
 
     @BeforeEach
     void startWithNoTalks() {
@@ -72,7 +70,7 @@ class TalkListsTest {
         rate(submitTalk("A", speaker), talkA);
         rate(submitTalk("B", speaker), talkB);
         rate(submitTalk("C", speaker), talkC);
-        assertEquals(ranking, titles(send("GET", "/talks?sort=rating", null)));
+        assertEquals(ranking, titles(api.get("/talks?sort=rating")));
     }
 
     @DisplayName("R5: Lists all talks oldest first, or the talks of one speaker")
@@ -93,7 +91,7 @@ class TalkListsTest {
         submitTalk("A", first);
         submitTalk("B", second);
         submitTalk("C", first);
-        assertEquals(talks, titles(send("GET", talkListPath(speakerId), null)));
+        assertEquals(talks, titles(api.get(talkListPath(speakerId))));
     }
 
     @DisplayName("Ranks talks only for the sort order rating")
@@ -108,18 +106,18 @@ class TalkListsTest {
         Rating in capitals | RATING        | 400
         """)
     void ranksTalksOnlyForSortOrderRating(String sort, int status) throws Exception {
-        assertEquals(status, send("GET", sortPath(sort), null).statusCode());
+        assertEquals(status, api.get(sortPath(sort)).statusCode());
     }
 
     private long registerSpeaker(String email) throws Exception {
-        HttpResponse<String> res = send("POST", "/speakers",
+        HttpResponse<String> res = api.send("POST", "/speakers",
                 JSON.writeValueAsString(JSON.createObjectNode().put("name", "Grace Hopper").put("email", email)));
         assertEquals(201, res.statusCode(), res.body());
         return JSON.readTree(res.body()).get("id").asLong();
     }
 
     private long submitTalk(String title, long speakerId) throws Exception {
-        HttpResponse<String> res = send("POST", "/talks", JSON.writeValueAsString(JSON.createObjectNode()
+        HttpResponse<String> res = api.send("POST", "/talks", JSON.writeValueAsString(JSON.createObjectNode()
                 .put("title", title).put("format", "PRESENTATION").put("level", "BEGINNER").put("speakerId", speakerId)));
         assertEquals(201, res.statusCode(), res.body());
         return JSON.readTree(res.body()).get("id").asLong();
@@ -128,7 +126,7 @@ class TalkListsTest {
     /** Rates the talk once per score, each score from a different reviewer. */
     private void rate(long talkId, List<Integer> scores) throws Exception {
         for (int reviewer = 1; reviewer <= scores.size(); reviewer++) {
-            HttpResponse<String> res = send("PUT", "/talks/" + talkId + "/ratings/" + reviewer,
+            HttpResponse<String> res = api.send("PUT", "/talks/" + talkId + "/ratings/" + reviewer,
                     "{\"score\":" + scores.get(reviewer - 1) + "}");
             assertEquals(200, res.statusCode(), res.body());
         }
@@ -148,13 +146,5 @@ class TalkListsTest {
 
     private static String sortPath(String sort) {
         return sort == null ? "/talks" : "/talks?sort=" + sort;
-    }
-
-    private HttpResponse<String> send(String method, String path, String json) throws Exception {
-        HttpRequest request = HttpRequest.newBuilder(URI.create("http://localhost:" + port + path))
-                .header("Content-Type", "application/json")
-                .method(method, json == null ? HttpRequest.BodyPublishers.noBody() : HttpRequest.BodyPublishers.ofString(json))
-                .build();
-        return http.send(request, HttpResponse.BodyHandlers.ofString());
     }
 }

@@ -1,26 +1,28 @@
 package no.scienta.cfp;
 
 import java.util.List;
-import java.util.Map;
+import java.util.Optional;
 
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 
 @Repository
 public class SpeakerDao {
 
-    private final JdbcTemplate jdbc;
+    private static final RowMapper<Speaker> SPEAKER = (rs, rowNum) ->
+            new Speaker(rs.getLong("id"), rs.getString("name"), rs.getString("email"), rs.getString("bio"));
 
-    public SpeakerDao(JdbcTemplate jdbc) {
+    private final JdbcTemplate jdbc;
+    private final Timestamps timestamps;
+
+    public SpeakerDao(JdbcTemplate jdbc, Timestamps timestamps) {
         this.jdbc = jdbc;
+        this.timestamps = timestamps;
     }
 
-    public Map<String, Object> findById(long id) {
-        List<Map<String, Object>> rows = jdbc.queryForList("SELECT id, name, email, bio FROM speaker WHERE id = ?", id);
-        if (rows.isEmpty()) {
-            return null;
-        }
-        return rows.get(0);
+    public Optional<Speaker> findById(long id) {
+        return jdbc.query("SELECT id, name, email, bio FROM speaker WHERE id = ?", SPEAKER, id).stream().findFirst();
     }
 
     public boolean exists(long id) {
@@ -36,7 +38,11 @@ public class SpeakerDao {
     public long insert(String name, String email, String bio) {
         return jdbc.queryForObject(
                 "INSERT INTO speaker (name, email, bio, created) VALUES (?, ?, ?, ?) RETURNING id",
-                Long.class, name, email, bio, Utils.today());
+                Long.class, name, email, bio, timestamps.today());
+    }
+
+    public List<Speaker> findAll() {
+        return jdbc.query("SELECT id, name, email, bio FROM speaker", SPEAKER);
     }
 
     public int count() {
@@ -44,8 +50,8 @@ public class SpeakerDao {
     }
 
     // Used by the old admin page to look people up.
-    public List<Map<String, Object>> search(String name) {
-        return jdbc.queryForList(
-                "SELECT id, name, email, bio FROM speaker WHERE name ILIKE '%' || ? || '%' ORDER BY name", name);
+    public List<Speaker> search(String name) {
+        return jdbc.query(
+                "SELECT id, name, email, bio FROM speaker WHERE name ILIKE '%' || ? || '%' ORDER BY name", SPEAKER, name);
     }
 }

@@ -6,7 +6,7 @@ package no.scienta.cfp;
 public sealed interface StatusChange {
 
     /** The talk moved to the new status. The talk is as the API shows it, ratings included. */
-    record Moved(TalkDto talk) implements StatusChange {
+    record Moved(TalkResponse talk) implements StatusChange {
     }
 
     /** Every outcome in which the talk did not move. */

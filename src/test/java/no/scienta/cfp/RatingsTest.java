@@ -3,20 +3,16 @@ package no.scienta.cfp;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.DynamicPropertyRegistry;
@@ -33,7 +29,6 @@ import org.tabletest.junit.TypeConverter;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class RatingsTest {
 
-    private static final Pattern ID = Pattern.compile("\"id\":(\\d+)");
     private static final ObjectMapper JSON = new ObjectMapper();
 
     @DynamicPropertySource
@@ -41,18 +36,19 @@ public class RatingsTest {
         TestDatabase.fresh(registry);
     }
 
-    @Value("${local.server.port}")
-    int port;
+    private final ApiClient api;
 
-    private final HttpClient http = HttpClient.newHttpClient();
+    RatingsTest(@Value("${local.server.port}") int port) {
+        api = new ApiClient(port);
+    }
 
     private String talk;
 
     @BeforeEach
     void submitATalk() throws Exception {
-        String speaker = created(send("POST", "/speakers",
+        String speaker = ApiClient.createdId(api.send("POST", "/speakers",
                 "{\"name\":\"Barbara Liskov\",\"email\":\"barbara-" + UUID.randomUUID() + "@example.com\"}"));
-        talk = created(send("POST", "/talks", "{\"title\":\"Data abstraction\",\"format\":\"PRESENTATION\","
+        talk = ApiClient.createdId(api.send("POST", "/talks", "{\"title\":\"Data abstraction\",\"format\":\"PRESENTATION\","
                 + "\"level\":\"ADVANCED\",\"speakerId\":" + speaker + "}"));
     }
 
@@ -72,7 +68,7 @@ public class RatingsTest {
         Negative number             | -1                       | 400
         """)
     void acceptsAnyPositiveWholeNumberAsReviewer(String reviewer, int status) throws Exception {
-        HttpResponse<String> res = send("PUT", "/talks/" + talk + "/ratings/" + reviewer, "{\"score\":4}");
+        HttpResponse<String> res = api.send("PUT", "/talks/" + talk + "/ratings/" + reviewer, "{\"score\":4}");
         assertEquals(status, res.statusCode(), res.body());
     }
 
@@ -92,7 +88,7 @@ public class RatingsTest {
         No score             |                 | 400
         """)
     void acceptsOnlyAWholeNumberFrom1To5AsScore(String score, int status) throws Exception {
-        HttpResponse<String> res = send("PUT", "/talks/" + talk + "/ratings/1", ratingBody(score));
+        HttpResponse<String> res = api.send("PUT", "/talks/" + talk + "/ratings/1", ratingBody(score));
         assertEquals(status, res.statusCode(), res.body());
     }
 
@@ -108,7 +104,7 @@ public class RatingsTest {
         """)
     void keepsOneRatingPerReviewer(List<Rating> ratings, Double averageRating, int ratingCount) throws Exception {
         rate(ratings);
-        JsonNode shown = JSON.readTree(send("GET", "/talks/" + talk, null).body());
+        JsonNode shown = JSON.readTree(api.get("/talks/" + talk).body());
         assertEquals(averageRating, averageRatingOf(shown));
         assertEquals(ratingCount, shown.get("ratingCount").asInt());
     }
@@ -127,9 +123,51 @@ public class RatingsTest {
     void showsTheAverageScoreWithTwoDecimals(List<Integer> scores, Double averageRating, int ratingCount)
             throws Exception {
         rateByDifferentReviewers(scores);
-        JsonNode shown = JSON.readTree(send("GET", "/talks/" + talk, null).body());
+        JsonNode shown = JSON.readTree(api.get("/talks/" + talk).body());
         assertEquals(averageRating, averageRatingOf(shown));
         assertEquals(ratingCount, shown.get("ratingCount").asInt());
+    }
+
+    @DisplayName("R1, R2: Refuses a rating with the reason, before it looks for the talk")
+    @Description("""
+            The reason is the message field of the error body. Talk "submitted" is a newly submitted
+            talk; 999999 is no talk. A blank Score cell sends a body without "score".
+            """)
+    @TableTest("""
+        Scenario                  | Talk      | Reviewer | Score | Status? | Message?
+        Reviewer zero             | submitted | 0        | 4     | 400     | reviewerId must be positive
+        Decimal number            | submitted | 1        | 4.0   | 400     | score must be a whole number
+        No score                  | submitted | 1        |       | 400     | score must be a whole number
+        Above the scale           | submitted | 1        | 6     | 400     | score must be 1-5
+        Bad score for no talk     | 999999    | 1        | 6     | 400     | score must be 1-5
+        Good score for no talk    | 999999    | 1        | 4     | 404     | talk not found
+        """)
+    void refusesARatingWithTheReason(String talkCell, String reviewer, String score, int status, String message)
+            throws Exception {
+        String talkId = "submitted".equals(talkCell) ? talk : talkCell;
+        HttpResponse<String> res = api.send("PUT", "/talks/" + talkId + "/ratings/" + reviewer, ratingBody(score));
+        assertEquals(status, res.statusCode(), res.body());
+        assertEquals(message, JSON.readTree(res.body()).get("message").asText());
+    }
+
+    @Test
+    void answersWithTheRatingAndWhenItWasGiven() throws Exception {
+        HttpResponse<String> res = api.send("PUT", "/talks/" + talk + "/ratings/7", "{\"score\":5}");
+        assertEquals(200, res.statusCode(), res.body());
+        JsonNode rating = JSON.readTree(res.body());
+        assertEquals(List.of("talkId", "reviewerId", "score", "ratedAtDisplay"), JsonFields.namesOf(rating));
+        assertEquals(talk, rating.get("talkId").asText());
+        assertEquals(7, rating.get("reviewerId").asLong());
+        assertEquals(5, rating.get("score").asInt());
+        String ratedAt = rating.get("ratedAtDisplay").asText();
+        assertTrue(ratedAt.matches("(1[0-2]|[1-9])/([1-9]|[12]\\d|3[01])/\\d{2}, (1[0-2]|[1-9]):[0-5]\\d [AP]M"), ratedAt);
+    }
+
+    @Test
+    void refusesASortOtherThanRatingWithTheReason() throws Exception {
+        HttpResponse<String> res = api.get("/talks?sort=bogus");
+        assertEquals(400, res.statusCode(), res.body());
+        assertEquals("sort must be 'rating'", JSON.readTree(res.body()).get("message").asText());
     }
 
     /** The talk's averageRating, or null when the response has JSON null. */
@@ -149,7 +187,7 @@ public class RatingsTest {
 
     private void rate(List<Rating> ratings) throws Exception {
         for (Rating rating : ratings) {
-            HttpResponse<String> res = send("PUT", "/talks/" + talk + "/ratings/" + rating.reviewer(),
+            HttpResponse<String> res = api.send("PUT", "/talks/" + talk + "/ratings/" + rating.reviewer(),
                     ratingBody(String.valueOf(rating.score())));
             assertEquals(200, res.statusCode(), res.body());
         }
@@ -162,24 +200,9 @@ public class RatingsTest {
 
     private void rateByDifferentReviewers(List<Integer> scores) throws Exception {
         for (int reviewer = 1; reviewer <= scores.size(); reviewer++) {
-            HttpResponse<String> res = send("PUT", "/talks/" + talk + "/ratings/" + reviewer,
+            HttpResponse<String> res = api.send("PUT", "/talks/" + talk + "/ratings/" + reviewer,
                     "{\"score\":" + scores.get(reviewer - 1) + "}");
             assertEquals(200, res.statusCode(), res.body());
         }
-    }
-
-    private String created(HttpResponse<String> res) {
-        assertEquals(201, res.statusCode(), res.body());
-        Matcher m = ID.matcher(res.body());
-        assertTrue(m.find(), res.body());
-        return m.group(1);
-    }
-
-    private HttpResponse<String> send(String method, String path, String json) throws Exception {
-        HttpRequest request = HttpRequest.newBuilder(URI.create("http://localhost:" + port + path))
-                .header("Content-Type", "application/json")
-                .method(method, json == null ? HttpRequest.BodyPublishers.noBody() : HttpRequest.BodyPublishers.ofString(json))
-                .build();
-        return http.send(request, HttpResponse.BodyHandlers.ofString());
     }
 }

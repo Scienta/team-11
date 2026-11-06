@@ -26,23 +26,19 @@ public class RatingDao {
     }
 
     /**
-     * The rating totals of each rated talk among the given talks, read in one query. A talk with no rating is not in
-     * the map.
+     * The rating summary of each rated talk among the given talks, by talk id, read in one query. A talk with no
+     * rating is not in the map.
      */
-    public Map<Long, RatingTotals> totalsFor(List<Long> talkIds) {
+    public Map<Long, RatingSummary> summariesFor(List<Long> talkIds) {
         if (talkIds.isEmpty()) {
             return Map.of();
         }
         return jdbc.query("SELECT talk_id, COUNT(*) AS cnt, SUM(score) AS total, MIN(score) AS lowest, "
                                 + "MAX(score) AS highest FROM rating WHERE talk_id = ANY(?) GROUP BY talk_id",
-                        (rs, row) -> Map.entry(rs.getLong("talk_id"), new RatingTotals(rs.getInt("cnt"),
+                        (rs, row) -> Map.entry(rs.getLong("talk_id"), RatingSummary.of(rs.getInt("cnt"),
                                 rs.getLong("total"), rs.getInt("lowest"), rs.getInt("highest"))),
                         (Object) talkIds.toArray(Long[]::new))
                 .stream()
                 .collect(Collectors.toUnmodifiableMap(Map.Entry::getKey, Map.Entry::getValue));
     }
-
-    // public double average(long talkId) {
-    //     return jdbc.queryForObject("SELECT AVG(score) FROM rating WHERE talk_id = ?", Double.class, talkId);
-    // }
 }

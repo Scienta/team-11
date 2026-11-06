@@ -1,13 +1,15 @@
 package no.scienta.cfp;
 
+import java.time.Instant;
+import java.time.ZoneOffset;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
 
 @Repository
 public class TalkDao {
@@ -25,29 +27,23 @@ public class TalkDao {
 
     private final JdbcTemplate jdbc;
 
-    private final RowMapper<TalkDto> mapper = (rs, rowNum) -> {
-        TalkDto t = new TalkDto();
-        t.id = rs.getLong("id");
-        t.title = rs.getString("title");
-        t.format = rs.getString("format");
-        t.durationMinutes = rs.getInt("duration");
-        t.level = rs.getString("level");
-        t.status = TalkStatus.valueOf(rs.getString("status"));
-        t.speakerId = rs.getLong("speaker_id");
+    private final RowMapper<Talk> mapper = (rs, rowNum) -> {
         long millis = rs.getLong("submitted_at");
-        t.submittedAt = new Date(millis);
-        t.submittedOn = Utils.toSqlDate(millis);
-        t.coSpeakerIds = List.of((Long[]) rs.getArray("co_speaker_ids").getArray());
-        return t;
+        return new Talk(rs.getLong("id"), rs.getString("title"), rs.getString("format"), rs.getString("level"),
+                rs.getLong("speaker_id"), rs.getInt("duration"), TalkStatus.valueOf(rs.getString("status")), new Date(millis),
+                utcDay(millis), List.of((Long[]) rs.getArray("co_speaker_ids").getArray()));
     };
 
     public TalkDao(JdbcTemplate jdbc) {
         this.jdbc = jdbc;
     }
 
-    public TalkDto findById(long id) {
-        List<TalkDto> list = jdbc.query("SELECT " + COLUMNS + " FROM talk WHERE id = ?", mapper, id);
-        return list.isEmpty() ? null : list.get(0);
+    private static java.sql.Date utcDay(long epochMillis) {
+        return java.sql.Date.valueOf(Instant.ofEpochMilli(epochMillis).atZone(ZoneOffset.UTC).toLocalDate());
+    }
+
+    public Optional<Talk> findById(long id) {
+        return jdbc.query("SELECT " + COLUMNS + " FROM talk WHERE id = ?", mapper, id).stream().findFirst();
     }
 
     /** How a transaction holds a talk row until it ends. */
@@ -73,17 +69,17 @@ public class TalkDao {
         return !jdbc.queryForList("SELECT id FROM talk WHERE id = ? " + mode.clause, Long.class, id).isEmpty();
     }
 
-    /** The talk, read after {@link #lock} with {@link Lock#UPDATE}, or null when there is no such talk. */
-    public TalkDto findByIdForUpdate(long id) {
+    /** The talk, read after {@link #lock} with {@link Lock#UPDATE}, or empty when there is no such talk. */
+    public Optional<Talk> findByIdForUpdate(long id) {
         lock(id, Lock.UPDATE);
         return findById(id);
     }
 
-    public List<TalkDto> findBySpeaker(long speakerId) {
+    public List<Talk> findBySpeaker(long speakerId) {
         return jdbc.query("SELECT " + COLUMNS + " FROM talk WHERE speaker_id = ? ORDER BY id", mapper, speakerId);
     }
 
-    public List<TalkDto> findAll() {
+    public List<Talk> findAll() {
         return jdbc.query("SELECT " + COLUMNS + " FROM talk ORDER BY id", mapper);
     }
 
@@ -96,9 +92,8 @@ public class TalkDao {
      * Inserts the talk only if the speaker has fewer than {@code max} talks that count towards the limit, as main
      * speaker or co-speaker ({@link TalkStatus#countsTowardLimit()}, submission-cap-cr R1, R2). Returns the new id, or
      * null. The speaker row is locked first, so a submission and a co-speaker place for the same speaker can't both see
-     * room under the limit (submission-cap-cr R6).
+     * room under the limit (submission-cap-cr R6). The caller's transaction holds the lock, so call this inside one.
      */
-    @Transactional
     public Long insertIfBelow(int max, String title, String format, int duration, String level, long speakerId, long submittedAt) {
         lockSpeaker(speakerId);
         List<Long> ids = jdbc.queryForList(
@@ -132,11 +127,4 @@ public class TalkDao {
                 .map(Enum::name)
                 .toArray(String[]::new);
     }
-
-    // old version, raced when the mobile app double-posted
-    // public long insert(String title, String format, int duration, String level, long speakerId) {
-    //     jdbc.update("INSERT INTO talk (title, format, duration, level, status, speaker_id) VALUES (?, ?, ?, ?, 'SUBMITTED', ?)",
-    //             title, format, duration, level, speakerId);
-    //     return jdbc.queryForObject("SELECT currval('talk_id_seq')", Long.class);
-    // }
 }

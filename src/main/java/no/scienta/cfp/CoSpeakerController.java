@@ -26,19 +26,19 @@ public class CoSpeakerController {
     }
 
     @PutMapping
-    public TalkDto add(@PathVariable Long id, @PathVariable Long speakerId,
+    public TalkResponse add(@PathVariable Long id, @PathVariable Long speakerId,
                        @RequestParam Optional<Long> actingSpeakerId) {
         return answer(service.add(id, speakerId, actingSpeakerId));
     }
 
     @DeleteMapping
-    public TalkDto remove(@PathVariable Long id, @PathVariable Long speakerId,
+    public TalkResponse remove(@PathVariable Long id, @PathVariable Long speakerId,
                           @RequestParam Optional<Long> actingSpeakerId) {
         return answer(service.remove(id, speakerId, actingSpeakerId));
     }
 
     /** The changed talk, or the refusal as an error. */
-    private static TalkDto answer(CoSpeakerChange change) {
+    private static TalkResponse answer(CoSpeakerChange change) {
         if (change instanceof CoSpeakerChange.Refusal refused) {
             throw refusal(refused);
         }

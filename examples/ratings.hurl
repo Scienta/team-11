@@ -1,5 +1,5 @@
 # Ratings: published examples (happy path only).
-# Run: hurl --test --variable base_url=http://localhost:8080 examples.hurl
+# Run: examples/run.sh [base-url]
 
 # Setup (Speakers R1, Talks R1): a speaker with two talks
 POST {{base_url}}/speakers

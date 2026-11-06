@@ -13,11 +13,14 @@ public class NotificationService {
 
     private static final Logger log = LoggerFactory.getLogger(NotificationService.class);
 
-    @Value("${cfp.mail.enabled:false}")
-    private boolean enabled;
+    private final boolean enabled;
+    private final String from;
 
-    @Value("${cfp.mail.from:cfp-noreply@example.com}")
-    private String from;
+    public NotificationService(@Value("${cfp.mail.enabled:false}") boolean enabled,
+                               @Value("${cfp.mail.from:cfp-noreply@example.com}") String from) {
+        this.enabled = enabled;
+        this.from = from;
+    }
 
     public void talkSubmitted(String speakerEmail, String title) {
         send(speakerEmail, "Thank you for your submission", "We have received your talk \"" + title + "\".\n\n"
@@ -30,17 +33,9 @@ public class NotificationService {
 
     private void send(String to, String subject, String body) {
         if (!enabled) {
-            log.debug("mail disabled, not sending '" + subject + "' to " + to);
+            log.debug("mail disabled, not sending '{}'", subject);
             return;
         }
-        // JavaMailSender was removed with the relay
-        // MimeMessage msg = mailSender.createMimeMessage();
-        // MimeMessageHelper helper = new MimeMessageHelper(msg, "UTF-8");
-        // helper.setFrom(from);
-        // helper.setTo(to);
-        // helper.setSubject("[CFP] " + subject);
-        // helper.setText(body);
-        // mailSender.send(msg);
-        log.info("MAIL from=" + from + " to=" + to + " subject=" + subject);
+        log.info("MAIL from={} subject={}", from, subject);
     }
 }

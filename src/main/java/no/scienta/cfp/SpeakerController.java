@@ -1,7 +1,6 @@
 package no.scienta.cfp;
 
 import java.util.List;
-import java.util.Map;
 
 import jakarta.validation.Valid;
 
@@ -19,31 +18,33 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/speakers")
 public class SpeakerController {
 
-    private final ConferenceService service;
+    private final SpeakerService service;
+    private final TalkService talks;
 
-    public SpeakerController(ConferenceService service) {
+    public SpeakerController(SpeakerService service, TalkService talks) {
         this.service = service;
+        this.talks = talks;
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public Map<String, Object> create(@Valid @RequestBody SpeakerForm form) {
+    public Speaker create(@Valid @RequestBody SpeakerForm form) {
         return service.registerSpeaker(form);
     }
 
     @GetMapping("/{id}")
-    public Map<String, Object> get(@PathVariable Long id) {
+    public Speaker get(@PathVariable Long id) {
         return service.getSpeaker(id);
     }
 
     @GetMapping("/{id}/talks")
-    public List<TalkDto> talks(@PathVariable Long id) {
-        return service.getTalksForSpeaker(id);
+    public List<TalkResponse> talks(@PathVariable Long id) {
+        return talks.getTalksForSpeaker(id);
     }
 
     // admin only, not in the API docs
     @GetMapping("/search")
-    public List<Map<String, Object>> search(@RequestParam String q) {
+    public List<Speaker> search(@RequestParam String q) {
         return service.searchSpeakers(q);
     }
 }

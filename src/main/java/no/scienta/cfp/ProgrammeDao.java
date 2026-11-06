@@ -51,7 +51,7 @@ public class ProgrammeDao {
      */
     public Optional<ProgrammeTalk> lockTalk(long talkId) {
         return talkDao.lock(talkId, TalkDao.Lock.SHARE)
-                ? Optional.ofNullable(talkDao.findById(talkId)).map(ProgrammeTalk::of)
+                ? talkDao.findById(talkId).map(ProgrammeTalk::of)
                 : Optional.empty();
     }
 
