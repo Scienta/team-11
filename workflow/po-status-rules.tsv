@@ -46,7 +46,7 @@ workshop-registration/r9-frees-the-seat-when-an-attendee-unregisters	En deltaker
 workshop-registration/r9-unregisters-a-registration-once-from-its-own-workshop	En påmelding kan bare meldes av én gang, og bare fra sin egen workshop.
 workshop-registration/r6-r9-registers-an-email-again-after-it-unregistered	Den som har meldt seg av, kan melde seg på igjen.
 workshop-registration/r9-gives-a-freed-seat-to-one-attendee-only	En ledig plass går til én deltaker, også når mange melder seg på samtidig.
-workshop-registration/r10-unregisters-only-with-the-registration-s-email	For å melde seg av må man oppgi e-postadressen fra påmeldingen.
+workshop-registration/r10-unregisters-only-with-the-registration-s-cancellation-token	Den som melder seg på, får en hemmelig avmeldingskode. Bare med den koden kan påmeldingen meldes av.
 warm-up/r1-sends-each-warm-up-request-through-the-http-port	Ved oppstart varmer tjenesten seg opp med de samme forespørslene som brukerne sender.
 warm-up/r2-leaves-every-table-as-empty-as-it-found-it	Oppvarmingen etterlater ingen data.
 warm-up/r3-writes-the-number-of-requests-when-the-warm-up-ends	Tjenesten skriver i loggen hvor mange forespørsler oppvarmingen sendte.
@@ -64,8 +64,18 @@ co-speakers/r12-who-acts-is-checked-after-the-talk-is-found-and-before-the-other
 error-answers/answers-a-database-failure-without-its-details	Ved en feil i databasen svarer tjenesten uten å vise tekniske detaljer.
 error-answers/refuses-a-text-field-that-holds-a-nul-character	Tekst som inneholder et ugyldig nulltegn, avvises.
 request-log-filter-test/masks-each-email-in-the-logged-bodies	E-postadresser skjules i loggen.
+request-log-filter-test/masks-each-cancellation-token-in-the-logged-bodies	Avmeldingskoder skjules i loggen.
 request-log-filter-test/logs-a-large-body-in-a-short-time	Også en stor forespørsel blir logget raskt.
 utils-test/exports-a-value-that-starts-like-a-formula-as-text	I eksporten til regneark blir en verdi som ligner en formel, lagret som tekst.
 utils-test/quotes-a-value-with-a-semicolon-or-a-line-break	I eksporten til regneark får en verdi med semikolon eller linjeskift anførselstegn rundt seg.
 request-limits/refuses-a-request-body-larger-than-1-mb	Tjenesten avviser en forespørsel som er større enn 1 MB.
-request-log-filter-test/logs-a-large-body-in-a-short-time	Loggen skriver også en stor forespørsel raskt.
+programme-scheduling/r1-gives-each-slot-its-fixed-start-and-end	Programmet har tre rom med de samme fem tidspunktene i hvert rom. Start og slutt er faste.
+programme-scheduling/r1-refuses-a-room-or-slot-outside-the-venue	Bare rommene og tidspunktene som finnes, kan brukes. Andre avvises.
+programme-scheduling/r2-puts-a-talk-in-a-place-looks-it-up-takes-it-out	Komiteen kan sette et foredrag i et rom på et tidspunkt, se hva som står der, og ta det ut igjen.
+programme-scheduling/r2-puts-a-talk-only-for-a-body-with-a-talk-id	For å sette et foredrag på programmet må komiteen oppgi et foredrag som finnes.
+programme-scheduling/r3-puts-only-an-accepted-talk-on-the-programme	Bare godtatte foredrag kommer på programmet.
+programme-scheduling/r4-puts-a-workshop-only-in-the-long-slot	En workshop må ligge på det lange tidspunktet, fra 13:30 til 15:30. Andre foredrag passer på alle tidspunkter.
+programme-scheduling/r5-keeps-one-talk-per-place-and-each-talk-once	Det er ett foredrag per rom og tidspunkt, og et foredrag står bare én gang på programmet. For å flytte et foredrag tar man det ut først.
+programme-scheduling/r6-keeps-each-speaker-in-one-room-at-a-time	Ingen foredragsholder eller medforedragsholder skal være i to rom på samme tidspunkt.
+programme-scheduling/r7-leaves-the-programme-as-it-is-when-a-talk-changes	Når et foredrag endres etterpå, for eksempel trekkes, står programmet som før. Komiteen kan ta det ut.
+programme-scheduling/r8-keeps-the-rules-when-requests-come-at-the-same-time	Også når flere i komiteen endrer programmet samtidig, holder reglene.

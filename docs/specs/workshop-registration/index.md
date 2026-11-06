@@ -2,7 +2,7 @@
 
 * [Answers 400 for a request it cannot use](./answers-400-for-a-request-it-cannot-use.md)
 * [R1: Registers an attendee only with a name and a real email](./r1-registers-an-attendee-only-with-a-name-and-a-real-email.md)
-* [R10: Unregisters only with the registration's email](./r10-unregisters-only-with-the-registration-s-email.md)
+* [R10: Unregisters only with the registration's cancellation token](./r10-unregisters-only-with-the-registration-s-cancellation-token.md)
 * [R2: Takes registrations only for a workshop](./r2-takes-registrations-only-for-a-workshop.md)
 * [R3: Takes registrations only for an accepted workshop](./r3-takes-registrations-only-for-an-accepted-workshop.md)
 * [R4: Keeps the attendees of a withdrawn workshop](./r4-keeps-the-attendees-of-a-withdrawn-workshop.md)

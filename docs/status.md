@@ -1,8 +1,8 @@
 # Teststatus
 
-Laget 6. november 2026 kl. 14:47 fra versjon [3f78ae6](https://github.com/Scienta/team-11/commit/3f78ae6cec60a48735f12d72000ecd8b8f2dff82).
+Laget 6. november 2026 kl. 14:47 fra versjon [54f8f40](https://github.com/Scienta/team-11/commit/54f8f40c99318b7c7cf3878530d3237ad2921a5c).
 
-✅ Våre tester: alle 77 regler er i orden (326 av 326 eksempler).
+✅ Våre tester: alle 76 regler er i orden (323 av 323 eksempler).
 
 ❌ Arrangørenes kontroller: 1 av 24 er ikke i orden (Påmelding til workshop).
 
@@ -33,8 +33,6 @@ Alle detaljer står i [testrapporten](specs/index.md).
 - ✅ **R8** En medforedragsholder kan fjernes igjen. Hovedforedragsholderen kan ikke fjernes. — 7 av 7 eksempler · [se eksemplene](specs/co-speakers/r8-removes-a-co-speaker-never-the-main-speaker.md)
 - ✅ **R9** Et foredrag som er trukket eller avvist, kan ikke få nye eller færre medforedragsholdere. — 2 av 2 eksempler · [se eksemplene](specs/co-speakers/r9-a-withdrawn-or-rejected-talk-can-t-be-changed.md)
 - ✅ Et ukjent foredrag gir en tydelig feilmelding. — 4 av 4 eksempler · [se eksemplene](specs/co-speakers/answers-404-for-an-unknown-talk-and-400-for-a-talk-id-that-is-not-a-number.md)
-- ✅ **R12** Når forespørselen sier hvem som gjør endringen, kan bare hovedforedragsholderen legge til eller fjerne medforedragsholdere. — 12 av 12 eksempler · [se eksemplene](specs/co-speakers/r12-only-the-main-speaker-changes-the-co-speakers-when-the-request-says-who-acts.md)
-- ✅ **R12** Et ukjent foredrag gir fortsatt 404. Hvem som gjør endringen, sjekkes før foredragets status. — 5 av 5 eksempler · [se eksemplene](specs/co-speakers/r12-who-acts-is-checked-after-the-talk-is-found-and-before-the-other-rules.md)
 
 ## Karakterer
 
@@ -78,7 +76,20 @@ Alle detaljer står i [testrapporten](specs/index.md).
 - ✅ **R9** En påmelding kan bare meldes av én gang, og bare fra sin egen workshop. — 5 av 5 eksempler · [se eksemplene](specs/workshop-registration/r9-unregisters-a-registration-once-from-its-own-workshop.md)
 - ✅ **R6, R9** Den som har meldt seg av, kan melde seg på igjen. — 2 av 2 eksempler · [se eksemplene](specs/workshop-registration/r6-r9-registers-an-email-again-after-it-unregistered.md)
 - ✅ **R9** En ledig plass går til én deltaker, også når mange melder seg på samtidig. — 2 av 2 eksempler · [se eksemplene](specs/workshop-registration/r9-gives-a-freed-seat-to-one-attendee-only.md)
-- ✅ **R10** For å melde seg av må man oppgi e-postadressen fra påmeldingen. — 5 av 5 eksempler · [se eksemplene](specs/workshop-registration/r10-unregisters-only-with-the-registration-s-email.md)
+- ✅ **R10** Den som melder seg på, får en hemmelig avmeldingskode. Bare med den koden kan påmeldingen meldes av. — 8 av 8 eksempler · [se eksemplene](specs/workshop-registration/r10-unregisters-only-with-the-registration-s-cancellation-token.md)
+
+## Program
+
+- ✅ **R1** Programmet har tre rom med de samme fem tidspunktene i hvert rom. Start og slutt er faste. — 5 av 5 eksempler · [se eksemplene](specs/programme-scheduling/r1-gives-each-slot-its-fixed-start-and-end.md)
+- ✅ **R1** Bare rommene og tidspunktene som finnes, kan brukes. Andre avvises. — 4 av 4 eksempler · [se eksemplene](specs/programme-scheduling/r1-refuses-a-room-or-slot-outside-the-venue.md)
+- ✅ **R2** Komiteen kan sette et foredrag i et rom på et tidspunkt, se hva som står der, og ta det ut igjen. — 8 av 8 eksempler · [se eksemplene](specs/programme-scheduling/r2-puts-a-talk-in-a-place-looks-it-up-takes-it-out.md)
+- ✅ **R2** For å sette et foredrag på programmet må komiteen oppgi et foredrag som finnes. — 11 av 11 eksempler · [se eksemplene](specs/programme-scheduling/r2-puts-a-talk-only-for-a-body-with-a-talk-id.md)
+- ✅ **R3** Bare godtatte foredrag kommer på programmet. — 2 av 2 eksempler · [se eksemplene](specs/programme-scheduling/r3-puts-only-an-accepted-talk-on-the-programme.md)
+- ✅ **R4** En workshop må ligge på det lange tidspunktet, fra 13:30 til 15:30. Andre foredrag passer på alle tidspunkter. — 3 av 3 eksempler · [se eksemplene](specs/programme-scheduling/r4-puts-a-workshop-only-in-the-long-slot.md)
+- ✅ **R5** Det er ett foredrag per rom og tidspunkt, og et foredrag står bare én gang på programmet. For å flytte et foredrag tar man det ut først. — 4 av 4 eksempler · [se eksemplene](specs/programme-scheduling/r5-keeps-one-talk-per-place-and-each-talk-once.md)
+- ✅ **R6** Ingen foredragsholder eller medforedragsholder skal være i to rom på samme tidspunkt. — 6 av 6 eksempler · [se eksemplene](specs/programme-scheduling/r6-keeps-each-speaker-in-one-room-at-a-time.md)
+- ✅ **R7** Når et foredrag endres etterpå, for eksempel trekkes, står programmet som før. Komiteen kan ta det ut. — 3 av 3 eksempler · [se eksemplene](specs/programme-scheduling/r7-leaves-the-programme-as-it-is-when-a-talk-changes.md)
+- ✅ **R8** Også når flere i komiteen endrer programmet samtidig, holder reglene. — 3 av 3 eksempler · [se eksemplene](specs/programme-scheduling/r8-keeps-the-rules-when-requests-come-at-the-same-time.md)
 
 ## Oppstart
 
@@ -93,17 +104,8 @@ Alle detaljer står i [testrapporten](specs/index.md).
 - ✅ Ved en feil i databasen svarer tjenesten uten å vise tekniske detaljer. — 1 av 1 eksempel · [se eksemplene](specs/error-answers/answers-a-database-failure-without-its-details.md)
 - ✅ Tekst som inneholder et ugyldig nulltegn, avvises. — 2 av 2 eksempler · [se eksemplene](specs/error-answers/refuses-a-text-field-that-holds-a-nul-character.md)
 - ✅ E-postadresser skjules i loggen. — 7 av 7 eksempler · [se eksemplene](specs/request-log-filter-test/masks-each-email-in-the-logged-bodies.md)
-- ✅ Også en stor forespørsel blir logget raskt. — 3 av 3 eksempler · [se eksemplene](specs/request-log-filter-test/logs-a-large-body-in-a-short-time.md)
+- ✅ Avmeldingskoder skjules i loggen. — 10 av 10 eksempler · [se eksemplene](specs/request-log-filter-test/masks-each-cancellation-token-in-the-logged-bodies.md)
+- ✅ Også en stor forespørsel blir logget raskt. — 4 av 4 eksempler · [se eksemplene](specs/request-log-filter-test/logs-a-large-body-in-a-short-time.md)
 - ✅ I eksporten til regneark blir en verdi som ligner en formel, lagret som tekst. — 6 av 6 eksempler · [se eksemplene](specs/utils-test/exports-a-value-that-starts-like-a-formula-as-text.md)
 - ✅ I eksporten til regneark får en verdi med semikolon eller linjeskift anførselstegn rundt seg. — 4 av 4 eksempler · [se eksemplene](specs/utils-test/quotes-a-value-with-a-semicolon-or-a-line-break.md)
 - ✅ Tjenesten avviser en forespørsel som er større enn 1 MB. — 3 av 3 eksempler · [se eksemplene](specs/request-limits/refuses-a-request-body-larger-than-1-mb.md)
-- ✅ **R1** Gives each slot its fixed start and end — 5 av 5 eksempler · [se eksemplene](specs/programme-scheduling/r1-gives-each-slot-its-fixed-start-and-end.md)
-- ✅ **R1** Refuses a room or slot outside the venue — 4 av 4 eksempler · [se eksemplene](specs/programme-scheduling/r1-refuses-a-room-or-slot-outside-the-venue.md)
-- ✅ **R2** Puts a talk in a place, looks it up, takes it out — 8 av 8 eksempler · [se eksemplene](specs/programme-scheduling/r2-puts-a-talk-in-a-place-looks-it-up-takes-it-out.md)
-- ✅ **R2** Puts a talk only for a body with a talk ID — 11 av 11 eksempler · [se eksemplene](specs/programme-scheduling/r2-puts-a-talk-only-for-a-body-with-a-talk-id.md)
-- ✅ **R3** Puts only an accepted talk on the programme — 2 av 2 eksempler · [se eksemplene](specs/programme-scheduling/r3-puts-only-an-accepted-talk-on-the-programme.md)
-- ✅ **R4** Puts a workshop only in the long slot — 3 av 3 eksempler · [se eksemplene](specs/programme-scheduling/r4-puts-a-workshop-only-in-the-long-slot.md)
-- ✅ **R5** Keeps one talk per place, and each talk once — 4 av 4 eksempler · [se eksemplene](specs/programme-scheduling/r5-keeps-one-talk-per-place-and-each-talk-once.md)
-- ✅ **R6** Keeps each speaker in one room at a time — 6 av 6 eksempler · [se eksemplene](specs/programme-scheduling/r6-keeps-each-speaker-in-one-room-at-a-time.md)
-- ✅ **R7** Leaves the programme as it is when a talk changes — 3 av 3 eksempler · [se eksemplene](specs/programme-scheduling/r7-leaves-the-programme-as-it-is-when-a-talk-changes.md)
-- ✅ **R8** Keeps the rules when requests come at the same time — 3 av 3 eksempler · [se eksemplene](specs/programme-scheduling/r8-keeps-the-rules-when-requests-come-at-the-same-time.md)

@@ -1,12 +1,17 @@
 package no.scienta.cfp;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
@@ -19,6 +24,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -52,6 +58,8 @@ public class WorkshopRegistrationTest {
     JdbcTemplate jdbc;
 
     private final HttpClient http = HttpClient.newHttpClient();
+    /** The cancellation token of each registration that this test made, by registration ID. */
+    private final Map<Long, String> tokens = new HashMap<>();
 
     @BeforeEach
     void startWithNoTalks() {
@@ -102,12 +110,13 @@ public class WorkshopRegistrationTest {
     @DisplayName("R2: Takes registrations only for a workshop")
     @Description("""
             Each row submits and accepts one talk in the given format, which gets ID 1. Talk 2 does not
-            exist.
+            exist. A talk of another format refuses a registration like a closed workshop, but has no
+            list of attendees.
             """)
     @TableTest("""
         Scenario       | Format                                     | Talk ID | Register? | List?
         A workshop     | WORKSHOP                                   | 1       | 201       | 200
-        Another format | {LIGHTNING_10, LIGHTNING_20, PRESENTATION} | 1       | 404       | 404
+        Another format | {LIGHTNING_10, LIGHTNING_20, PRESENTATION} | 1       | 409       | 404
         No such talk   | WORKSHOP                                   | 2       | 404       | 404
         """)
     void takesRegistrationsOnlyForAWorkshop(String format, long talkId, int register, int list) throws Exception {
@@ -279,7 +288,7 @@ public class WorkshopRegistrationTest {
         registerOneByOne(first, List.of("ada@example.com"));
         withdrawIf("WITHDRAWN".equals(workshopStatus), first);
         unregisterIf(unregisteredBefore, first, 1);
-        assertEquals(status, unregisterAs(workshopId, registrationId, "ada@example.com").statusCode());
+        assertEquals(status, unregisterWithTokenOf(workshopId, registrationId, 1).statusCode());
         assertEquals(listedAfter, emailsListedFor(first));
     }
 
@@ -323,26 +332,54 @@ public class WorkshopRegistrationTest {
         assertEquals(listed, emailsListedFor(workshop).size());
     }
 
-    @DisplayName("R10: Unregisters only with the registration's email")
+    @DisplayName("R10: Unregisters only with the registration's cancellation token")
     @Description("""
-            Each row registers ada@example.com for an accepted workshop, and her registration gets
-            ID 1. Then it sends DELETE /workshops/1/registrations/1 with the body. A blank body sends
-            no body at all. The list is the workshop's list after the request.
+            Each row registers Ada and then Grace for an accepted workshop, so Ada's registration gets
+            ID 1. Each 201 returns a cancellation token. Then the row sends DELETE
+            /workshops/1/registrations/1 with the body. In a body, <token of Ada> stands for the token
+            from Ada's 201, and <token of Ada in capitals> for the same token in capitals. The list is
+            the workshop's list after the request.
             """)
     @TableTest("""
-        Scenario              | Body                                                             | Status? | Listed After?
-        Ada's email           | {'{"email": "ada@example.com"}', '{"email": "ADA@Example.com"}'} | 204     | []
-        Another email         | '{"email": "grace@example.com"}'                                 | 404     | [ada@example.com]
-        Body without email    | '{}'                                                             | 404     | [ada@example.com]
-        No body               |                                                                  | 400     | [ada@example.com]
-        Body that is not JSON | '{"email":'                                                      | 400     | [ada@example.com]
+        Scenario                | Body                                      | Status? | Listed After?
+        Ada's token             | '{"token": "<token of Ada>"}'             | 204     | [grace@example.com]
+        Grace's token           | '{"token": "<token of Grace>"}'           | 404     | [ada@example.com, grace@example.com]
+        Ada's token in capitals | '{"token": "<token of Ada in capitals>"}' | 404     | [ada@example.com, grace@example.com]
+        Ada's email             | '{"email": "ada@example.com"}'            | 404     | [ada@example.com, grace@example.com]
+        Body without token      | '{}'                                      | 404     | [ada@example.com, grace@example.com]
+        Token that is not text  | '{"token": 42}'                           | 404     | [ada@example.com, grace@example.com]
+        No body                 | no body                                   | 400     | [ada@example.com, grace@example.com]
+        Body that is not JSON   | '{"token":'                               | 400     | [ada@example.com, grace@example.com]
         """)
-    void unregistersOnlyWithTheRegistrationsEmail(String body, int status, List<String> listedAfter)
+    void unregistersOnlyWithTheRegistrationsCancellationToken(DeleteBody body, int status, List<String> listedAfter)
             throws Exception {
         long workshop = talkWith("WORKSHOP", "ACCEPTED");
-        registerOneByOne(workshop, List.of("ada@example.com"));
-        assertEquals(status, unregister(workshop, 1, body).statusCode());
+        registerOneByOne(workshop, List.of("ada@example.com", "grace@example.com"));
+        assertEquals(status, unregister(workshop, 1, body.withTokens(tokens.get(1L), tokens.get(2L))).statusCode());
         assertEquals(listedAfter, emailsListedFor(workshop));
+    }
+
+    @Test
+    void showsTheCancellationTokenOnlyInTheRegistrationsOwn201() throws Exception {
+        long workshop = talkWith("WORKSHOP", "ACCEPTED");
+
+        JsonNode created = JSON.readTree(register(workshop, "Ada Lovelace", "ada@example.com").body());
+        JsonNode listed = JSON.readTree(send("GET", registrationsPath(workshop), null).join().body()).get(0);
+
+        assertEquals(43, created.get("cancellationToken").asText().length(), created.toString());
+        assertFalse(listed.has("cancellationToken"), listed.toString());
+    }
+
+    @Test
+    void keepsARegistrationFromBeforeTheCancellationToken() throws Exception {
+        long workshop = talkWith("WORKSHOP", "ACCEPTED");
+        jdbc.update("INSERT INTO workshop_registration (talk_id, name, email) VALUES (?, 'Ada Lovelace', 'ada@example.com')",
+                workshop);
+
+        HttpResponse<String> response = unregister(workshop, 1, "{\"token\": \"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\"}");
+
+        assertEquals(404, response.statusCode(), response.body());
+        assertEquals(List.of("ada@example.com"), emailsListedFor(workshop));
     }
 
     // ------------------------------------------------------------------------------------------- fixture
@@ -397,14 +434,15 @@ public class WorkshopRegistrationTest {
         return send("DELETE", registrationsPath(workshop) + "/" + registrationId, body).join();
     }
 
-    private HttpResponse<String> unregisterAs(long workshop, long registrationId, String email) {
-        return unregister(workshop, registrationId, JSON.createObjectNode().put("email", email).toString());
+    /** Sends the DELETE for the registration with the cancellation token of the token owner's registration. */
+    private HttpResponse<String> unregisterWithTokenOf(long workshop, long registrationId, long tokenOwner) {
+        return unregister(workshop, registrationId, JSON.createObjectNode().put("token", tokens.get(tokenOwner)).toString());
     }
 
-    /** Unregisters Ada's registration, when the condition holds. */
+    /** Unregisters the registration with its own token, when the condition holds. */
     private void unregisterIf(boolean condition, long workshop, long registrationId) {
         if (condition) {
-            expect(204, unregisterAs(workshop, registrationId, "ada@example.com"));
+            expect(204, unregisterWithTokenOf(workshop, registrationId, registrationId));
         }
     }
 
@@ -412,7 +450,8 @@ public class WorkshopRegistrationTest {
     private void unregisterFirstIf(boolean condition, long workshop) throws Exception {
         if (condition) {
             JsonNode first = JSON.readTree(send("GET", registrationsPath(workshop), null).join().body()).get(0);
-            expect(204, unregisterAs(workshop, first.get("id").asLong(), first.get("email").asText()));
+            long registrationId = first.get("id").asLong();
+            expect(204, unregisterWithTokenOf(workshop, registrationId, registrationId));
         }
     }
 
@@ -450,8 +489,26 @@ public class WorkshopRegistrationTest {
                 .collect(Collectors.toList());
     }
 
+    /** Registers the attendee, and keeps the cancellation token of a 201. */
     private HttpResponse<String> register(long workshop, String name, String email) {
-        return send("POST", registrationsPath(workshop), registration(name, email)).join();
+        HttpResponse<String> response = send("POST", registrationsPath(workshop), registration(name, email)).join();
+        keepTheTokenOf(response);
+        return response;
+    }
+
+    private void keepTheTokenOf(HttpResponse<String> response) {
+        if (response.statusCode() == 201) {
+            JsonNode created = readJson(response.body());
+            tokens.put(created.get("id").asLong(), created.path("cancellationToken").asText(null));
+        }
+    }
+
+    private static JsonNode readJson(String text) {
+        try {
+            return JSON.readTree(text);
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 
     private static String registration(String name, String email) {
@@ -465,6 +522,27 @@ public class WorkshopRegistrationTest {
         boolean isNull() {
             return text == null;
         }
+    }
+
+    /**
+     * The body of an unregistration, as a table cell writes it. {@code no body} sends no body at all. The placeholders
+     * stand for the tokens that the registrations got.
+     */
+    record DeleteBody(String template) {
+
+        String withTokens(String tokenOfAda, String tokenOfGrace) {
+            if (template == null) {
+                return null;
+            }
+            return template.replace("<token of Ada in capitals>", tokenOfAda.toUpperCase(Locale.ROOT))
+                    .replace("<token of Ada>", tokenOfAda)
+                    .replace("<token of Grace>", tokenOfGrace);
+        }
+    }
+
+    @TypeConverter
+    public static DeleteBody parseDeleteBody(String cell) {
+        return new DeleteBody("no body".equals(cell) ? null : cell);
     }
 
     @TypeConverter

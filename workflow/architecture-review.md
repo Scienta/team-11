@@ -24,7 +24,8 @@ Java 17 has no pattern matching for `switch`, so a controller maps a sealed outc
 
 ## Log
 
-The SHAs are the ones on `push-candidate` (tip `c4fe79c`, on `origin/main` `c43bbaf`).
+The SHAs in a section are the ones that the section reviewed. A later rebase can change them: look a commit up
+by its subject with `git log --grep`.
 
 ### 2026-11-06: acceptance design review of `6841a88` (Frikke)
 
@@ -81,7 +82,7 @@ No blocker. The candidate reports 391 tests and 0 failures (`c4fe79c`). The guar
 |---|---------|-------------|------|--------|
 | G7 | `AcceptanceService.decide` and `withdraw` took up to 4 pool connections one after another. The GET paths took 1 + N connections, with N the number of talks. | One `@Transactional` for each status change (`a871d15`); `@Transactional(readOnly = true)` on the GET paths (`4ffa97b`) | before the push | done |
 | G8 | `TalkDao.lock` locks the row and also returns whether the talk exists: a command that returns a query result. | none: acceptable for a lock | — | accepted |
-| G9 | The N queries for the ratings in `GET /talks` stay inside the read-only transaction. | Replace the loop with one query that joins the ratings | tidy after | open (Frekken) |
+| G9 | The N queries for the ratings in `GET /talks` stay inside the read-only transaction. | Replace the loop with one query that joins the ratings | tidy after | done, `88e5d86`: one grouped query with `talk_id = ANY(?)` |
 
 ### 2026-11-06: Spring Boot 4, PR #5 at `060ef9b` (guardian)
 
@@ -97,9 +98,35 @@ OK to merge. A scratch merge with our local `main` on Java 25 found 7 fixes for 
 
 Start-up of the merged image at 0.15 CPU: 21.7 s with the JIT flag, 56.9 s without it. Keep the flag.
 
+### 2026-11-06: later batches (guardian)
+
+No blocker in any of them.
+
+- `afdd22a` (413 above 1 MB), `c2f50a2` (multipart off), `2b9bc6f` (email lengths): fit P1–P8.
+- `07f7d81` scheduling: fits P1, P3–P8. Locks in one order only: the slot `FOR UPDATE`, then the talk
+  `FOR SHARE`.
+- `b7ef1a1` cancellation token: only the SHA-256 hash is stored, and the comparison takes constant time.
+
+| # | Finding | Refactoring | When | Status |
+|---|---------|-------------|------|--------|
+| G10 | `ProgrammeService.takeOut` returns a `boolean` (P2). | Replace the boolean with a sealed `TakeOutOutcome` | tidy after | done, `7791c00` |
+| G11 | `scheduleIfAllowed` hides the insert in a `\|\|` inside a ternary. | Extract Method `addUnlessThere` | tidy after | done, `a223c14` |
+| G12 | The literal `"WORKSHOP"` is in `Slot.fits`, `WorkshopTalk.isWorkshop` and `ConferenceService.DURATIONS`. | Replace Type Code with Enum: a `TalkFormat` with the duration and the long-slot rule | tidy after | open |
+| G13 | The `TalkStatus` constructor takes 6 positional parameters, 4 of them booleans. | Introduce Parameter Object, or a set of capabilities for each status | tidy after | open |
+| G14 | The controller builds `new CancellationToken(token)` from any string (P3). | Introduce Factory Method `CancellationToken.parse(body)` | tidy after | done, `f0f237e` |
+| G15 | `registerIfTaken` makes and hashes a token also for a refused request. | Move Statements into the branch that saves | tidy after | done, `9fa3cc4` |
+| G16 | `RequestBodyLimitFilter.ReadBodyRequest.getReader` calls `Charset.forName` on the client's charset: 500, not 400, for an unknown charset. No endpoint reads `getReader` today. | Catch the unknown charset and answer 400 | tidy after | open |
+| G17 | `addUnlessThere` takes an `Optional<Place>` parameter. | Replace the parameter with a `boolean alreadyThere` | tidy after | open, small |
+
+For the Spring Boot 4 merge (PR #5), add to the 7 merge fixes above:
+
+8. `RequestBodyLimitFilter`: `javax.servlet` becomes `jakarta.servlet`.
+9. The `UrlHandlerFilter` bean has no `@Order`, so its order against `RequestBodyLimitFilter` (both at
+   `LOWEST_PRECEDENCE`) is not defined. Give it an explicit, higher precedence.
+
 ## Watch list
 
-- Spring Boot 4 (PR #5): after the merge, check that the 7 merge fixes above are in, the JIT flag
+- Spring Boot 4 (PR #5): after the merge, check that the 9 merge fixes above are in, the JIT flag
   first of all.
 - Merges from Carl Kristian's laptop: check only the fit with P1–P8 and what our features rely on.
   Do not repeat his team's feature review.

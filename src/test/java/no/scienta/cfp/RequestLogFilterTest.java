@@ -100,6 +100,33 @@ class RequestLogFilterTest {
         assertTrue(output.getOut().contains("request=" + loggedBody + " response=" + loggedBody), output.getOut());
     }
 
+    @DisplayName("Masks each cancellation token in the logged bodies")
+    @Description("""
+            Workshop registration R10: the 201 of a registration returns a cancellation token, and the
+            DELETE that unregisters sends it back. Each row sends the body as the request and gets the
+            same body as the response.
+            """)
+    @TableTest("""
+        Scenario                      | Body                                                                                                                                                                                                                                                                                                                       | Logged Body?
+        Token in a 201                | '{"id":1,"cancellationToken":"kQ9-x_Z2"}'                                                                                                                                                                                                                                                                                  | '{"id":1,"cancellationToken":"***"}'
+        Token in a DELETE             | '{"token":"kQ9-x_Z2"}'                                                                                                                                                                                                                                                                                                     | '{"token":"***"}'
+        Spaces around the colon       | '{"token" : "kQ9-x_Z2"}'                                                                                                                                                                                                                                                                                                   | '{"token" : "***"}'
+        Tab before the colon          | '{"token"\t:"kQ9-x_Z2"}'                                                                                                                                                                                                                                                                                                   | '{"token"\t:"***"}'
+        Tab after the colon           | '{"token":\t"kQ9-x_Z2"}'                                                                                                                                                                                                                                                                                                   | '{"token":\t"***"}'
+        Nine spaces before the colon  | '{"token"         :"kQ9-x_Z2"}'                                                                                                                                                                                                                                                                                            | '{"token"         :"***"}'
+        Token of 300 characters       | '{"token":"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"}' | '{"token":"***"}'
+        Empty token                   | '{"token":""}'                                                                                                                                                                                                                                                                                                             | '{"token":"***"}'
+        Token that is not text        | '{"token":42}'                                                                                                                                                                                                                                                                                                             | '{"token":42}'
+        Another field ending in token | '{"csrfToken":"kQ9-x_Z2"}'                                                                                                                                                                                                                                                                                                 | '{"csrfToken":"kQ9-x_Z2"}'
+        """)
+    void masksEachCancellationTokenInTheLoggedBodies(@Scenario String scenario, String body, String loggedBody,
+                                                     CapturedOutput output) throws Exception {
+        filter.doFilter(jsonRequest("DELETE", "/workshops/1/registrations/1", body), new MockHttpServletResponse(),
+                chainAnswering(204, body));
+
+        assertTrue(output.getOut().contains("request=" + loggedBody + " response=" + loggedBody), output.getOut());
+    }
+
     @Test
     void masksAnEmailThatTheCutGoesThrough(CapturedOutput output) throws Exception {
         String body = "x".repeat(RequestLogFilter.MAX_BODY_CHARS - 10) + " ada.lovelace@example.com";
@@ -120,6 +147,7 @@ class RequestLogFilterTest {
         80 KB of letters | A         | 80000   | 200
         2 MB of letters  | A         | 2000000 | 200
         2 MB of spaces   | ' '       | 2000000 | 200
+        2 MB of quotes   | '"'       | 2000000 | 200
         """)
     void logsALargeBodyInAShortTime(String character, int repeats, long timeLimitMillis) {
         String body = character.repeat(repeats);

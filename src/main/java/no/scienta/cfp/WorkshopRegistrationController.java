@@ -27,7 +27,7 @@ public class WorkshopRegistrationController {
     }
 
     @PostMapping("/workshops/{id}/registrations")
-    public ResponseEntity<Registration> register(@PathVariable long id, @RequestBody Map<String, Object> body) {
+    public ResponseEntity<RegistrationConfirmation> register(@PathVariable long id, @RequestBody Map<String, Object> body) {
         RegistrationRequest request = RegistrationRequest.parse(body)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST,
                         "a registration needs a name and a real email"));
@@ -43,31 +43,36 @@ public class WorkshopRegistrationController {
     }
 
     /**
-     * Unregisters when the body gives the registration's email (R9, R10). A wrong or missing email gets the same 404 as
-     * an unknown registration, so the answer does not tell whether the registration exists.
+     * Unregisters when the body gives the registration's cancellation token (R9, R10). A wrong or missing token gets the
+     * same 404 as an unknown registration, so the answer does not tell whether the registration exists.
      */
     @DeleteMapping("/workshops/{id}/registrations/{registrationId}")
     public ResponseEntity<Void> unregister(@PathVariable long id, @PathVariable long registrationId,
                                            @RequestBody Map<String, Object> body) {
-        boolean unregistered = body.get("email") instanceof String email
-                && service.unregister(id, registrationId, email) instanceof UnregistrationOutcome.Unregistered;
+        boolean unregistered = CancellationToken.parse(body)
+                .map(token -> service.unregister(id, registrationId, token))
+                .filter(UnregistrationOutcome.Unregistered.class::isInstance)
+                .isPresent();
         if (unregistered) {
             return ResponseEntity.noContent().build();
         }
         throw new ResponseStatusException(HttpStatus.NOT_FOUND, "no such registration for this workshop");
     }
 
-    private static ResponseEntity<Registration> created(RegistrationOutcome outcome) {
+    private static ResponseEntity<RegistrationConfirmation> created(RegistrationOutcome outcome) {
         if (outcome instanceof RegistrationOutcome.Refusal refused) {
             throw refusal(refused);
         }
-        Registration registration = ((RegistrationOutcome.Registered) outcome).registration();
-        return ResponseEntity.status(HttpStatus.CREATED).body(registration);
+        RegistrationConfirmation confirmation = ((RegistrationOutcome.Registered) outcome).confirmation();
+        return ResponseEntity.status(HttpStatus.CREATED).body(confirmation);
     }
 
     private static ResponseStatusException refusal(RegistrationOutcome.Refusal outcome) {
-        if (outcome instanceof RegistrationOutcome.NotAWorkshop) {
+        if (outcome instanceof RegistrationOutcome.NoSuchTalk) {
             return notAWorkshop();
+        }
+        if (outcome instanceof RegistrationOutcome.NotAWorkshop) {
+            return new ResponseStatusException(HttpStatus.CONFLICT, "only a workshop takes registrations");
         }
         if (outcome instanceof RegistrationOutcome.Closed closed) {
             return new ResponseStatusException(HttpStatus.CONFLICT,

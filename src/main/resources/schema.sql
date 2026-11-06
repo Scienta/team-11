@@ -88,6 +88,10 @@ CREATE TABLE IF NOT EXISTS programme_entry (
 );
 CREATE UNIQUE INDEX IF NOT EXISTS ux_programme_entry_talk ON programme_entry (talk_id);
 
+-- 2026-11 cancellation token (workshop-registration R10): only its SHA-256 hash. Older rows keep NULL and cannot be
+-- unregistered with a token.
+ALTER TABLE workshop_registration ADD COLUMN IF NOT EXISTS cancellation_token_hash TEXT;
+
 -- 2026-11 co-speakers R11: a deleted talk or speaker takes its co-speaker links with it. talk_co_speaker already
 -- exists in production, so the foreign keys are added here, each only when it is missing. NOT VALID checks only new
 -- rows, so adding a key can't fail on old ones; once both keys are in place no new orphan link can appear, and the
