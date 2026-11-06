@@ -1,7 +1,5 @@
 package no.scienta.cfp;
 
-import java.util.List;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DuplicateKeyException;
@@ -11,7 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 /**
- * Registering, looking up and searching speakers.
+ * Registering and looking up speakers.
  */
 @Service
 public class SpeakerService {
@@ -59,9 +57,5 @@ public class SpeakerService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                     "bio is longer than " + MAX_BIO_CHARACTERS + " characters");
         }
-    }
-
-    public List<Speaker> searchSpeakers(String q) {
-        return speakerDao.search(q);
     }
 }

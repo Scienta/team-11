@@ -8,7 +8,6 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.Map;
 
-import tools.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,14 +22,12 @@ import org.tabletest.junit.TypeConverter;
 
 /**
  * Error answers that must not show the database's details (security review, 2026-11-06): a text with a NUL
- * character, and a failure in the database. Runs the real app on a random port with a throwaway database, emptied
- * before each test.
+ * character. A failure in the database is in {@link DatabaseDownTest}. Runs the real app on a random port with a
+ * throwaway database, emptied before each test.
  */
 @DisplayName("Error answers")
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class ErrorAnswersTest {
-
-    private static final ObjectMapper JSON = new ObjectMapper();
 
     @DynamicPropertySource
     static void database(DynamicPropertyRegistry registry) {
@@ -63,21 +60,6 @@ public class ErrorAnswersTest {
         """)
     void refusesATextFieldWithANulCharacter(TextField field, String text, int status) throws Exception {
         assertEquals(status, send("POST", field.path(), field.body(text)).statusCode());
-    }
-
-    @DisplayName("Answers a database failure without its details")
-    @Description("""
-            The search term reaches the database as a parameter, and the database refuses the NUL
-            character (%00 in the URL). The answer has the usual error fields.
-            """)
-    @TableTest("""
-        Scenario                         | Request                        | Status? | Message?
-        Search term with a NUL character | /speakers/search?q=Grace%00Hop | 500     | the service could not complete the request
-        """)
-    void answersADatabaseFailureWithoutItsDetails(String request, int status, String message) throws Exception {
-        HttpResponse<String> res = send("GET", request, null);
-        assertEquals(status, res.statusCode(), res.body());
-        assertEquals(message, JSON.readTree(res.body()).get("message").asText(), res.body());
     }
 
     /** A text field of a request body, with the request that carries it. */

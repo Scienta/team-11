@@ -10,7 +10,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -40,11 +39,5 @@ public class SpeakerController {
     @GetMapping("/{id}/talks")
     public List<TalkResponse> talks(@PathVariable Long id) {
         return talks.getTalksForSpeaker(id);
-    }
-
-    // admin only, not in the API docs
-    @GetMapping("/search")
-    public List<Speaker> search(@RequestParam String q) {
-        return service.searchSpeakers(q);
     }
 }

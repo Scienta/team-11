@@ -48,10 +48,4 @@ public class SpeakerDao {
     public int count() {
         return jdbc.queryForObject("SELECT COUNT(*) FROM speaker", Integer.class);
     }
-
-    // Used by the old admin page to look people up.
-    public List<Speaker> search(String name) {
-        return jdbc.query(
-                "SELECT id, name, email, bio FROM speaker WHERE name ILIKE '%' || ? || '%' ORDER BY name", SPEAKER, name);
-    }
 }

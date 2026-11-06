@@ -1,6 +1,7 @@
 package no.scienta.cfp;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.net.http.HttpResponse;
@@ -198,24 +199,24 @@ public class SpeakersTest {
         assertEquals(1, created);
     }
 
-    @Test
-    void searchMatchesNamesRegardlessOfCase() throws Exception {
-        String name = "Lovelace" + UUID.randomUUID().toString().substring(0, 8);
-        assertEquals(201, api.send("POST", "/speakers",
-                "{\"name\":\"Ada " + name + "\",\"email\":\"ada-" + UUID.randomUUID() + "@example.com\"}").statusCode());
+    @DisplayName("Has no speaker search")
+    @Description("""
+            Security review S18: GET /speakers/search was anonymous, in no spec, and returned speakers
+            with their email. The path now means the speaker with the id "search", which is not a
+            number. A speaker named Ada Lovelace is registered first, and must not show in the answer.
+            """)
+    @TableTest("""
+        Scenario           | Request                | Status?
+        Empty search term  | /speakers/search?q=    | 400
+        A name as the term | /speakers/search?q=ada | 400
+        """)
+    void hasNoSpeakerSearch(String request, int status) throws Exception {
+        api.send("POST", "/speakers", speaker("Ada Lovelace", "ada-" + UUID.randomUUID() + "@example.com", null));
 
-        HttpResponse<String> found = api.get("/speakers/search?q=" + name.toLowerCase());
-        assertEquals(200, found.statusCode());
-        assertTrue(found.body().contains("\"name\":\"Ada " + name + "\""), found.body());
-    }
+        HttpResponse<String> answer = api.get(request);
 
-    @Test
-    void searchTreatsTheTermAsTextNotSql() throws Exception {
-        assertEquals(201, api.send("POST", "/speakers", speaker("Conan O'Brien", "conan@example.com", null)).statusCode());
-
-        HttpResponse<String> found = api.get("/speakers/search?q=O%27Brien");
-        assertEquals(200, found.statusCode(), found.body());
-        assertTrue(found.body().contains("\"name\":\"Conan O'Brien\""), found.body());
+        assertEquals(status, answer.statusCode(), answer.body());
+        assertFalse(answer.body().contains("Ada Lovelace"), answer.body());
     }
 
     /** A bio written in a table as a count and a character, for example {@code 500 × 😀}. */

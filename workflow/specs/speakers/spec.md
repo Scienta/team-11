@@ -37,7 +37,7 @@ Source: `request.md` in this folder (the base spec from the harness, not edited)
 | Speaker ID that is not a number | 400 | |
 | `PUT /speakers/{id}` (admin, not in the spec) | Removed: 405, the speaker does not change | It had no authorisation, so anybody could change any speaker's name and email (security review, 2026-11-06). No spec asks for it. |
 | Name, email and bio | Stored and returned as sent, not trimmed | R2: "exactly as registered" |
-| `GET /speakers/search?q=` (admin, not in the spec) | `q` is bound as a parameter, so `O'Brien` finds O'Brien. `%` and `_` in `q` still act as wildcards. | B1: the term was pasted into the SQL (injection). Escaping wildcards would be a second behaviour change; nobody has asked for it. |
+| `GET /speakers/search?q=` (admin, not in the spec) | Removed. The path now falls to `GET /speakers/{id}` with the id `search`, which is not a number: 400, and no speaker list. | Security review S18, 2026-11-06: the endpoint had no authorisation, and an empty `q` returned every speaker with name, email and bio. No spec asks for it, as for `PUT /speakers/{id}` (S1). Before (B1) the term was bound as a parameter. |
 
 ## Examples
 
