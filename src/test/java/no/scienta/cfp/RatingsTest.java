@@ -12,16 +12,18 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.api.DisplayName;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
+import org.tabletest.junit.Description;
+import org.tabletest.junit.TableTest;
 
 /**
  * Rating a talk: who counts as a reviewer. Runs the real app on a random port with a throwaway database.
  */
+@DisplayName("Ratings")
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class RatingsTest {
 
@@ -47,17 +49,21 @@ class RatingsTest {
                 + "\"level\":\"ADVANCED\",\"speakerId\":" + speaker + "}"));
     }
 
-    // Ratings R1: any positive whole number that fits in 64 bits is a reviewer
-    @ParameterizedTest(name = "reviewer {0} -> {1}")
-    @CsvSource({
-            "1,                   200",
-            "2147483647,          200",
-            "2147483648,          200",
-            "9223372036854775807, 200",
-            "9223372036854775808, 400",
-            "0,                   400",
-            "-1,                  400",
-    })
+    @DisplayName("R1: Accepts a reviewer from 1 to 9223372036854775807")
+    @Description("""
+            Reviewers are not registered: the reviewer is the number at the end of
+            PUT /talks/{id}/ratings/{reviewerId}. Each row rates a newly submitted talk with score 4.
+            Open question for the product owner: is a reviewer number above 2147483647 realistic?
+            """)
+    @TableTest("""
+        Scenario                    | Reviewer                 | Status?
+        Lowest positive number      | 1                        | 200
+        Around the largest 32-bit   | {2147483647, 2147483648} | 200
+        Largest 64-bit number       | 9223372036854775807      | 200
+        One past the largest 64-bit | 9223372036854775808      | 400
+        Zero                        | 0                        | 400
+        Negative number             | -1                       | 400
+        """)
     void acceptsAnyPositiveWholeNumberAsReviewer(String reviewer, int status) throws Exception {
         HttpResponse<String> res = send("PUT", "/talks/" + talk + "/ratings/" + reviewer, "{\"score\":4}");
         assertEquals(status, res.statusCode(), res.body());
