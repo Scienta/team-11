@@ -181,25 +181,40 @@ container has a small share of a CPU, and in a burst the JIT compiler took CPU f
 Why we missed it: no test runs with the container's CPU limit. The warm-up fixed the cold start, but
 not a burst on a warm JVM with little CPU.
 
-**Tick 137 (13:44): `workshop-registration/check-2` was FAULTY on `POST /workshops/{id}/registrations`.**
-It was the first tick of the workshop checks after the claim at tick 136. The other three workshop
-checks and the 20 earlier checks were OK.
+**Ticks 137–160 (13:44–14:07): `workshop-registration/check-2` was FAULTY on `/workshops/{id}/registrations`, 24 ticks.**
+It began at the first tick of the workshop checks after the claim at tick 136. The other three
+workshop checks and the 20 earlier checks stayed OK. bled went from −2.63 to −26.63: 24 points.
 
-- The check registered for a `SUBMITTED` workshop and got our 409. It went on.
-- Then it registered for an `ACCEPTED` `LIGHTNING_20` talk and got our 404 "no workshop with this id".
-  The check stopped there.
-- Our decision for R2 was 404 for a talk that is not a `WORKSHOP`: "the path names a workshop, so the
-  resource does not exist". The check overturned it. The fix gives 409 for a POST to a talk that
-  exists but is not a workshop, as for a workshop that is not accepted. An unknown ID stays 404, and a
-  GET for a talk that is not a workshop stays 404.
-- We found it with the harness timeline (`failure`: `POST /workshops/{id}/registrations`) and the
-  transcript of the faulty run. The harness does not show the status that it expects.
+- Step 1, ticks 137–147 (11 ticks): the check registered for a `SUBMITTED` workshop and got our 409.
+  Then it registered for an `ACCEPTED` `LIGHTNING_20` talk and got our 404 "no workshop with this id".
+  The check stopped there. Our decision for R2 was 404 for a talk that is not a `WORKSHOP`: "the path
+  names a workshop, so the resource does not exist". The fix `a242630` gives 409 for a POST to a talk
+  that exists but is not a workshop, as for a workshop that is not accepted. It went live with
+  `3393575`.
+- Step 2, ticks 148–160 (13 ticks): with the POST fixed, the check went one request further. It read
+  the list of the same `LIGHTNING_10` talk with `GET` and got our 404. The fix `dc1a353` gives 200 with
+  an empty list. Nobody can register for that talk, so its list is empty, as for a workshop that was
+  never accepted. The deploy runs for `dc1a353` and `735e1e3` were cancelled by later pushes, so the
+  fix went live only with `dfd57c9` at 14:07:19. Tick 161 was OK.
+- An unknown talk ID still gives 404, on POST and on GET.
+- We found both steps with the harness timeline (`failure`: first `POST`, then `GET`
+  `/workshops/{id}/registrations`) and the transcript of the faulty run. The harness does not show
+  the status that it expects.
 
 Why we missed it: we read "only workshops" and "only accepted workshops" as two rules, and gave them
 two status codes. The request has one rule: "Only workshops … that the committee has accepted take
 registrations". Our review compared the code with our spec, and our spec already had the split, so
 the review could not find it. A decision that splits one sentence of the request into two status
 codes needs a second look against the request itself.
+
+Why it took 24 ticks:
+
+- A check stops at its first failure, so the transcript at tick 137 showed the POST and nothing after
+  it. We fixed one step, and the next step showed only after that deploy. When a check fails on one
+  request of a sequence, check the rest of the same flow against the request before the fix is
+  deployed. Here that was the list of the same talk.
+- The fix waited in a queue with other deploys, and later pushes cancelled two of its deploy runs.
+  Deploy a fix for a FAULTY check alone, and let no other push cancel its run.
 
 ## 5. Reusable artifacts
 
