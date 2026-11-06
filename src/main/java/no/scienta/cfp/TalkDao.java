@@ -1,7 +1,11 @@
 package no.scienta.cfp;
 
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
@@ -65,18 +69,28 @@ public class TalkDao {
     }
 
     /**
-     * Inserts the talk only if the speaker has fewer than {@code max} talks that count. A withdrawn talk does not
-     * count (Acceptance R7). Returns the new id, or null.
+     * Inserts the talk only if the speaker has fewer than {@code max} talks that count towards the limit
+     * ({@link TalkStatus#countsTowardLimit()}). Returns the new id, or null.
      * The speaker row is locked first so two submissions for the same speaker can't both see room under the limit.
      */
     @Transactional
     public Long insertIfBelow(int max, String title, String format, int duration, String level, long speakerId, long submittedAt) {
         jdbc.queryForList("SELECT id FROM speaker WHERE id = ? FOR UPDATE", speakerId);
+        List<String> outsideTheLimit = Arrays.stream(TalkStatus.values())
+                .filter(status -> !status.countsTowardLimit())
+                .map(Enum::name)
+                .collect(Collectors.toList());
+        String placeholders = outsideTheLimit.stream().map(status -> "?").collect(Collectors.joining(", "));
+        Object[] args = Stream.of(Stream.of(title, format, duration, level, speakerId, submittedAt, speakerId),
+                        outsideTheLimit.stream(), Stream.of(max))
+                .flatMap(Function.identity())
+                .toArray();
         List<Long> ids = jdbc.queryForList(
                 "INSERT INTO talk (title, format, duration, level, status, speaker_id, submitted_at) "
                         + "SELECT ?, ?, ?, ?, 'SUBMITTED', ?, ? "
-                        + "WHERE (SELECT COUNT(*) FROM talk WHERE speaker_id = ? AND status <> 'WITHDRAWN') < ? RETURNING id",
-                Long.class, title, format, duration, level, speakerId, submittedAt, speakerId, max);
+                        + "WHERE (SELECT COUNT(*) FROM talk WHERE speaker_id = ? AND status NOT IN (" + placeholders + ")) < ? "
+                        + "RETURNING id",
+                Long.class, args);
         return ids.isEmpty() ? null : ids.get(0);
     }
 

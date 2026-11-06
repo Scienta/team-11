@@ -6,25 +6,27 @@ import java.util.Set;
 
 /**
  * Where a talk is in the acceptance state machine, and which moves between the statuses the rules allow
- * (Acceptance R1–R4, R8). Each status is declared after the statuses it can come from.
+ * (Acceptance R1–R4, R7, R8). Each status is declared after the statuses it can come from.
  */
 public enum TalkStatus {
-    SUBMITTED(Set.of(), 0, true),
-    WAITLISTED(Set.of(SUBMITTED), 0, true),
-    ACCEPTED(Set.of(SUBMITTED, WAITLISTED), 2, false),
-    REJECTED(Set.of(SUBMITTED, WAITLISTED), 0, false),
-    WITHDRAWN(Set.of(SUBMITTED, WAITLISTED, ACCEPTED), 0, false);
+    SUBMITTED(Set.of(), 0, true, true),
+    WAITLISTED(Set.of(SUBMITTED), 0, true, true),
+    ACCEPTED(Set.of(SUBMITTED, WAITLISTED), 2, false, true),
+    REJECTED(Set.of(SUBMITTED, WAITLISTED), 0, false, true),
+    WITHDRAWN(Set.of(SUBMITTED, WAITLISTED, ACCEPTED), 0, false, false);
 
     private static final Set<TalkStatus> DECISIONS = EnumSet.of(ACCEPTED, REJECTED, WAITLISTED);
 
     private final Set<TalkStatus> reachableFrom;
     private final int reviewersNeeded;
     private final boolean openForRating;
+    private final boolean countsTowardLimit;
 
-    TalkStatus(Set<TalkStatus> reachableFrom, int reviewersNeeded, boolean openForRating) {
+    TalkStatus(Set<TalkStatus> reachableFrom, int reviewersNeeded, boolean openForRating, boolean countsTowardLimit) {
         this.reachableFrom = reachableFrom;
         this.reviewersNeeded = reviewersNeeded;
         this.openForRating = openForRating;
+        this.countsTowardLimit = countsTowardLimit;
     }
 
     /** The statuses from which a talk can move to this status (R2, R4). */
@@ -44,6 +46,11 @@ public enum TalkStatus {
     /** Whether a reviewer can still rate a talk with this status (R8). */
     public boolean isOpenForRating() {
         return openForRating;
+    }
+
+    /** Whether a talk with this status counts towards the speaker's limit of talks (R7). */
+    public boolean countsTowardLimit() {
+        return countsTowardLimit;
     }
 
     /** The committee's decision from a request body value: only the three decisions of R1. */
