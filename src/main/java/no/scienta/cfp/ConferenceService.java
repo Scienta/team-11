@@ -4,10 +4,10 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -33,14 +33,9 @@ public class ConferenceService {
 
     private static final int MAX_TALKS_PER_SPEAKER = 3;
 
-    private static final Map<String, Integer> DURATIONS = new HashMap<>();
-
-    static {
-        DURATIONS.put("LIGHTNING_10", 10);
-        DURATIONS.put("LIGHTNING_20", 20);
-        DURATIONS.put("PRESENTATION", 45);
-        DURATIONS.put("WORKSHOP", 120);
-    }
+    /** The order the 400 message has always listed the formats in; clients may compare the message. */
+    private static final List<TalkFormat> FORMATS_IN_ERROR_MESSAGE = List.of(
+            TalkFormat.WORKSHOP, TalkFormat.PRESENTATION, TalkFormat.LIGHTNING_20, TalkFormat.LIGHTNING_10);
 
     private final SpeakerDao speakerDao;
     private final TalkDao talkDao;
@@ -128,9 +123,8 @@ public class ConferenceService {
         if (form.title == null || form.title.trim().isEmpty()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "title is required");
         }
-        if (form.format == null || !DURATIONS.containsKey(form.format)) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "format must be one of " + DURATIONS.keySet());
-        }
+        TalkFormat format = constantNamed(TalkFormat.class, form.format).orElseThrow(() ->
+                new ResponseStatusException(HttpStatus.BAD_REQUEST, "format must be one of " + FORMATS_IN_ERROR_MESSAGE));
         if (form.level == null || !Arrays.asList("BEGINNER", "INTERMEDIATE", "ADVANCED").contains(form.level)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "unknown level");
         }
@@ -141,28 +135,18 @@ public class ConferenceService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "speaker " + form.speakerId + " does not exist");
         }
 
-        int duration;
-        switch (form.format) {
-            case "LIGHTNING_10":
-                duration = 10;
-                break;
-            case "LIGHTNING_20":
-                duration = 20;
-                break;
-            case "WORKSHOP":
-                duration = 120;
-                break;
-            default:
-                duration = 45;
-        }
-
-        Long id = checkSubmissionLimit(form, duration);
+        Long id = checkSubmissionLimit(form, format.durationMinutes());
         if (id == null) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "a speaker can submit at most " + MAX_TALKS_PER_SPEAKER + " talks");
         }
         Map<String, Object> speaker = speakerDao.findById(form.speakerId);
         notifications.talkSubmitted((String) speaker.get("email"), form.title);
         return getTalk(id);
+    }
+
+    /** The constant with exactly this name, in capitals as declared; none for null or any other name. */
+    private static <E extends Enum<E>> Optional<E> constantNamed(Class<E> type, String name) {
+        return Arrays.stream(type.getEnumConstants()).filter(constant -> constant.name().equals(name)).findFirst();
     }
 
     private Long checkSubmissionLimit(TalkForm form, int duration) {
