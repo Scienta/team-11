@@ -36,6 +36,7 @@ Source: `request.md` in this folder (the base spec from the harness, not edited)
 | Speaker ID that is not a number | 400 | |
 | `PUT /speakers/{id}` (admin, not in the spec) | Same email and bio rules as POST | One rule for one business concept. The old limit for the bio was 1000. |
 | Name, email and bio | Stored and returned as sent, not trimmed | R2: "exactly as registered" |
+| `GET /speakers/search?q=` (admin, not in the spec) | `q` is bound as a parameter, so `O'Brien` finds O'Brien. `%` and `_` in `q` still act as wildcards. | B1: the term was pasted into the SQL (injection). Escaping wildcards would be a second behaviour change; nobody has asked for it. |
 
 ## Examples
 
