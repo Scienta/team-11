@@ -46,10 +46,10 @@ public class ProgrammeService {
         return dao.entryAt(place);
     }
 
-    /** Takes the talk out of the place, whatever its status now (R2, R7). Returns whether a talk was there. */
+    /** Takes the talk out of the place, whatever its status now (R2, R7). */
     @Transactional
-    public boolean takeOut(Place place) {
+    public TakeOutOutcome takeOut(Place place) {
         dao.lockSlot(place.slot());
-        return dao.remove(place);
+        return dao.remove(place) ? new TakeOutOutcome.TakenOut() : new TakeOutOutcome.NothingThere();
     }
 }

@@ -43,7 +43,7 @@ public class ProgrammeController {
 
     @DeleteMapping
     public ResponseEntity<Void> takeOut(@PathVariable String room, @PathVariable String slot) {
-        if (service.takeOut(place(room, slot))) {
+        if (service.takeOut(place(room, slot)) instanceof TakeOutOutcome.TakenOut) {
             return ResponseEntity.noContent().build();
         }
         throw nothingThere();
