@@ -50,8 +50,8 @@ public class ProgrammeController {
     }
 
     private static Place place(String room, String slot) {
-        return Place.parse(room, slot).orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                "the room must be one of R1, R2, R3 and the slot one of S1-S5"));
+        return Place.parse(room, slot).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                "no such room and slot: the room is one of R1, R2, R3 and the slot one of S1-S5"));
     }
 
     private static ProgrammeEntry scheduled(ScheduleOutcome outcome) {
