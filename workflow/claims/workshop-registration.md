@@ -13,6 +13,11 @@ PO approval: **approved by Ingvild Hardeng on Stein's behalf**: "Jeg godkjenner 
 #team-11, 14:42:57 CET (13:42:57Z), after the claim request (ts `1793972501.624669`). Stein himself has not
 answered in the claim thread.
 
+**Correction (14:51–14:53):** Stein objected in Slack at 14:51:33 CET that he gave nobody the authority to
+approve for him. Nils Christian answered in Stein's thread at 14:53: it was our mistake to accept
+Ingvild's approval on his behalf, and from now on we wait for Stein's own «godkjent». The claim at tick
+136 was made without the product owner's own approval. A claim is permanent, so it stays.
+
 `TEAM_URL=https://fagsem-h2026-team-11.scienta.cloud`
 
 ## Security: tested and OK?
