@@ -94,10 +94,30 @@ class TalksTest {
         assertEquals(status, submit("PRESENTATION", level).statusCode());
     }
 
+    @DisplayName("Accepts a talk only with a real title")
+    @Description("""
+            A blank cell sends JSON null as the title. Each row is the first talk of a newly
+            registered speaker, a PRESENTATION at level BEGINNER.
+            """)
+    @TableTest("""
+        Scenario     | Title               | Status?
+        A real title | Legacy is a feeling | 201
+        Empty        | ''                  | 400
+        Only spaces  | '   '               | 400
+        No title     |                     | 400
+        """)
+    void acceptsATalkOnlyWithARealTitle(String title, int status) throws Exception {
+        assertEquals(status, submit(title, "PRESENTATION", "BEGINNER").statusCode());
+    }
+
     /** Submits one talk for a newly registered speaker. */
     private HttpResponse<String> submit(String format, String level) throws Exception {
+        return submit("Legacy is a feeling", format, level);
+    }
+
+    private HttpResponse<String> submit(String title, String format, String level) throws Exception {
         String talk = JSON.writeValueAsString(JSON.createObjectNode()
-                .put("title", "Legacy is a feeling")
+                .put("title", title)
                 .put("format", format)
                 .put("level", level)
                 .put("speakerId", Long.parseLong(newSpeaker())));
