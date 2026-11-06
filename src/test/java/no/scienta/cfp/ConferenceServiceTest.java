@@ -14,16 +14,13 @@ class ConferenceServiceTest {
 
     private SpeakerDao speakerDao;
     private TalkDao talkDao;
-    private RatingDao ratingDao;
     private ConferenceService service;
 
     @BeforeEach
     void setUp() {
         speakerDao = mock(SpeakerDao.class);
         talkDao = mock(TalkDao.class);
-        ratingDao = mock(RatingDao.class);
-        service = new ConferenceService(speakerDao, talkDao, ratingDao, mock(TalkStatusDao.class),
-                mock(NotificationService.class));
+        service = new ConferenceService(speakerDao, talkDao, mock(RatingService.class), mock(NotificationService.class));
     }
 
     @Test

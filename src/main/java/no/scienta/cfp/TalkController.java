@@ -18,9 +18,11 @@ import org.springframework.web.server.ResponseStatusException;
 public class TalkController {
 
     private final ConferenceService service;
+    private final RatingService ratings;
 
-    public TalkController(ConferenceService service) {
+    public TalkController(ConferenceService service, RatingService ratings) {
         this.service = service;
+        this.ratings = ratings;
     }
 
     @PostMapping("/talks")
@@ -52,6 +54,6 @@ public class TalkController {
     @PutMapping("/talks/{id}/ratings/{reviewerId}")
     public Map<String, Object> rate(@PathVariable Long id, @PathVariable Long reviewerId,
                                     @RequestBody Map<String, Object> body) {
-        return service.rate(id, reviewerId, body);
+        return ratings.rate(id, reviewerId, body);
     }
 }
