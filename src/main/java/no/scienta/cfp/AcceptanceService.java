@@ -24,41 +24,42 @@ public class AcceptanceService {
         this.statusDao = statusDao;
     }
 
-    public TalkDto decide(long talkId, Map<String, Object> body) {
+    public StatusChange decide(long talkId, Map<String, Object> body) {
         TalkStatus decision = TalkStatus.parseDecision(body.get("status"))
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST,
                         "status must be ACCEPTED, REJECTED or WAITLISTED"));
-        return moveTo(findTalk(talkId), decision);
+        return findTalk(talkId)
+                .map(talk -> moveTo(talk, decision))
+                .orElseGet(StatusChange.NotFound::new);
     }
 
-    public TalkDto withdraw(long talkId, Map<String, Object> body) {
+    public StatusChange withdraw(long talkId, Map<String, Object> body) {
         long speakerId = speakerIdOf(body.get("speakerId"));
-        TalkDto talk = findTalk(talkId);
-        if (talk.speakerId != speakerId) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "only the main speaker can withdraw the talk");
-        }
-        return moveTo(talk, TalkStatus.WITHDRAWN);
+        return findTalk(talkId)
+                .map(talk -> withdrawFor(talk, speakerId))
+                .orElseGet(StatusChange.NotFound::new);
     }
 
-    /** Moves the talk and answers with the talk as the API shows it, ratings included. */
-    private TalkDto moveTo(TalkDto talk, TalkStatus next) {
-        if (!statusDao.moveTo(talk.id, next)) {
-            TalkStatus current = TalkStatus.valueOf(findTalk(talk.id).status);
-            throw new ResponseStatusException(HttpStatus.CONFLICT, refusal(current, next));
+    private StatusChange withdrawFor(TalkDto talk, long speakerId) {
+        return talk.speakerId == speakerId ? moveTo(talk, TalkStatus.WITHDRAWN) : new StatusChange.NotMainSpeaker();
+    }
+
+    /**
+     * Moves the talk if the rules allow it. A refusal is explained from the status that the talk had when it was
+     * read; if another request changed the talk in between, the reason can be out of date, but the talk is not
+     * changed either way.
+     */
+    private StatusChange moveTo(TalkDto talk, TalkStatus next) {
+        if (statusDao.moveTo(talk.id, next)) {
+            return new StatusChange.Moved(conference.getTalk(talk.id));
         }
-        return conference.getTalk(talk.id);
+        TalkStatus current = TalkStatus.valueOf(talk.status);
+        return current.canMoveTo(next) ? new StatusChange.NeedsReviewers(next) : new StatusChange.NotAllowed(current, next);
     }
 
     /** The talk without its ratings. */
-    private TalkDto findTalk(long talkId) {
-        return Optional.ofNullable(talkDao.findById(talkId))
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "talk not found"));
-    }
-
-    private static String refusal(TalkStatus current, TalkStatus next) {
-        return current.canMoveTo(next)
-                ? "a talk needs ratings from " + next.reviewersNeeded() + " different reviewers to become " + next
-                : "a talk that is " + current + " cannot become " + next;
+    private Optional<TalkDto> findTalk(long talkId) {
+        return Optional.ofNullable(talkDao.findById(talkId));
     }
 
     private static long speakerIdOf(Object value) {
