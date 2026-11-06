@@ -71,50 +71,57 @@ class CoSpeakersTest {
     @Description("""
             Main is the talk's main speaker, Ada, Bob and Cy are other registered speakers, and Nobody
             is a speaker id that is not registered. The co-speakers after are read from GET /talks/{id}.
+            A blank message is not checked.
             """)
     @TableTest("""
-        Scenario                          | Co-speakers before | Added  | Status? | Co-speakers after?
-        R1: first co-speaker              | []                 | Ada    | 200     | [Ada]
-        R1: second, in the order added    | [Ada]              | Bob    | 200     | [Ada, Bob]
-        R2: a third co-speaker            | [Ada, Bob]         | Cy     | 409     | [Ada, Bob]
-        R5: already a co-speaker          | [Ada]              | Ada    | 200     | [Ada]
-        R5: already one, at the limit     | [Ada, Bob]         | Bob    | 200     | [Ada, Bob]
-        R3: the main speaker              | []                 | Main   | 409     | []
-        R1: an unregistered speaker       | []                 | Nobody | 404     | []
-        Speaker id that is not a number   | []                 | abc    | 400     | []
+        Scenario                        | Co-speakers before | Added                | Status? | Message?                                 | Co-speakers after?
+        R1: first co-speaker            | []                 | Ada                  | 200     |                                          | [Ada]
+        R1: second, in the order added  | [Ada]              | Bob                  | 200     |                                          | [Ada, Bob]
+        R2: a third co-speaker          | [Ada, Bob]         | Cy                   | 409     | a talk has at most 2 co-speakers         | [Ada, Bob]
+        R5: already a co-speaker        | [Ada]              | Ada                  | 200     |                                          | [Ada]
+        R5: already one, at the limit   | [Ada, Bob]         | Bob                  | 200     |                                          | [Ada, Bob]
+        R3: the main speaker            | []                 | Main                 | 409     | "the main speaker can't be a co-speaker" | []
+        R1: an unregistered speaker     | []                 | Nobody               | 404     | speaker not found                        | []
+        No speaker has id 0 or below    | []                 | {0, -1}              | 404     | speaker not found                        | []
+        Speaker id that is not a number | []                 | abc                  | 400     |                                          | []
+        Speaker id past 64 bits         | []                 | 99999999999999999999 | 400     |                                          | []
         """)
-    void addsACoSpeaker(List<String> before, String added, int status, List<String> after) throws Exception {
+    void addsACoSpeaker(List<String> before, String added, int status, String message, List<String> after)
+            throws Exception {
         add(before);
-        HttpResponse<String> res = send("PUT", coSpeakerPath(added), null);
-        assertEquals(status, res.statusCode(), res.body());
+        assertAnswer(status, message, send("PUT", coSpeakerPath(added), null));
         assertEquals(after, coSpeakersOfTheTalk());
     }
 
     @DisplayName("R8: Removes a co-speaker, never the main speaker")
     @Description("""
             Removing a registered speaker who is not a co-speaker changes nothing, so a double-click
-            on remove does not fail.
+            on remove does not fail. A blank message is not checked.
             """)
     @TableTest("""
-        Scenario                        | Co-speakers before | Removed | Status? | Co-speakers after?
-        A co-speaker                    | [Ada, Bob]         | Ada     | 200     | [Bob]
-        Not a co-speaker                | [Ada]              | Bob     | 200     | [Ada]
-        The main speaker                | [Ada]              | Main    | 409     | [Ada]
-        An unregistered speaker         | [Ada]              | Nobody  | 404     | [Ada]
-        Speaker id that is not a number | [Ada]              | abc     | 400     | [Ada]
+        Scenario                        | Co-speakers before | Removed              | Status? | Message?                            | Co-speakers after?
+        A co-speaker                    | [Ada, Bob]         | Ada                  | 200     |                                     | [Bob]
+        Not a co-speaker                | [Ada]              | Bob                  | 200     |                                     | [Ada]
+        The main speaker                | [Ada]              | Main                 | 409     | "the main speaker can't be removed" | [Ada]
+        An unregistered speaker         | [Ada]              | Nobody               | 404     | speaker not found                   | [Ada]
+        No speaker has id 0 or below    | [Ada]              | {0, -1}              | 404     | speaker not found                   | [Ada]
+        Speaker id that is not a number | [Ada]              | abc                  | 400     |                                     | [Ada]
+        Speaker id past 64 bits         | [Ada]              | 99999999999999999999 | 400     |                                     | [Ada]
         """)
-    void removesACoSpeaker(List<String> before, String removed, int status, List<String> after) throws Exception {
+    void removesACoSpeaker(List<String> before, String removed, int status, String message, List<String> after)
+            throws Exception {
         add(before);
-        HttpResponse<String> res = send("DELETE", coSpeakerPath(removed), null);
-        assertEquals(status, res.statusCode(), res.body());
+        assertAnswer(status, message, send("DELETE", coSpeakerPath(removed), null));
         assertEquals(after, coSpeakersOfTheTalk());
     }
 
     @DisplayName("Answers 404 for an unknown talk and 400 for a talk id that is not a number")
     @TableTest("""
-        Scenario                     | Method        | Talk       | Status?
-        Unknown talk                 | {PUT, DELETE} | 2147483647 | 404
-        Talk id that is not a number | {PUT, DELETE} | abc        | 400
+        Scenario                     | Method        | Talk                 | Status?
+        Unknown talk                 | {PUT, DELETE} | 2147483647           | 404
+        No talk has id 0 or below    | {PUT, DELETE} | {0, -1}              | 404
+        Talk id that is not a number | {PUT, DELETE} | abc                  | 400
+        Talk id past 64 bits         | {PUT, DELETE} | 99999999999999999999 | 400
         """)
     void answersForAnUnknownTalk(String method, String talkId, int status) throws Exception {
         HttpResponse<String> res = send(method, "/talks/" + talkId + "/co-speakers/" + speakers.get("Ada"), null);
@@ -199,8 +206,9 @@ class CoSpeakersTest {
     void coSpeakingDoesNotCountTowardsTheLimit() throws Exception {
         add(List.of("Ada"));
         for (int i = 0; i < 3; i++) {
-            submit(speakers.get("Ada"));
+            assertEquals(201, send("POST", "/talks", talkBody(speakers.get("Ada"))).statusCode());
         }
+        assertEquals(409, send("POST", "/talks", talkBody(speakers.get("Ada"))).statusCode());
     }
 
     @DisplayName("R9: A withdrawn or rejected talk can't be changed")
@@ -244,6 +252,14 @@ class CoSpeakersTest {
                 .toList();
         sent.stream().map(CompletableFuture::join).forEach(res -> assertEquals(200, res.statusCode(), res.body()));
         assertEquals(List.of("Ada"), coSpeakersOfTheTalk());
+    }
+
+    /** The status, and the error message when the row gives one. */
+    private static void assertAnswer(int status, String message, HttpResponse<String> res) throws Exception {
+        assertEquals(status, res.statusCode(), res.body());
+        if (message != null) {
+            assertEquals(message, JSON.readTree(res.body()).get("message").asText(), res.body());
+        }
     }
 
     private void add(List<String> coSpeakers) throws Exception {
