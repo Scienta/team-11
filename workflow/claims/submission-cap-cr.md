@@ -24,7 +24,7 @@ whether both requests were approved.
 
 | Check | Evidence | State |
 |-------|----------|-------|
-| The architecture guardian reports no blocker | We found no entry for `f95fd45` in [`workflow/architecture-review.md`](../architecture-review.md). | **not seen by us** |
+| The architecture guardian reports no blocker | Fiffi reviewed `267cb08` and `f95fd45` (in a message to The Hand; to be logged in [`workflow/architecture-review.md`](../architecture-review.md)): "OK, no blocker". The statuses that count stay in `TalkStatus.countsTowardLimit` (only `REJECTED` changes, and G13 does not grow). One SQL constant, `TalkDao.TALKS_THAT_COUNT`, does the count for both paths. The lock order is talk, then speaker, so there is no cycle. The Boot 4 rebase has no javax and no Jackson 2. Tidy: `MAX_TALKS_PER_SPEAKER` moved into `TalkLimit` in `2be6fff`, also cleared. | done |
 
 ## Functionality: what is implemented, and is it tested OK?
 
