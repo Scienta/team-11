@@ -11,8 +11,8 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
 /**
- * The HTTP API of the acceptance state machine: the committee's decision and the speaker's withdrawal. Turns each
- * refused status change into its HTTP status.
+ * The HTTP API of the acceptance state machine: the committee's decision and the speaker's withdrawal. Parses the
+ * request bodies and turns each refused status change into its HTTP status.
  */
 @RestController
 public class AcceptanceController {
@@ -25,12 +25,16 @@ public class AcceptanceController {
 
     @PutMapping("/talks/{id}/status")
     public TalkDto decide(@PathVariable Long id, @RequestBody Map<String, Object> body) {
-        return answer(service.decide(id, body));
+        Decision decision = Decision.parse(body).orElseThrow(() -> new ResponseStatusException(
+                HttpStatus.BAD_REQUEST, "status must be ACCEPTED, REJECTED or WAITLISTED"));
+        return answer(service.decide(id, decision));
     }
 
     @PostMapping("/talks/{id}/withdraw")
     public TalkDto withdraw(@PathVariable Long id, @RequestBody Map<String, Object> body) {
-        return answer(service.withdraw(id, body));
+        Withdrawal withdrawal = Withdrawal.parse(body).orElseThrow(() -> new ResponseStatusException(
+                HttpStatus.BAD_REQUEST, "speakerId must be a whole number"));
+        return answer(service.withdraw(id, withdrawal));
     }
 
     private static TalkDto answer(StatusChange change) {

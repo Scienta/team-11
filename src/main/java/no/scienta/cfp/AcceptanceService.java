@@ -1,11 +1,8 @@
 package no.scienta.cfp;
 
-import java.util.Map;
 import java.util.Optional;
 
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 
 /**
  * The committee's decisions on a talk and the speaker's withdrawal (Acceptance R1–R6). A refused change leaves the
@@ -24,19 +21,15 @@ public class AcceptanceService {
         this.statusDao = statusDao;
     }
 
-    public StatusChange decide(long talkId, Map<String, Object> body) {
-        TalkStatus decision = TalkStatus.parseDecision(body.get("status"))
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                        "status must be ACCEPTED, REJECTED or WAITLISTED"));
+    public StatusChange decide(long talkId, Decision decision) {
         return findTalk(talkId)
-                .map(talk -> moveTo(talk, decision))
+                .map(talk -> moveTo(talk, decision.status()))
                 .orElseGet(StatusChange.NotFound::new);
     }
 
-    public StatusChange withdraw(long talkId, Map<String, Object> body) {
-        long speakerId = speakerIdOf(body.get("speakerId"));
+    public StatusChange withdraw(long talkId, Withdrawal withdrawal) {
         return findTalk(talkId)
-                .map(talk -> withdrawFor(talk, speakerId))
+                .map(talk -> withdrawFor(talk, withdrawal.speakerId()))
                 .orElseGet(StatusChange.NotFound::new);
     }
 
@@ -60,12 +53,5 @@ public class AcceptanceService {
     /** The talk without its ratings. */
     private Optional<TalkDto> findTalk(long talkId) {
         return Optional.ofNullable(talkDao.findById(talkId));
-    }
-
-    private static long speakerIdOf(Object value) {
-        if (value instanceof Integer || value instanceof Long) {
-            return ((Number) value).longValue();
-        }
-        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "speakerId must be a whole number");
     }
 }
