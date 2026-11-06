@@ -38,13 +38,13 @@ ids), placed last.
 | Talk or speaker id that is not a number, or beyond a 64-bit number | 400 | Same as the base features' path ids. |
 | Talk or speaker id 0 or negative | 404 | No talk or speaker has that id. |
 | A third co-speaker | 409 `a talk has at most 2 co-speakers` | R2. A conflict with the talk's current state; removing one makes room. |
-| The main speaker as co-speaker | 409 `the main speaker can't be a co-speaker` | R3. A conflict with the talk's state (its `speakerId`), not a malformed request. |
+| The main speaker as co-speaker (PUT) | 400 `the main speaker can't be a co-speaker` | R3. The rules never allow this request, whatever the talk's state; no change to the talk makes it possible. Changed from 409 at tick 171: the harness check `co-speakers/check-2` rejected our 409. A 409 stays for a conflict with the current state that can go away (R2, R9). |
 | Adding an existing co-speaker, also when the talk has two | 200, talk unchanged | R5. A double-click must not fail. The co-speaker keeps their place in the order. |
-| Removing a registered speaker who isn't a co-speaker | 200, talk unchanged | DELETE is idempotent, like R5 for PUT: a double-click on remove must not fail. |
-| Removing the main speaker | 409 `the main speaker can't be removed` | R8. A conflict with the talk's state. |
+| Removing a registered speaker who isn't a co-speaker, or no longer is one | 404 `this speaker is not a co-speaker of the talk`, talk unchanged | The resource in the path, the speaker's place among the talk's co-speakers, does not exist. Changed from 200 at tick 171: the harness check `co-speakers/check-1` rejected our 200 ("DELETE is idempotent"). A second click on remove gets 404. |
+| Removing the main speaker | 409 `the main speaker can't be removed`, unchanged at tick 171 | R8. Coordinator's decision at tick 171 (Fiffi): no harness check has rejected it. The alternative would be 404, because the main speaker is never a co-speaker. |
 | Removing a co-speaker and adding them again | They go last | R4: the order they were added. |
 | Withdrawn or rejected talk | 409 `a withdrawn or rejected talk can't be changed` | R9. A talk gets these statuses through the `acceptance` endpoints, `POST /talks/{id}/withdraw` and `PUT /talks/{id}/status`. The talk row lock makes a co-speaker change and a status change wait for each other. Checked after the 404s, before the other rules. |
-| Order of checks | `actingSpeakerId` 400, talk 404, R12 403, speaker 404, R9, R3/R8, R5, R2 | The most basic error first. R5 before R2, so re-adding a co-speaker at the limit is still 200. R12 is placed as acceptance places the withdrawal's 403: after the talk 404 and before the status (R9), so someone who may not act learns nothing about the talk's status or the speaker in the path. |
+| Order of checks | `actingSpeakerId` 400, talk 404, R12 403, speaker 404, R9, R3 (PUT, 400) or R8 (DELETE, 409), then for PUT R5, R2 and for DELETE "not a co-speaker" 404 | The most basic error first. R5 before R2, so re-adding a co-speaker at the limit is still 200. R12 is placed as acceptance places the withdrawal's 403: after the talk 404 and before the status (R9), so someone who may not act learns nothing about the talk's status or the speaker in the path. |
 | A co-speaker's own talk list | Unchanged: main-speaker talks only | R6. Applies to `GET /speakers/{id}/talks` and `GET /talks?speakerId=`. |
 | Request body on PUT or DELETE | Ignored | The request says no body. |
 | Who acts (R12) | Optional query parameter `actingSpeakerId` on PUT and DELETE. Absent, or an empty value (`actingSpeakerId=`): no check, as before R12. | Product owner (Stein, 2026-11-06 14:21): yes, only the main speaker. The request defines no body for PUT, and the harness sends no actor, so a required actor would break the harness checks. An empty value counts as absent, as `includeWithdrawn=` does in acceptance. |
@@ -67,7 +67,7 @@ unregistered speaker id.
 | [Ada, Bob] | Cy | 409 | [Ada, Bob] |
 | [Ada] | Ada | 200 | [Ada] |
 | [Ada, Bob] | Bob | 200 | [Ada, Bob] |
-| none | Main | 409 | [] |
+| none | Main | 400 | [] |
 | none | Nobody | 404 | [] |
 | none | `abc` | 400 | [] |
 
@@ -76,7 +76,8 @@ unregistered speaker id.
 | Co-speakers before | DELETE | Status | `coSpeakerIds` after |
 |--------------------|--------|--------|----------------------|
 | [Ada, Bob] | Ada | 200 | [Bob] |
-| [Ada] | Bob | 200 | [Ada] |
+| [Ada] | Bob | 404 | [Ada] |
+| none, Ada removed before | Ada | 404 | [] |
 | [Ada] | Main | 409 | [Ada] |
 | [Ada] | Nobody | 404 | [Ada] |
 | [Ada] | `abc` | 400 | [Ada] |
