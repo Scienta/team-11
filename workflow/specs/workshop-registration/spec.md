@@ -4,6 +4,9 @@ Source: `request.md` in this folder (the feature request from the harness, not e
 
 ## Rules
 
+R1–R8 come from the feature request. R9 comes from the product owner's answer in Slack #team-11
+on 2026-11-06 at 14:01.
+
 | ID | Rule |
 |----|------|
 | R1 | An attendee registers for a workshop with a name and an email. Both are required. |
@@ -14,6 +17,7 @@ Source: `request.md` in this folder (the feature request from the harness, not e
 | R6 | One registration per email per workshop, whatever the letter case: `ada@example.com` and `ADA@Example.com` are the same person. |
 | R7 | The same person can register for several workshops. |
 | R8 | The organisers see the attendees of a workshop, in the order they registered. |
+| R9 | An attendee can unregister after registering, so that the seat goes to someone else. |
 
 ## API
 
@@ -21,8 +25,10 @@ Source: `request.md` in this folder (the feature request from the harness, not e
 |--------|------|--------------|----------------|---------------|
 | POST | `/workshops/{id}/registrations` | `{name, email}` | 201 | Registration |
 | GET | `/workshops/{id}/registrations` | | 200 | list of Registration, oldest first |
+| DELETE | `/workshops/{id}/registrations/{registrationId}` | | 204 | none |
 
-`{id}` is the workshop's talk ID. A Registration is `{id, workshopId, name, email}`. `email` is the
+`{id}` is the workshop's talk ID, and `{registrationId}` is the `id` of a Registration. A Registration
+is `{id, workshopId, name, email}`. `email` is the
 email as the attendee typed it.
 
 ## Our decisions
@@ -44,7 +50,15 @@ email as the attendee typed it.
 | The attendee is not a registered speaker | Allowed | Attendees are not speakers. The request asks for a name and an email only. |
 | Order of the list (R8) | By registration ID, oldest first | IDs grow in the order the registrations are saved. |
 | Who can read the list | Anyone, no authentication | Same as the other endpoints today (tech debt B11). |
-| Concurrency (R5, R6) | A registration locks the talk row (`SELECT … FOR UPDATE`), counts, and inserts in one transaction. A unique index on the workshop and the lower-case email backs R6. | Advisory locks are not available on the platform. A plain conditional `INSERT` lets two requests both see 19 seats taken. |
+| Concurrency (R5, R6, R9) | A registration and an unregistration both lock the talk row (`SELECT … FOR UPDATE`) and do their count, insert or delete in one transaction. A unique index on the workshop and the lower-case email backs R6. | Advisory locks are not available on the platform. A plain conditional `INSERT` lets two requests both see 19 seats taken, and a seat freed by R9 must go to one attendee only. |
+| The workshop's own speakers | They take no seats: the 20 seats are for attendees only. | PO, Slack #team-11, 2026-11-06 14:00. |
+| Unregister (R9) | `DELETE /workshops/{id}/registrations/{registrationId}` gives 204 with no body. The registration is gone from the list. | The PO asked for it (2026-11-06 14:01). The Registration already has an `id`, so the request's API extends naturally. |
+| Unregister an unknown registration, one already unregistered, or one of another workshop | 404 | The resource does not exist under this path. Unregistering twice is not an error to hide: the second request finds nothing. |
+| Unregister from an unknown talk or a talk that is not a `WORKSHOP` | 404 | Same as POST and GET (R2) |
+| Unregister from a `WITHDRAWN` workshop | 204 | R4 keeps the others on the list; an attendee may still leave it. |
+| The freed seat (R9) | Free at once: on a full workshop, the next registration after an unregistration gets 201. | The PO: "so that the seat goes to someone else". |
+| Register again after unregistering (R6, R9) | 201 | The email is no longer on the list. |
+| Who can unregister | Anyone who knows the registration ID, no authentication | Same as the other endpoints today (tech debt B11). |
 
 ## Examples
 
@@ -112,6 +126,17 @@ email as the attendee typed it.
 | `ADA@Example.com` | `ADA@Example.com`, as typed |
 | nobody | `[]` |
 
+### R9: unregister frees the seat
+
+| Given | Request | Status |
+|-------|---------|--------|
+| a full workshop (20 attendees) | unregister one attendee, then register a new one | 204, then 201 |
+| Ada registered | unregister Ada twice | 204, then 404 |
+| Ada registered | unregister Ada, then Ada registers again | 204, then 201 |
+| Ada registered for workshop 1 | `DELETE /workshops/2/registrations/<Ada's id>` | 404 |
+| no registration with this ID | unregister it | 404 |
+| Ada and Grace registered, then the workshop is withdrawn | unregister Ada | 204; the list shows only Grace |
+
 ## Effect on existing features
 
 - Talks and Acceptance: no change. A registration reads the talk's format and status and changes
@@ -121,7 +146,6 @@ email as the attendee typed it.
 
 ## Open questions for the product owner
 
-- [ ] Do the workshop's own speakers take seats out of the 20? We assume no: the 20 seats are for
-  attendees only.
-- [ ] Can an attendee cancel a registration and free the seat? The request has no endpoint for it,
-  so we build none. Is that right for now?
+- [x] Do the workshop's own speakers take seats out of the 20? — No (2026-11-06 14:00). See "Our decisions".
+- [x] Can an attendee cancel a registration and free the seat? — Yes, it must be possible (2026-11-06
+  14:01). This is R9.
