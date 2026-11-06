@@ -1,8 +1,5 @@
 package no.scienta.cfp;
 
-import java.util.List;
-import java.util.Optional;
-
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -48,10 +45,11 @@ public class WorkshopRegistrationService {
         return deleted ? new UnregistrationOutcome.Unregistered() : new UnregistrationOutcome.NoSuchRegistration();
     }
 
-    /** The workshop's attendees in registration order, whatever its status (R4, R8), or empty when it is no workshop. */
-    public Optional<List<Registration>> attendees(long workshopId) {
+    /** The workshop's attendees in registration order, whatever its status (R4, R8). */
+    public AttendeesOutcome attendees(long workshopId) {
         return dao.findTalk(workshopId)
                 .filter(WorkshopTalk::isWorkshop)
-                .map(workshop -> dao.registrations(workshopId));
+                .<AttendeesOutcome>map(workshop -> new AttendeesOutcome.Attendees(dao.registrations(workshopId)))
+                .orElseGet(AttendeesOutcome.NotAWorkshop::new);
     }
 }

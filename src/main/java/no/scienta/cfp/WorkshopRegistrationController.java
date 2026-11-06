@@ -36,7 +36,10 @@ public class WorkshopRegistrationController {
 
     @GetMapping("/workshops/{id}/registrations")
     public List<Registration> attendees(@PathVariable long id) {
-        return service.attendees(id).orElseThrow(WorkshopRegistrationController::notAWorkshop);
+        if (service.attendees(id) instanceof AttendeesOutcome.Attendees attendees) {
+            return attendees.registrations();
+        }
+        throw notAWorkshop();
     }
 
     /**
