@@ -23,7 +23,7 @@ Since the plan was written, `main` has 19 new commits. These items are done:
 
 Changes to the basis for the plan:
 
-- **`schema.sql` is now the migration path.** `9b66dc9` changes a column with an `ALTER TABLE` that does nothing on later runs. That's allowed: in-place changes that are safe to run again are fine, but D20 and "Skip during the game" still apply (no Flyway, no foreign keys).
+- **`schema.sql` is now the migration path.** `9b66dc9` changes a column with an `ALTER TABLE` that does nothing on later runs. That's allowed: in-place changes that are safe to run again are fine, but D20 and "Skip during the game" still apply (no Flyway, and no foreign keys beyond `talk_co_speaker`'s).
 - **TableTest (`05631f5`, `fac091d`, `d3c9b88`)**: JUnit is 5.14, `@TableTest` is the team's format for example tables, and CI publishes the report on GitHub Pages for the product owners. The characterisation tests in Phase 0 are written as `@TableTest` wherever the case is a table.
 - **New tests and Hurl files** (`RatingsTest`, more in `SpeakersTest` and `UtilsTest`, plus `examples/our-speakers.hurl` and `our-ratings.hurl`) cover part of D15. Steps 4 and 5 get smaller.
 
@@ -116,7 +116,7 @@ The specs also confirm these constraints from sections 1c and 4:
 | D17 | `pom.xml:15-16,86` | Java release is declared three times. | Low |
 | D18 | `Dockerfile:2,5,7` | Uses the image's `mvn` rather than `./mvnw`, so its Maven version can differ from the wrapper's 3.9.11. `-q` hides build diagnostics. Runs as root with no `USER`. No `-XX:MaxRAMPercentage`, so the JVM defaults to 25% of container memory. Base images aren't pinned to a digest. | Low |
 | D19 | `README.md` (the part below `fagdag:end`) | Stale docs: Java 8, port 8081, `master`/Jenkins, `/votes`, `/talks/top`, "max 5". `examples/*.hurl` line 2 refers to `examples.hurl`, which doesn't exist. | Low |
-| D20 | `schema.sql` | No migration tool and no foreign keys. Noted only: **don't change** (see Priorities). | — |
+| D20 | `schema.sql` | No migration tool. `talk_co_speaker` now has cascading foreign keys to `talk` and `speaker` (co-speakers R11, PR #9): added `NOT VALID`, then orphan links deleted, then `VALIDATE`; safe to run again, and start-up never fails on it. The other tables still have none. Noted only: **don't change** (see Priorities). | — |
 
 Checked and fine: no session `SET` anywhere, the pool is capped at 5 (`application.properties:8`), there are no advisory locks, and rating upserts use `ON CONFLICT` (`RatingDao.java:20-24`).
 
