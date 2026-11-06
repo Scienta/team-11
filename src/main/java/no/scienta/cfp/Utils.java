@@ -6,6 +6,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 import java.util.TimeZone;
+import java.util.regex.Pattern;
 
 /**
  * Misc helpers.
@@ -78,8 +79,13 @@ public class Utils {
         return s;
     }
 
+    /**
+     * One {@code @}, a local part, and a domain of at least two dot-separated labels. No whitespace.
+     */
+    private static final Pattern EMAIL = Pattern.compile("[^@\\s]+@[^@\\s.]+(\\.[^@\\s.]+)+");
+
     public static boolean isValidEmail(String email) {
-        return email != null && email.contains("@") && email.indexOf('@') < email.lastIndexOf('.');
+        return email != null && EMAIL.matcher(email).matches();
     }
 
     public static boolean isEmpty(String s) {

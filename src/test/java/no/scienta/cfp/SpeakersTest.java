@@ -36,6 +36,11 @@ class SpeakersTest {
     private final HttpClient http = HttpClient.newHttpClient();
 
     @Test
+    void rejectsARegistrationWithoutARealEmail() throws Exception {
+        assertEquals(400, register("Grace Hopper", "not-an-email").statusCode());
+    }
+
+    @Test
     void anEmailRegistersOnceRegardlessOfLetterCase() throws Exception {
         String email = "grace-" + UUID.randomUUID() + "@example.com";
         assertEquals(201, register("Grace Hopper", email).statusCode());

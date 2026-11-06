@@ -10,6 +10,8 @@ import java.util.TimeZone;
 
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 
 class UtilsTest {
 
@@ -47,5 +49,24 @@ class UtilsTest {
         SimpleDateFormat f = new SimpleDateFormat(Utils.DB_DATE_TIME);
         f.setTimeZone(TimeZone.getTimeZone("UTC"));
         assertEquals(f.format(new Date()), Utils.now());
+    }
+
+    // Speakers R3; the rows are the example table in workflow/specs/speakers/spec.md
+    @ParameterizedTest(name = "{0} is an email: {1}")
+    @CsvSource({
+            "ada@example.com,                     true",
+            "ada.lovelace+cfp@mail.example.co.uk, true",
+            "not-an-email,                        false",
+            "ada@example,                         false",
+            "@example.com,                        false",
+            "ada@.com,                            false",
+            "ada@example.,                        false",
+            "ada@example..com,                    false",
+            "ada@@example.com,                    false",
+            "ada lovelace@example.com,            false",
+            "' ada@example.com',                  false",
+    })
+    void acceptsOnlyARealEmailAddress(String email, boolean valid) {
+        assertEquals(valid, Utils.isValidEmail(email));
     }
 }
