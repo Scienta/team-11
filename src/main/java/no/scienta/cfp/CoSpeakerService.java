@@ -32,7 +32,9 @@ public class CoSpeakerService {
 
     @Transactional
     public TalkDto add(long talkId, long speakerId) {
-        TalkDto talk = changeableTalk(talkId, speakerId);
+        TalkDto talk = lockedTalk(talkId);
+        requireRegistered(speakerId);
+        requireChangeable(talk);
         if (talk.speakerId == speakerId) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "the main speaker can't be a co-speaker");
         }
@@ -48,7 +50,9 @@ public class CoSpeakerService {
 
     @Transactional
     public TalkDto remove(long talkId, long speakerId) {
-        TalkDto talk = changeableTalk(talkId, speakerId);
+        TalkDto talk = lockedTalk(talkId);
+        requireRegistered(speakerId);
+        requireChangeable(talk);
         if (talk.speakerId == speakerId) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "the main speaker can't be removed");
         }
@@ -56,18 +60,24 @@ public class CoSpeakerService {
         return conference.getTalk(talkId);
     }
 
-    /** The talk, locked for this transaction, when both ids are known and the talk may still change. */
-    private TalkDto changeableTalk(long talkId, long speakerId) {
+    /** The talk, locked until the transaction ends. */
+    private TalkDto lockedTalk(long talkId) {
         TalkDto talk = talkDao.findByIdForUpdate(talkId);
         if (talk == null) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "talk not found");
         }
+        return talk;
+    }
+
+    private void requireRegistered(long speakerId) {
         if (!speakerDao.exists(speakerId)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "speaker not found");
         }
+    }
+
+    private static void requireChangeable(TalkDto talk) {
         if (UNCHANGEABLE_STATUSES.contains(talk.status)) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "a withdrawn or rejected talk can't be changed");
         }
-        return talk;
     }
 }
