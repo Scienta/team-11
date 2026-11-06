@@ -72,16 +72,18 @@ class ReportsTest {
         assertTrue(generated.matches("\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}"), generated);
     }
 
-    @DisplayName("Counts the total length of all talks in whole hours")
+    @DisplayName("Counts the total length of all talks in whole hours, rounded")
     @Description("""
-            One speaker submits a talk in each format of the list.
+            One speaker submits a talk in each format of the list. Half an hour rounds up.
             """)
     @TableTest("""
         Scenario          | Formats                                  | Total Hours?
         No talks          | []                                       | 0
         185 minutes       | [WORKSHOP, PRESENTATION, LIGHTNING_20]   | 3
-        210 minutes       | [WORKSHOP, PRESENTATION, PRESENTATION]   | 3
-        160 minutes       | [WORKSHOP, LIGHTNING_20, LIGHTNING_20]   | 2
+        210 minutes       | [WORKSHOP, PRESENTATION, PRESENTATION]   | 4
+        160 minutes       | [WORKSHOP, LIGHTNING_20, LIGHTNING_20]   | 3
+        150 minutes       | [WORKSHOP, LIGHTNING_20, LIGHTNING_10]   | 3
+        140 minutes       | [WORKSHOP, LIGHTNING_10, LIGHTNING_10]   | 2
         """)
     void countsTheTotalLengthInWholeHours(List<String> formats, int totalHours) throws Exception {
         String speaker = newSpeaker("Grace Hopper");

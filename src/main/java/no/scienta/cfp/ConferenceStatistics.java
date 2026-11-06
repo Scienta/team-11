@@ -55,7 +55,7 @@ public class ConferenceStatistics {
         stats.put("byFormat", byFormat);
         stats.put("byLevel", byLevel);
         stats.put("byStatus", byStatus);
-        stats.put("totalHours", minutes / 60);
+        stats.put("totalHours", Math.round(minutes / 60.0));
         stats.put("averageRating", rated == 0 ? null : RatingAverage.roundToOneDecimal(ratingSum / rated));
         stats.put("generated", Timestamps.databaseTime(timestamps.now()));
         return stats;
