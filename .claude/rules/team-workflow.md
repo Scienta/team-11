@@ -23,9 +23,15 @@ The steps from feature request to claim are in `workflow/process.md`. Follow the
 
 ## Running things on this laptop
 
-- Run Maven (`./mvnw`) outside the sandbox. Maven must write to `~/.m2`.
-- The Testcontainers tests need Docker. If `docker info` fails, run only the tests that need no
-  database (`-Dtest=...`) and say which tests did not run.
+- Run Maven (`./mvnw`) outside the sandbox. Maven must write to `~/.m2`, and the Testcontainers
+  tests must reach Docker.
+- Docker is Colima, linked at `/var/run/docker.sock`. The sandbox blocks the real socket behind the
+  link, so run `docker` outside the sandbox. If `colima status` says it is not running, ask a
+  person to run `colima start`.
+- If Docker is not available, run only the tests that need no database (`-Dtest=...`) and say
+  which tests did not run.
+- Run the Hurl examples with `examples/run.sh https://fagsem-h2026-team-11.scienta.cloud`. This
+  works inside the sandbox.
 - Use `workflow/harness.sh` for the harness API. Never print, log or commit
   `.fagdag/harness-token`.
 - Read the deployed service's requests with `.github/fagdag/logs.sh --since <RFC 3339 time>`. Each
