@@ -12,7 +12,10 @@ talks/r3-accepts-a-talk-only-with-a-real-title	Et foredrag må ha en tittel.
 talks/r4-sets-the-duration-from-the-format	Lengden på foredraget følger av formatet. Foredragsholderen velger den ikke.
 talks/r5-accepts-only-the-four-formats-in-capitals	Et foredrag har ett av de fire formatene: lyntale på 10 eller 20 minutter, presentasjon eller workshop.
 talks/r5-accepts-only-the-three-levels-in-capitals	Et foredrag har ett av de tre nivåene: nybegynner, middels eller viderekommen.
+talks/r3-r5-refuses-an-incomplete-talk-with-the-reason	Et foredrag som mangler noe, blir avvist, og svaret sier hva som mangler.
+talks/r2-r8-answers-404-for-a-talk-or-speaker-that-does-not-exist	Spør du etter et foredrag eller en foredragsholder som ikke finnes, får du svar om at det ikke finnes.
 ratings/r1-accepts-a-reviewer-from-1-to-9223372036854775807	Hver vurderer har et nummer. Vi tar bare imot gyldige numre.
+ratings/r1-r2-refuses-a-rating-with-the-reason-before-it-looks-for-the-talk	En ugyldig karakter blir avvist, og svaret sier hvorfor.
 ratings/r2-accepts-only-a-whole-number-from-1-to-5-as-score	Karakteren er et helt tall fra 1 til 5.
 ratings/r3-keeps-one-rating-per-reviewer-the-latest-score	Hver vurderer har én karakter per foredrag. Den siste karakteren gjelder.
 ratings/r4-shows-the-average-score-with-one-decimal-halves-up	Snittet vises med én desimal. En halv rundes opp.
@@ -66,8 +69,10 @@ error-answers/refuses-a-text-field-that-holds-a-nul-character	Tekst som innehold
 request-log-filter-test/masks-each-email-in-the-logged-bodies	E-postadresser skjules i loggen.
 request-log-filter-test/masks-each-cancellation-token-in-the-logged-bodies	Avmeldingskoder skjules i loggen.
 request-log-filter-test/logs-a-large-body-in-a-short-time	Også en stor forespørsel blir logget raskt.
-utils-test/exports-a-value-that-starts-like-a-formula-as-text	I eksporten til regneark blir en verdi som ligner en formel, lagret som tekst.
-utils-test/quotes-a-value-with-a-semicolon-or-a-line-break	I eksporten til regneark får en verdi med semikolon eller linjeskift anførselstegn rundt seg.
+csv-field-test/exports-a-value-that-starts-like-a-formula-as-text	I eksporten til regneark blir en verdi som ligner en formel, lagret som tekst.
+csv-field-test/quotes-a-value-with-a-semicolon-or-a-line-break	I eksporten til regneark får en verdi med semikolon eller linjeskift anførselstegn rundt seg.
+reports/averages-the-talks-shown-averages-one-decimal-halves-up	I statistikken vises snittet av foredragenes snitt med én desimal. En halv rundes opp.
+reports/counts-the-total-length-of-all-talks-in-whole-hours-rounded	I statistikken vises samlet lengde på alle foredrag i hele timer. En halv time rundes opp.
 request-limits/refuses-a-request-body-larger-than-1-mb	Tjenesten avviser en forespørsel som er større enn 1 MB.
 programme-scheduling/r1-gives-each-slot-its-fixed-start-and-end	Programmet har tre rom med de samme fem tidspunktene i hvert rom. Start og slutt er faste.
 programme-scheduling/r1-refuses-a-room-or-slot-outside-the-venue	Bare rommene og tidspunktene som finnes, kan brukes. Andre avvises.
