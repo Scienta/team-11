@@ -1,10 +1,10 @@
 # Teststatus
 
-Laget 6. november 2026 kl. 14:29 fra versjon [ac85ae4](https://github.com/Scienta/team-11/commit/ac85ae4cae06e7913dffcb3cdece2673d577bc9c).
+Laget 6. november 2026 kl. 14:33 fra versjon [84a7fab](https://github.com/Scienta/team-11/commit/84a7fabce49f72d4b2c6a6ef02e81849beba9ba9).
 
-✅ Våre tester: alle 64 regler er i orden (249 av 249 eksempler).
+✅ Våre tester: alle 65 regler er i orden (256 av 256 eksempler).
 
-✅ Arrangørenes kontroller: alle 15 er i orden (Foredragsholdere, Foredrag, Karakterer).
+✅ Arrangørenes kontroller: alle 20 er i orden (Foredragsholdere, Foredrag, Karakterer, Godkjenning).
 
 Hver linje er en regel vi tester. Et eksempel er ett konkret tilfelle av regelen.
 Arrangørenes kontroller sjekker tjenesten som kjører nå, og bare funksjoner vi har meldt ferdige.
@@ -13,7 +13,7 @@ Alle detaljer står i [testrapporten](specs/index.md).
 ## Foredragsholdere
 
 - ✅ **R3** En foredragsholder må ha et navn. — 4 av 4 eksempler · [se eksemplene](specs/speakers/r3-registers-a-speaker-only-with-a-name.md)
-- ✅ **R3** En foredragsholder må ha en gyldig e-postadresse. — 13 av 13 eksempler · [se eksemplene](specs/speakers/r3-registers-a-speaker-only-with-a-real-email-address.md)
+- ✅ **R3** En foredragsholder må ha en gyldig e-postadresse. — 17 av 17 eksempler · [se eksemplene](specs/speakers/r3-registers-a-speaker-only-with-a-real-email-address.md)
 - ✅ **R4** Beskrivelsen av en foredragsholder kan ha høyst 500 tegn. — 5 av 5 eksempler · [se eksemplene](specs/speakers/r4-limits-the-bio-to-500-characters.md)
 - ✅ Ingen kan endre en foredragsholder etter registreringen. — 2 av 2 eksempler · [se eksemplene](specs/speakers/refuses-to-change-a-registered-speaker.md)
 - ✅ **R5** To foredragsholdere kan ikke ha samme e-postadresse. — 2 av 2 eksempler · [se eksemplene](specs/speakers/r5-refuses-a-second-speaker-with-the-same-email.md)
@@ -91,6 +91,7 @@ Alle detaljer står i [testrapporten](specs/index.md).
 - ✅ Ved en feil i databasen svarer tjenesten uten å vise tekniske detaljer. — 1 av 1 eksempel · [se eksemplene](specs/error-answers/answers-a-database-failure-without-its-details.md)
 - ✅ Tekst som inneholder et ugyldig nulltegn, avvises. — 2 av 2 eksempler · [se eksemplene](specs/error-answers/refuses-a-text-field-that-holds-a-nul-character.md)
 - ✅ E-postadresser skjules i loggen. — 7 av 7 eksempler · [se eksemplene](specs/request-log-filter-test/masks-each-email-in-the-logged-bodies.md)
-- ✅ Også en stor forespørsel blir logget raskt. — 3 av 3 eksempler · [se eksemplene](specs/request-log-filter-test/logs-a-large-body-in-a-short-time.md)
 - ✅ I eksporten til regneark blir en verdi som ligner en formel, lagret som tekst. — 6 av 6 eksempler · [se eksemplene](specs/utils-test/exports-a-value-that-starts-like-a-formula-as-text.md)
 - ✅ I eksporten til regneark får en verdi med semikolon eller linjeskift anførselstegn rundt seg. — 4 av 4 eksempler · [se eksemplene](specs/utils-test/quotes-a-value-with-a-semicolon-or-a-line-break.md)
+- ✅ Tjenesten avviser en forespørsel som er større enn 1 MB. — 3 av 3 eksempler · [se eksemplene](specs/request-limits/refuses-a-request-body-larger-than-1-mb.md)
+- ✅ Loggen skriver også en stor forespørsel raskt. — 3 av 3 eksempler · [se eksemplene](specs/request-log-filter-test/logs-a-large-body-in-a-short-time.md)
