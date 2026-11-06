@@ -21,9 +21,9 @@ import org.springframework.web.bind.annotation.RestController;
 public class SpeakerController {
 
     private final SpeakerService service;
-    private final ConferenceService talks;
+    private final TalkService talks;
 
-    public SpeakerController(SpeakerService service, ConferenceService talks) {
+    public SpeakerController(SpeakerService service, TalkService talks) {
         this.service = service;
         this.talks = talks;
     }

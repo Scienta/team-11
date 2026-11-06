@@ -17,10 +17,10 @@ import org.springframework.web.server.ResponseStatusException;
 @RestController
 public class TalkController {
 
-    private final ConferenceService service;
+    private final TalkService service;
     private final RatingService ratings;
 
-    public TalkController(ConferenceService service, RatingService ratings) {
+    public TalkController(TalkService service, RatingService ratings) {
         this.service = service;
         this.ratings = ratings;
     }

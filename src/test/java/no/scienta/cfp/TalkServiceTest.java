@@ -10,17 +10,17 @@ import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
-class ConferenceServiceTest {
+class TalkServiceTest {
 
     private SpeakerDao speakerDao;
     private TalkDao talkDao;
-    private ConferenceService service;
+    private TalkService service;
 
     @BeforeEach
     void setUp() {
         speakerDao = mock(SpeakerDao.class);
         talkDao = mock(TalkDao.class);
-        service = new ConferenceService(speakerDao, talkDao, mock(RatingService.class), mock(NotificationService.class));
+        service = new TalkService(speakerDao, talkDao, mock(RatingService.class), mock(NotificationService.class));
     }
 
     @Test

@@ -15,10 +15,12 @@ import org.springframework.web.bind.annotation.RestController;
 public class ReportController {
 
     private final ConferenceService service;
+    private final TalkService talkService;
     private final SpeakerService speakers;
 
-    public ReportController(ConferenceService service, SpeakerService speakers) {
+    public ReportController(ConferenceService service, TalkService talkService, SpeakerService speakers) {
         this.service = service;
+        this.talkService = talkService;
         this.speakers = speakers;
     }
 
@@ -29,7 +31,7 @@ public class ReportController {
 
     @GetMapping("/admin/talks.csv")
     public ResponseEntity<String> talksCsv() {
-        List<TalkDto> talks = service.listTalks(null, null);
+        List<TalkDto> talks = talkService.listTalks(null, null);
         StringBuilder sb = new StringBuilder();
         sb.append("id;title;format;minutes;level;speaker;status;submitted;rating;ratings\n");
         for (TalkDto t : talks) {

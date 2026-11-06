@@ -13,10 +13,10 @@ import org.springframework.web.server.ResponseStatusException;
 @Service
 public class AcceptanceService {
 
-    private final ConferenceService conference;
+    private final TalkService conference;
     private final TalkStatusDao statusDao;
 
-    public AcceptanceService(ConferenceService conference, TalkStatusDao statusDao) {
+    public AcceptanceService(TalkService conference, TalkStatusDao statusDao) {
         this.conference = conference;
         this.statusDao = statusDao;
     }

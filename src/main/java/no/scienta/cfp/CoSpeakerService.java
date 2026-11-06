@@ -21,10 +21,10 @@ public class CoSpeakerService {
     private final TalkDao talkDao;
     private final SpeakerDao speakerDao;
     private final CoSpeakerDao coSpeakerDao;
-    private final ConferenceService conference;
+    private final TalkService conference;
 
     public CoSpeakerService(TalkDao talkDao, SpeakerDao speakerDao, CoSpeakerDao coSpeakerDao,
-                            ConferenceService conference) {
+                            TalkService conference) {
         this.talkDao = talkDao;
         this.speakerDao = speakerDao;
         this.coSpeakerDao = coSpeakerDao;
