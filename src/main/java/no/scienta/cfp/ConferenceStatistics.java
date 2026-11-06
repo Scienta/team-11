@@ -11,12 +11,12 @@ import org.springframework.stereotype.Service;
  * Statistics for the programme committee.
  */
 @Service
-public class ConferenceService {
+public class ConferenceStatistics {
 
     private final SpeakerDao speakerDao;
     private final TalkService talkService;
 
-    public ConferenceService(SpeakerDao speakerDao, TalkService talkService) {
+    public ConferenceStatistics(SpeakerDao speakerDao, TalkService talkService) {
         this.speakerDao = speakerDao;
         this.talkService = talkService;
     }
