@@ -18,7 +18,7 @@ Source: `request.md` in this folder (the feature request from the harness, not e
 
 | Method | Path | Request body | Success status | Response body |
 |--------|------|--------------|----------------|---------------|
-| GET | `/programme` | | 200 | JSON array of ProgrammeRow, `Content-Type: application/json` |
+| GET | `/programme` | | 200 | JSON array of ProgrammeRow, `Content-Type: application/json;charset=UTF-8` |
 | GET | `/programme.csv` | | 200 | CSV text, `Content-Type: text/csv;charset=UTF-8` |
 
 A ProgrammeRow is `{slot, start, end, room, talkId, title, format, speakers}`, for example
@@ -31,7 +31,7 @@ A CSV line has the same eight values in the same order:
 | Case | Decision | Why |
 |------|----------|-----|
 | `Content-Type` of the CSV | `text/csv;charset=UTF-8` | R5: the media type is `text/csv`, and the charset tells the client that the file is UTF-8. Same as `/admin/talks.csv`. |
-| `Accept` header on either path, for example `Accept: application/json` on `/programme.csv` or `Accept: text/csv` on `/programme` | Ignored: `/programme.csv` always answers 200 `text/csv`, and `/programme` always answers 200 `application/json`. Never 406. | R5 says so for the CSV. The path chooses the view, so the JSON path does the same. |
+| `Accept` header on either path, for example `Accept: application/json` on `/programme.csv` or `Accept: text/csv` on `/programme` | Ignored: `/programme.csv` always answers 200 `text/csv;charset=UTF-8`, and `/programme` always answers 200 `application/json;charset=UTF-8`. Never 406. | R5 says so for the CSV. The path chooses the view, so the JSON path does the same. Every JSON answer of the service has `charset=UTF-8` (`server.servlet.encoding.force`). |
 | Byte order mark | None | R5: the file starts with exactly the header line. |
 | A talk on the programme that is no longer `ACCEPTED`, for example withdrawn | In both views, as it is now. There is no status field. | R1: "everything on the programme". Scheduling R7 keeps the entry until the committee takes the talk out. The request lists the fields of a row, and a status is not one of them. |
 | Fields of a JSON row | Exactly the eight fields of ProgrammeRow, in that order | The request's schema. |
@@ -94,7 +94,7 @@ examples, `⏎` is the newline `\n`.
 |---------|--------|----------------|------|
 | `GET /programme.csv` | 200 | `text/csv;charset=UTF-8` | starts with `slot,start,end,room,talkId,title,format,speakers⏎` |
 | `GET /programme.csv` with `Accept: application/json` | 200 | `text/csv;charset=UTF-8` | the same body |
-| `GET /programme` with `Accept: text/csv` | 200 | `application/json` | the JSON list |
+| `GET /programme` with `Accept: text/csv` | 200 | `application/json;charset=UTF-8` | the JSON list |
 | `GET /programme.csv`, A "Kåre og Åse 🚀" in `R1` `S1` | 200 | `text/csv;charset=UTF-8` | the line has `Kåre og Åse 🚀` as UTF-8 bytes, and no byte order mark is in front of the header |
 
 ### R6: line endings and quoting
