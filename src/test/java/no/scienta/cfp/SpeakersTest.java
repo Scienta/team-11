@@ -12,20 +12,31 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.CsvSource;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
+import org.tabletest.junit.Description;
+import org.tabletest.junit.TableTest;
+import org.tabletest.junit.TypeConverter;
 
 /**
- * Speaker registration: emails are unique regardless of letter case, also under concurrent registrations, and the
- * old admin search matches names regardless of case. Runs the real app on a random port with a throwaway database.
+ * Speaker registration: a real email, a bio of at most 500 characters, and one speaker per email in any letter case,
+ * also under concurrent registrations. Runs the real app on a random port with a throwaway database, emptied before
+ * each test.
  */
+@DisplayName("Speakers")
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-class SpeakersTest {
+public class SpeakersTest {
+
+    private static final ObjectMapper JSON = new ObjectMapper();
 
     @DynamicPropertySource
     static void database(DynamicPropertyRegistry registry) {
@@ -35,49 +46,84 @@ class SpeakersTest {
     @Value("${local.server.port}")
     int port;
 
+    @Autowired
+    JdbcTemplate jdbc;
+
     private final HttpClient http = HttpClient.newHttpClient();
 
-    @Test
-    void rejectsARegistrationWithoutARealEmail() throws Exception {
-        assertEquals(400, register("Grace Hopper", "not-an-email").statusCode());
+    @BeforeEach
+    void startWithNoSpeakers() {
+        jdbc.execute("TRUNCATE speaker, talk, rating");
     }
 
-    // Speakers R4: a character is one code point, so an emoji counts once, not as two UTF-16 units
-    @ParameterizedTest(name = "{1} x {0} -> {2}")
-    @CsvSource({
-            "x,  500, 201",
-            "x,  501, 400",
-            "😀, 500, 201",
-            "😀, 501, 400",
-    })
-    void limitsTheBioTo500Characters(String character, int length, int status) throws Exception {
-        String json = "{\"name\":\"Grace Hopper\",\"email\":\"grace-" + UUID.randomUUID()
-                + "@example.com\",\"bio\":\"" + character.repeat(length) + "\"}";
-        HttpResponse<String> res = http.send(request("POST", "/speakers", json), HttpResponse.BodyHandlers.ofString());
+    @DisplayName("R3: Registers a speaker only with a real email address")
+    @Description("""
+            A real address has one @, a local part, and a domain of at least two labels split by dots,
+            with no spaces.
+            """)
+    @TableTest("""
+        Scenario                        | Email                               | Status?
+        Simple address                  | ada@example.com                     | 201
+        Plus sign and subdomains        | ada.lovelace+cfp@mail.example.co.uk | 201
+        No @                            | not-an-email                        | 400
+        Domain with one label           | ada@example                         | 400
+        No local part                   | @example.com                        | 400
+        Domain starts with a dot        | ada@.com                            | 400
+        Domain ends with a dot          | ada@example.                        | 400
+        Two dots in a row in the domain | ada@example..com                    | 400
+        Two @                           | ada@@example.com                    | 400
+        Space in the local part         | ada lovelace@example.com            | 400
+        """)
+    void registersASpeakerOnlyWithARealEmail(String email, int status) throws Exception {
+        assertEquals(status, register(email, null).statusCode());
+    }
+
+    @DisplayName("R4: Limits the bio to 500 characters")
+    @Description("""
+            A character is one Unicode code point, so the emoji 😀 counts once, although JSON and Java
+            count it as two UTF-16 units. A bio is optional.
+            """)
+    @TableTest("""
+        Scenario                 | Bio      | Status?
+        No bio                   |          | 201
+        At the limit             | 500 × x  | 201
+        One past the limit       | 501 × x  | 400
+        Emoji at the limit       | 500 × 😀 | 201
+        Emoji one past the limit | 501 × 😀 | 400
+        """)
+    void limitsTheBioTo500Characters(Bio bio, int status) throws Exception {
+        HttpResponse<String> res = register("grace@example.com", bio);
         assertEquals(status, res.statusCode(), res.body());
     }
 
-    // Speakers decision: the admin update has the same 500-character bio limit as registration
-    @ParameterizedTest(name = "update with {1} x {0} -> {2}")
-    @CsvSource({
-            "😀, 500, 200",
-            "x,  501, 400",
-    })
-    void limitsTheBioTo500CharactersOnUpdate(String character, int length, int status) throws Exception {
-        String email = "grace-" + UUID.randomUUID() + "@example.com";
-        HttpResponse<String> created = register("Grace Hopper", email);
-        String id = created.body().replaceAll(".*\"id\":(\\d+).*", "$1");
-        String json = "{\"name\":\"Grace Hopper\",\"email\":\"" + email + "\",\"bio\":\""
-                + character.repeat(length) + "\"}";
-        HttpResponse<String> res = http.send(request("PUT", "/speakers/" + id, json), HttpResponse.BodyHandlers.ofString());
+    @DisplayName("R4: Applies the bio limit when an admin updates a speaker")
+    @Description("""
+            The admin update is PUT /speakers/{id}. Each row updates the bio of a registered speaker
+            and keeps the name and the email.
+            """)
+    @TableTest("""
+        Scenario           | Bio      | Status?
+        Emoji at the limit | 500 × 😀 | 200
+        One past the limit | 501 × x  | 400
+        """)
+    void limitsTheBioTo500CharactersOnUpdate(Bio bio, int status) throws Exception {
+        String id = JSON.readTree(register("grace@example.com", null).body()).get("id").asText();
+        HttpResponse<String> res = send("PUT", "/speakers/" + id, speaker("grace@example.com", bio));
         assertEquals(status, res.statusCode(), res.body().substring(0, Math.min(200, res.body().length())));
     }
 
-    @Test
-    void anEmailRegistersOnceRegardlessOfLetterCase() throws Exception {
-        String email = "grace-" + UUID.randomUUID() + "@example.com";
-        assertEquals(201, register("Grace Hopper", email).statusCode());
-        assertEquals(409, register("Grace Hopper", email.toUpperCase()).statusCode());
+    @DisplayName("R5: Refuses a second speaker with the same email")
+    @Description("""
+            Each row registers a second speaker after a first one is registered.
+            """)
+    @TableTest("""
+        Scenario                        | First Email     | Second Email                       | Status?
+        Same address in any letter case | ada@example.com | {ada@example.com, ADA@Example.com} | 409
+        Another address                 | ada@example.com | grace@example.com                  | 201
+        """)
+    void refusesASecondSpeakerWithTheSameEmail(String firstEmail, String secondEmail, int status) throws Exception {
+        assertEquals(201, register(firstEmail, null).statusCode());
+        assertEquals(status, register(secondEmail, null).statusCode());
     }
 
     @Test
@@ -86,7 +132,7 @@ class SpeakersTest {
         List<CompletableFuture<HttpResponse<String>>> sent = new ArrayList<>();
         for (int i = 0; i < 20; i++) {
             String variant = i % 2 == 0 ? email : email.toUpperCase();
-            sent.add(http.sendAsync(request("POST", "/speakers", speaker("Racer " + i, variant)),
+            sent.add(http.sendAsync(request("POST", "/speakers", speaker(variant, null)),
                     HttpResponse.BodyHandlers.ofString()));
         }
         int created = 0;
@@ -103,23 +149,38 @@ class SpeakersTest {
     @Test
     void searchMatchesNamesRegardlessOfCase() throws Exception {
         String name = "Lovelace" + UUID.randomUUID().toString().substring(0, 8);
-        assertEquals(201, register("Ada " + name, "ada-" + UUID.randomUUID() + "@example.com").statusCode());
+        assertEquals(201, send("POST", "/speakers",
+                "{\"name\":\"Ada " + name + "\",\"email\":\"ada-" + UUID.randomUUID() + "@example.com\"}").statusCode());
 
-        HttpResponse<String> found = send("GET", "/speakers/search?q=" + name.toLowerCase());
+        HttpResponse<String> found = send("GET", "/speakers/search?q=" + name.toLowerCase(), null);
         assertEquals(200, found.statusCode());
         assertTrue(found.body().contains("\"name\":\"Ada " + name + "\""), found.body());
     }
 
-    private HttpResponse<String> register(String name, String email) throws Exception {
-        return http.send(request("POST", "/speakers", speaker(name, email)), HttpResponse.BodyHandlers.ofString());
+    /** A bio written in a table as a count and a character, for example {@code 500 × 😀}. */
+    record Bio(String text) {
     }
 
-    private HttpResponse<String> send(String method, String path) throws Exception {
-        return http.send(request(method, path, null), HttpResponse.BodyHandlers.ofString());
+    @TypeConverter
+    public static Bio parseBio(String cell) {
+        String[] countAndCharacter = cell.split(" × ");
+        return new Bio(countAndCharacter[1].repeat(Integer.parseInt(countAndCharacter[0])));
     }
 
-    private static String speaker(String name, String email) {
-        return "{\"name\":\"" + name + "\",\"email\":\"" + email + "\"}";
+    private HttpResponse<String> register(String email, Bio bio) throws Exception {
+        return send("POST", "/speakers", speaker(email, bio));
+    }
+
+    private static String speaker(String email, Bio bio) throws Exception {
+        ObjectNode speaker = JSON.createObjectNode().put("name", "Grace Hopper").put("email", email);
+        if (bio != null) {
+            speaker.put("bio", bio.text());
+        }
+        return JSON.writeValueAsString(speaker);
+    }
+
+    private HttpResponse<String> send(String method, String path, String json) throws Exception {
+        return http.send(request(method, path, json), HttpResponse.BodyHandlers.ofString());
     }
 
     private HttpRequest request(String method, String path, String json) {
