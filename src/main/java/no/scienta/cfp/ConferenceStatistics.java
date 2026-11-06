@@ -34,7 +34,7 @@ public class ConferenceStatistics {
             byFormat.put(t.format, byFormat.getOrDefault(t.format, 0) + 1);
             byLevel.put(t.level, byLevel.getOrDefault(t.level, 0) + 1);
             byStatus.put(t.status, byStatus.getOrDefault(t.status, 0) + 1);
-            if (!speakersWithTalks.contains(t.speakerId) && speakerDao.findById(t.speakerId) != null) {
+            if (!speakersWithTalks.contains(t.speakerId) && speakerDao.findById(t.speakerId).isPresent()) {
                 speakersWithTalks.add(t.speakerId);
             }
             minutes += t.durationMinutes;

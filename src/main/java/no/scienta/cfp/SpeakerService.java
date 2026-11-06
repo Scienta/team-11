@@ -1,8 +1,6 @@
 package no.scienta.cfp;
 
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,7 +29,7 @@ public class SpeakerService {
     }
 
     @Transactional
-    public Map<String, Object> registerSpeaker(SpeakerForm form) {
+    public Speaker registerSpeaker(SpeakerForm form) {
         if (!Utils.isValidEmail(form.getEmail())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "invalid email");
         }
@@ -47,25 +45,17 @@ public class SpeakerService {
         }
         log.info("registered speaker " + id + " (" + form.getEmail() + ")");
         notifications.speakerRegistered(form.getEmail(), form.getName());
-        Map<String, Object> speaker = new LinkedHashMap<>();
-        speaker.put("id", id);
-        speaker.put("name", form.getName());
-        speaker.put("email", form.getEmail());
-        speaker.put("bio", form.getBio());
-        return speaker;
+        return new Speaker(id, form.getName(), form.getEmail(), form.getBio());
     }
 
-    public Map<String, Object> getSpeaker(long id) {
-        Map<String, Object> speaker = speakerDao.findById(id);
-        if (speaker == null) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "speaker not found");
-        }
-        return speaker;
+    public Speaker getSpeaker(long id) {
+        return speakerDao.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "speaker not found"));
     }
 
     @Transactional
-    public Map<String, Object> updateSpeaker(long id, String name, String email, String bio) {
-        Map<String, Object> existing = getSpeaker(id);
+    public Speaker updateSpeaker(long id, String name, String email, String bio) {
+        Speaker existing = getSpeaker(id);
         if (name == null || name.equals("")) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "name is required");
         }
@@ -73,7 +63,7 @@ public class SpeakerService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "invalid email");
         }
         requireBioWithinLimit(bio);
-        if (!email.equalsIgnoreCase((String) existing.get("email")) && speakerDao.emailTaken(email)) {
+        if (!email.equalsIgnoreCase(existing.email()) && speakerDao.emailTaken(email)) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "email already registered");
         }
         speakerDao.update(id, name, email, bio);
@@ -88,7 +78,7 @@ public class SpeakerService {
         }
     }
 
-    public List<Map<String, Object>> searchSpeakers(String q) {
+    public List<Speaker> searchSpeakers(String q) {
         return speakerDao.search(q);
     }
 }

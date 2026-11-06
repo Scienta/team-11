@@ -58,8 +58,7 @@ public class TalkService {
         if (id == null) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "a speaker can submit at most " + MAX_TALKS_PER_SPEAKER + " talks");
         }
-        Map<String, Object> speaker = speakerDao.findById(form.speakerId);
-        notifications.talkSubmitted((String) speaker.get("email"), form.title);
+        notifications.talkSubmitted(speakerDao.findById(form.speakerId).orElseThrow().email(), form.title);
         return getTalk(id);
     }
 
@@ -83,7 +82,7 @@ public class TalkService {
     }
 
     public List<TalkDto> getTalksForSpeaker(long speakerId) {
-        if (speakerDao.findById(speakerId) == null) {
+        if (speakerDao.findById(speakerId).isEmpty()) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "speaker not found");
         }
         List<TalkDto> talks = talkDao.findBySpeaker(speakerId);

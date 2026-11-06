@@ -1,7 +1,6 @@
 package no.scienta.cfp;
 
 import java.util.List;
-import java.util.Map;
 
 import org.springframework.stereotype.Component;
 
@@ -24,13 +23,13 @@ public class TalkCsvExport {
         StringBuilder sb = new StringBuilder();
         sb.append("id;title;format;minutes;level;speaker;status;submitted;rating;ratings\n");
         for (TalkDto t : talks) {
-            Map<String, Object> speaker = speakers.getSpeaker(t.speakerId);
+            Speaker speaker = speakers.getSpeaker(t.speakerId);
             sb.append(t.id).append(';')
                     .append(Utils.csv(t.title)).append(';')
                     .append(Utils.capitalize(t.format.replace("_", " "))).append(';')
                     .append(t.durationMinutes).append(';')
                     .append(Utils.capitalize(t.level)).append(';')
-                    .append(Utils.csv((String) speaker.get("name"))).append(';')
+                    .append(Utils.csv(speaker.name())).append(';')
                     .append(t.status).append(';')
                     .append(Utils.norwegianDate(t.submittedAt)).append(';')
                     .append(t.averageRating == null ? "" : String.valueOf(t.averageRating).replace('.', ',')).append(';')

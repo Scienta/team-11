@@ -30,18 +30,18 @@ public class SpeakerController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public Map<String, Object> create(@Valid @RequestBody SpeakerForm form) {
+    public Speaker create(@Valid @RequestBody SpeakerForm form) {
         return service.registerSpeaker(form);
     }
 
     @GetMapping("/{id}")
-    public Map<String, Object> get(@PathVariable Long id) {
+    public Speaker get(@PathVariable Long id) {
         return service.getSpeaker(id);
     }
 
     // used by the admin UI to fix typos
     @PutMapping("/{id}")
-    public Map<String, Object> update(@PathVariable("id") Long id, @RequestBody Map<String, String> body) {
+    public Speaker update(@PathVariable("id") Long id, @RequestBody Map<String, String> body) {
         return service.updateSpeaker(id, body.get("name"), body.get("email"), body.get("bio"));
     }
 
@@ -52,7 +52,7 @@ public class SpeakerController {
 
     // admin only, not in the API docs
     @GetMapping("/search")
-    public List<Map<String, Object>> search(@RequestParam String q) {
+    public List<Speaker> search(@RequestParam String q) {
         return service.searchSpeakers(q);
     }
 }
