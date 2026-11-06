@@ -113,13 +113,17 @@ harness_line() {
     echo "⚪ Arrangørenes kontroller: ikke lest, fordi vi ikke fikk kontakt."
     return
   fi
-  local down total ok checked failed
+  local down total ok pending checked failed waiting
   down="$(jq -r '.down.current' <<<"$feedback")"
   total="$(jq '[.features[].checks // [] | .[]] | length' <<<"$feedback")"
   ok="$(jq '[.features[].checks // [] | .[] | select(.status == "OK")] | length' <<<"$feedback")"
+  # A check without a status has not run yet, for example just after a claim. It is not a failure.
+  pending="$(jq '[.features[].checks // [] | .[] | select(.status == null)] | length' <<<"$feedback")"
   checked="$(jq -r '.features[] | select(.checks != null) | .slug' <<<"$feedback" \
     | while read -r slug; do feature_name "$slug"; done | paste -sd, - | sed 's/,/, /g')"
-  failed="$(jq -r '.features[] | select([.checks // [] | .[] | select(.status != "OK")] | length > 0) | .slug' <<<"$feedback" \
+  failed="$(jq -r '.features[] | select([.checks // [] | .[] | select(.status != null and .status != "OK")] | length > 0) | .slug' <<<"$feedback" \
+    | while read -r slug; do feature_name "$slug"; done | paste -sd, - | sed 's/,/, /g')"
+  waiting="$(jq -r '.features[] | select([.checks // [] | .[] | select(.status == null)] | length > 0) | .slug' <<<"$feedback" \
     | while read -r slug; do feature_name "$slug"; done | paste -sd, - | sed 's/,/, /g')"
   if [[ "$down" == "true" ]]; then
     echo "❌ Arrangørenes kontroller når ikke tjenesten vår akkurat nå."
@@ -127,8 +131,10 @@ harness_line() {
     echo "⚪ Arrangørenes kontroller: ingen kontroller ennå."
   elif (( ok == total )); then
     echo "✅ Arrangørenes kontroller: alle $total er i orden ($checked)."
+  elif (( ok + pending == total )); then
+    echo "⏳ Arrangørenes kontroller: $ok av $total er i orden. $pending har ikke kjørt ennå ($waiting)."
   else
-    echo "❌ Arrangørenes kontroller: $((total - ok)) av $total er ikke i orden ($failed)."
+    echo "❌ Arrangørenes kontroller: $((total - ok - pending)) av $total er ikke i orden ($failed)."
   fi
 }
 
