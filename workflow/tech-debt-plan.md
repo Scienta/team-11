@@ -76,18 +76,18 @@ The specs also confirm these constraints from sections 1c and 4:
 | ID | Where | What | Severity |
 |---|---|---|---|
 | **B1** | `SpeakerDao.java:52` | **SQL injection.** It builds `"... WHERE name ILIKE '%" + name + "%'"` from `?q=`. `GET /speakers/search` has no authentication (the comment at `SpeakerController.java:51` calls it "admin only", but nothing enforces that). Because `server.error.include-message=always` (`application.properties:14`), the SQL error text also comes back in 500 responses. Breaks review rubric item 7. | **Critical** |
-| **B2** | `CS:145,153,156`, `Utils.java:17`, `README.md` API table | **Talk limit: 3 or 5?** The code, its message, its javadoc and `TalksTest` all say 3. `Utils.MAX_TALKS = 5` is never used, and the README says "max 5". Check the talks spec. Remove the misleading constant only after that decision. | High |
+| **B2** | `CS:145,153,156`, `Utils.java:17`, `README.md` API table | **Talk limit: 3 or 5?** The code, its message, its javadoc and `TalksTest` all say 3. `Utils.MAX_TALKS = 5` is never used, and the README says "max 5". **Settled: the talks spec says 3.** | High |
 | **B3** | `CS:223-227` vs `Utils.java:104-106`, `CS:261`, `UtilsTest.java:36-42` | **Rating rounding differs.** A talk's `averageRating` rounds HALF_UP (4.25 becomes 4.3). `/admin/stats` `averageRating` uses `roundRating`, which **floors** (4.25 becomes 4.2), and `UtilsTest` pins the floor behaviour (comment "CFP-61"). There's also a commented-out call to `roundRating` at `CS:226`. Check the ratings spec (R4). | High |
-| **B4** | `SpeakerForm.java:17` vs `CS:94` | Bio limit is 500 when you create a speaker and 1000 when you update one. | Medium |
-| **B5** | `SpeakerForm.java:14-15` vs `CS:91` | `POST /speakers` only checks that email is `@NotBlank`. `PUT` runs `Utils.isValidEmail`. Name on `PUT` is checked with `equals("")` (`CS:88`), so a name of `"   "` is accepted, but `@NotBlank` rejects it on `POST`. | Medium |
+| **B4** | `SpeakerForm.java:17` vs `CS:94` | **Fixed** (`717cefa`). Bio limit is 500 when you create a speaker and 1000 when you update one. | Medium |
+| **B5** | `SpeakerForm.java:14-15` vs `CS:91` | **Email part fixed** (`2b48135`); the name part is still open. `POST /speakers` only checks that email is `@NotBlank`. `PUT` runs `Utils.isValidEmail`. Name on `PUT` is checked with `equals("")` (`CS:88`), so a name of `"   "` is accepted, but `@NotBlank` rejects it on `POST`. | Medium |
 | **B6** | `CS:97-100` | `updateSpeaker` checks then writes (TOCTOU) and has no `DuplicateKeyException` catch. Two concurrent email changes return **500** instead of 409. `registerSpeaker` handles this case (`CS:64`). | Medium |
-| **B7** | `CS:38`, `ConferenceServiceTest.java:38-43`, `README.md` | `KEYNOTE`: the README lists it, the code comment says keynotes are invited and not submitted, and the test pins a 400. Check the spec. | Medium |
+| **B7** | `CS:38`, `ConferenceServiceTest.java:38-43`, `README.md` | `KEYNOTE`: the README lists it, the code comment says keynotes are invited and not submitted, and the test pins a 400. **Settled: 400 is right.** | Medium |
 | **B8** | `ReportController.java:34` vs `CS:244` | There's no foreign key on `talk.speaker_id` (`schema.sql:22`). One orphan talk makes `/admin/talks.csv` return **404** (because `getSpeaker` throws), while `/admin/stats` skips orphans. `Utils.csv` (`Utils.java:71-79`) replaces `"` with `'`, which isn't RFC 4180 quoting. | Low |
-| **B9** | `CS:260-261` | `totalHours` uses integer division, so it truncates. The stats average is an average of per-talk averages, not of all scores. Is either specified? | Low |
+| **B9** | `CS:260-261` | `totalHours` uses integer division, so it truncates. The stats average is an average of per-talk averages, not of all scores. **The product owner has decided both**: see the table at the top. | Low |
 | **B10** | `application.properties:14-15` | `include-message=always` puts internal exception text in 500 bodies. Changing it changes error bodies, so it's a person's call. | Medium (security) |
 | **B11** | `SpeakerController.java:51-55`, `ReportController.java:23-28` | `/speakers/search` and `/admin/*` have no auth and expose emails. Probably leave it for the game, but write the decision down. | Low |
 | **B12** | `CS:124-126` vs `CS:170-172` vs `CS:184` | Unknown speaker gives 400 on `POST /talks`, 404 on `/speakers/{id}/talks`, and `200 []` on `/talks?speakerId=`. Check each against the specs. | Low |
-| **B13** | `CS:274` | `score` must be an `Integer` instance, so `3.0`, `"3"` and numbers above `Integer.MAX_VALUE` get 400 "whole number". Check this against the spec before anyone changes the binding (see R6). | Low |
+| **B13** | `CS:274` | `score` must be an `Integer` instance, so `3.0`, `"3"` and numbers above `Integer.MAX_VALUE` get 400 "whole number". **Settled: that's right** (Ratings R2). | Low |
 
 ### 1b. Structural debt (external behaviour unchanged)
 
@@ -147,7 +147,7 @@ Each step is one commit and passes `./mvnw package`. Write the cases as `@TableT
 
 ### Phase 2: structural changes that make features cheaper (do these early)
 
-10. **S** `refactor: remove commented-out and dead code`. Covers D11, `Utils.isNumeric` and its test, and the `@Disabled` test (`UtilsTest:44-50`). **Leave `Utils.MAX_TALKS` alone until B2 is decided**, so the mismatch stays visible.
+10. **S** `refactor: remove commented-out and dead code`. Covers D11, `Utils.isNumeric` and its test, and the `@Disabled` test (`UtilsTest:44-50`). B2 is settled (the spec says 3), so remove `Utils.MAX_TALKS` here too.
 11. **S** `refactor: name the per-speaker talk limit`. One constant, `MAX_TALKS_PER_SPEAKER = 3`, used at `CS:145` and `CS:156`, with the message built from it. Same output. Guarded by step 2 and `TalksTest`.
 12. **S** `refactor: introduce TalkFormat enum with durations`. Replaces `CS:31-39`, `CS:128-141` and `CS:115`. Keep `TalkForm.format` as a `String` and parse it in the service. Build the error message from an explicit list in the **order captured in step 2**. Guarded by steps 2 and 3 and `ConferenceServiceTest`.
 13. **S** `refactor: introduce TalkLevel enum` (`CS:118`), the same way.
