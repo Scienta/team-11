@@ -59,6 +59,9 @@ Recorded here until `workflow/specs/<feature>/spec.md` exists. Move them there u
 | 6 | acceptance: may an accepted talk be withdrawn? | 13:09 (labelled "7", confirmed as 6 at 13:11): **yes**, that's intended. He'd also like a simple overview of gaps in the programme so they can be filled. That's a separate wish and not in any feature request. |
 | 7 | co-speakers + acceptance: can a co-speaker withdraw a talk? | 13:11: **no**, only the main speaker can withdraw a talk. |
 | 8 | co-speakers + acceptance: co-speakers on withdrawn, rejected or accepted talks | 13:11: co-speakers **can** be added to an accepted talk, but **not** to a rejected or withdrawn one. 8b (13:13): **yes**, co-speakers can be removed. The main speaker can't be removed. **Addendum (13:14):** a talk that is withdrawn or rejected can't be changed at all, so co-speakers can only be added or removed while it's `SUBMITTED`, `WAITLISTED` or `ACCEPTED`. Stein doesn't want more questions about every possible case unless there's a very good reason. |
+| 9 | admin stats (Nils Christian): do withdrawn talks count in `/admin/stats` and the CSV? | 14:00: they must **not** count in the statistics, but Stein wants to see them on a **separate line**. Affects B3/B9. |
+| 10 | workshop-registration (Nils Christian): do the workshop's speakers take any of the 20 places? | 14:00: **no**, the speakers don't count among the 20. |
+| 11 | workshop-registration (Nils Christian): can an attendee unregister and give up the place? | 14:01: **yes**, it must be possible to withdraw after registering, so that as many as possible can attend what they want. This overturns the team's assumption ("no, for now"). |
 
 The specs also confirm these constraints from sections 1c and 4:
 
