@@ -1,8 +1,8 @@
 # Teststatus
 
-Laget 6. november 2026 kl. 14:35 fra versjon [7c97c4c](https://github.com/Scienta/team-11/commit/7c97c4c5526cff61dafd7fb5f24e10f4f0e8e3c5).
+Laget 6. november 2026 kl. 14:36 fra versjon [cae558e](https://github.com/Scienta/team-11/commit/cae558eb724e6d3a48eb905cc9691b7625525c96).
 
-✅ Våre tester: alle 65 regler er i orden (256 av 256 eksempler).
+✅ Våre tester: alle 65 regler er i orden (260 av 260 eksempler).
 
 ✅ Arrangørenes kontroller: alle 20 er i orden (Foredragsholdere, Foredrag, Karakterer, Godkjenning).
 
@@ -22,7 +22,7 @@ Alle detaljer står i [testrapporten](specs/index.md).
 
 ## Foredrag
 
-- ✅ **R3** Et foredrag må ha en tittel. — 4 av 4 eksempler · [se eksemplene](specs/talks/r3-accepts-a-talk-only-with-a-real-title.md)
+- ✅ **R3** Et foredrag må ha en tittel. — 8 av 8 eksempler · [se eksemplene](specs/talks/r3-accepts-a-talk-only-with-a-real-title.md)
 - ✅ **R4** Lengden på foredraget følger av formatet. Foredragsholderen velger den ikke. — 4 av 4 eksempler · [se eksemplene](specs/talks/r4-sets-the-duration-from-the-format.md)
 - ✅ **R5** Et foredrag har ett av de fire formatene: lyntale på 10 eller 20 minutter, presentasjon eller workshop. — 4 av 4 eksempler · [se eksemplene](specs/talks/r5-accepts-only-the-four-formats-in-capitals.md)
 - ✅ **R5** Et foredrag har ett av de tre nivåene: nybegynner, middels eller viderekommen. — 4 av 4 eksempler · [se eksemplene](specs/talks/r5-accepts-only-the-three-levels-in-capitals.md)
