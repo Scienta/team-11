@@ -37,7 +37,7 @@ class SpeakerServiceTest {
         when(speakerDao.insert("Ada", "ada@example.com", null))
                 .thenThrow(new DuplicateKeyException("FEIL: duplisert nøkkelverdi bryter unik-skranke"));
         ResponseStatusException e = assertThrows(ResponseStatusException.class, () -> service.registerSpeaker(form));
-        assertEquals(HttpStatus.CONFLICT, e.getStatus());
+        assertEquals(HttpStatus.CONFLICT, e.getStatusCode());
     }
 
     @Test
@@ -47,7 +47,7 @@ class SpeakerServiceTest {
         form.setEmail("ada@example.com");
         when(speakerDao.emailTaken("ada@example.com")).thenReturn(true);
         ResponseStatusException e = assertThrows(ResponseStatusException.class, () -> service.registerSpeaker(form));
-        assertEquals(HttpStatus.CONFLICT, e.getStatus());
+        assertEquals(HttpStatus.CONFLICT, e.getStatusCode());
     }
 
     @Test

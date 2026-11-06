@@ -19,7 +19,6 @@ import org.springframework.web.server.ResponseStatusException;
 @Service
 public class TalkService {
 
-    private static final int MAX_TALKS_PER_SPEAKER = 3;
     private static final int MAX_TITLE_CHARACTERS = 200;
 
     /** The order the 400 message has always listed the formats in; clients may compare the message. */
@@ -70,7 +69,8 @@ public class TalkService {
 
         Long id = checkSubmissionLimit(form, format.durationMinutes());
         if (id == null) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "a speaker can submit at most " + MAX_TALKS_PER_SPEAKER + " talks");
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "a speaker can submit at most " + TalkLimit.PER_SPEAKER + " talks");
         }
         notifications.talkSubmitted(speakerDao.findById(form.speakerId).orElseThrow().email(), form.title);
         return getTalk(id);
@@ -82,7 +82,7 @@ public class TalkService {
     }
 
     private Long checkSubmissionLimit(TalkForm form, int duration) {
-        return talkDao.insertIfBelow(MAX_TALKS_PER_SPEAKER, form.title, form.format, duration, form.level, form.speakerId,
+        return talkDao.insertIfBelow(TalkLimit.PER_SPEAKER, form.title, form.format, duration, form.level, form.speakerId,
                 timestamps.now().toEpochMilli());
     }
 

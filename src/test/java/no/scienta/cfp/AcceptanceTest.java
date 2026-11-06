@@ -17,8 +17,8 @@ import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -204,15 +204,16 @@ public class AcceptanceTest {
         }
     }
 
-    @DisplayName("R7: Leaves a withdrawn talk out of the talk limit")
+    @DisplayName("R7: Leaves a withdrawn or rejected talk out of the talk limit")
     @Description("""
             The speaker has three talks, and the third has the status in the table. Then the speaker
-            submits another talk.
+            submits another talk. The change request submission-cap-cr overrides the earlier rule that
+            a rejected talk counts.
             """)
     @TableTest("""
-        Scenario                | Third Talk                                  | Response?
-        Third talk still counts | {SUBMITTED, ACCEPTED, REJECTED, WAITLISTED} | 409
-        Third talk withdrawn    | WITHDRAWN                                   | 201
+        Scenario                      | Third Talk                        | Response?
+        Third talk still counts       | {SUBMITTED, ACCEPTED, WAITLISTED} | 409
+        Third talk out of the running | {WITHDRAWN, REJECTED}             | 201
         """)
     void leavesWithdrawnTalkOutOfTheLimit(TalkStatus thirdTalk, int response) throws Exception {
         long speaker = registerSpeaker("ada@example.com");

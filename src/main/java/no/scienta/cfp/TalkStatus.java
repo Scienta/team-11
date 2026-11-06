@@ -14,7 +14,7 @@ public enum TalkStatus {
     SUBMITTED(Set.of(), 0, true, true, false, false, true),
     WAITLISTED(Set.of(SUBMITTED), 0, true, true, false, false, true),
     ACCEPTED(Set.of(SUBMITTED, WAITLISTED), 2, false, true, true, true, true),
-    REJECTED(Set.of(SUBMITTED, WAITLISTED), 0, false, true, false, false, false),
+    REJECTED(Set.of(SUBMITTED, WAITLISTED), 0, false, false, false, false, false),
     WITHDRAWN(Set.of(SUBMITTED, WAITLISTED, ACCEPTED), 0, false, false, false, false, false);
 
     private static final Set<TalkStatus> DECISIONS = EnumSet.of(ACCEPTED, REJECTED, WAITLISTED);
@@ -57,7 +57,7 @@ public enum TalkStatus {
         return openForRating;
     }
 
-    /** Whether a talk with this status counts towards the speaker's limit of talks (R7). */
+    /** Whether a talk with this status counts towards the speaker's limit of talks (R7, submission-cap-cr R2). */
     public boolean countsTowardLimit() {
         return countsTowardLimit;
     }

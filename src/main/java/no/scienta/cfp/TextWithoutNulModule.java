@@ -1,12 +1,10 @@
 package no.scienta.cfp;
 
-import java.io.IOException;
-
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.deser.std.StringDeserializer;
-import com.fasterxml.jackson.databind.module.SimpleModule;
 import org.springframework.stereotype.Component;
+import tools.jackson.core.JsonParser;
+import tools.jackson.databind.DeserializationContext;
+import tools.jackson.databind.deser.jdk.StringDeserializer;
+import tools.jackson.databind.module.SimpleModule;
 
 /**
  * Refuses a JSON text that holds a NUL character, which the database cannot store (security review, 2026-11-06).
@@ -24,7 +22,7 @@ public class TextWithoutNulModule extends SimpleModule {
     static final class TextWithoutNul extends StringDeserializer {
 
         @Override
-        public String deserialize(JsonParser parser, DeserializationContext context) throws IOException {
+        public String deserialize(JsonParser parser, DeserializationContext context) {
             String text = super.deserialize(parser, context);
             if (text != null && text.indexOf('\0') >= 0) {
                 return (String) context.handleWeirdStringValue(String.class, text, "a text cannot hold a NUL character");

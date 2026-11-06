@@ -4,10 +4,11 @@ The rows come from [`../claim-checklist.md`](../claim-checklist.md). A person cl
 row says "waiting" or "gap". The product owner reads a claim request in three sections: security,
 architecture and functionality.
 
-Claim: **waiting for Carl Kristian's team**, who request this claim. Deployed commit: `3318bf1` (`GET /health` at 13:41:50Z and 13:42:00Z). It has the R4 and R9 Hurl rows (`c8e30de`, the pushed copy of `ec38273`) and the ratings-query fix `88e5d86`.
+Claim: **claimed at harness tick 170** by Nils Christian. Carl Kristian's team prepared the claim request; our Hurl run and our guardians are part of the evidence. Deployed at the claim: `05ac2c5` (`GET /health`), which has the co-speakers code and Carl Kristian's PR #9 (`dfd57c9`, with the R12 Hurl rows `0355402`). Our team-URL run below was on `3318bf1`.
 Co-speakers came from Carl Kristian's team (PR #4, merged in `b729a5e`).
 
-PO approval: **waiting**.
+PO approval: **approved by Stein himself.** «Godkjent» at 15:15:20 CET at the top level of Slack #team-11, and
+«Godkjent» at 15:15:41 CET in Carl Kristian's claim thread (ts `1793974427.385909`).
 
 `TEAM_URL=https://fagsem-h2026-team-11.scienta.cloud`
 
@@ -37,9 +38,11 @@ withdrawn or rejected talk.
 | The deploy workflow is green for the commit | [Actions run 42226853638](https://github.com/Scienta/team-11/actions/runs/42226853638) for `3318bf1`: job `deploy` success | done |
 | `GET /health` on the team URL shows that SHA as `version` | `3318bf1c2a48…` at 13:41:50Z, before the run, and at 13:42:00Z, after it | done |
 | Our examples pass on the team URL | One run at 13:41:50Z (Fuglen), files from `3318bf1`: `our-co-speakers.hurl` 66/66 in 6.6 s. The earlier run at 13:27:33Z on `c43bbaf` passed the 36 requests of the file before `c8e30de`. | done |
-| The review agent found no open defect | | **waiting**: a spec review of the co-speakers code against `spec.md` |
+| The review agent found no open defect | Spec review by Carl Kristian's team announced before the claim, not seen by us. Our guardians reviewed PR #9 (co-speakers R11 and R12): Ferdinand, [`workflow/security-review.md`](../security-review.md), "OK to merge" for `7560729` and `3ca19dd`, and "nothing reopened" on `dfd57c9`; S15 (low): R12 `actingSpeakerId` is optional, so it is no access control. Fiffi reviewed PR #9 at `7560729` (in a message to The Hand; to be logged in `workflow/architecture-review.md`): "OK to merge, no code blocker". A scratch merge onto `3393575` conflicted only in `schema.sql`, and 545 tests were green on Java 17. It closes G2 (the status rule in `TalkStatus`) and G3 (a sealed `CoSpeakerChange`, no HTTP in the service). The R11 foreign keys are accepted, with D20 updated. Tidy after: G13 (7 positional `TalkStatus` parameters), and `CoSpeakerService.refusal` returns `Optional<CoSpeakerChange>`. | the spec review is not seen by us; both guardians found no blocker |
 | The base features still pass their examples | `ratings.hurl` from `3318bf1` 8/8 at 13:41:50Z. `speakers.hurl`, `talks.hurl`, `our-speakers.hurl` (18) and `our-ratings.hurl` passed on the same deploy at 13:39:51Z–13:40:45Z. | done |
 | No FAULTY check on the harness for this feature or the base features | `workflow/harness.sh feedback` at tick 133: all 20 checks OK (speakers 4, talks 6, ratings 5, acceptance 5), 550.05 points. The harness has no checks for co-speakers until it is claimed. | done for the claimed features |
 | Claim risk: response times on the team URL | Closed by `88e5d86` on `3318bf1`: in the 13:41:50Z run, an unfiltered `GET /talks` took 418 ms and `GET /talks?sort=rating` 284 ms (before: 12–17 s). | closed |
+
+| After the claim: the co-speakers checks on the harness | `workflow/harness.sh feedback` at tick 170: check-1 to check-3 not run yet (status `null`). | **waiting**: the first results; we watch them |
 
 When the person has claimed, copy the evidence into the claim log in `REVIEW.md` section 3.

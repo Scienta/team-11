@@ -26,15 +26,15 @@ An agent does the other steps.
 
    ```bash
    rm -rf target/junit-jupiter docs/specs
-   JAVA_HOME=$(/usr/libexec/java_home -v 17) ./mvnw test
-   JAVA_HOME=$(/usr/libexec/java_home -v 21) ./mvnw org.tabletest:tabletest-reporter-maven-plugin:report
+   JAVA_HOME=$(/usr/libexec/java_home -v 25) ./mvnw test
+   JAVA_HOME=$(/usr/libexec/java_home -v 25) ./mvnw org.tabletest:tabletest-reporter-maven-plugin:report
    workflow/po-status.sh
    ```
 7. **Review.** A review agent compares the diff with `spec.md`, row by row. It does not see our
    reasoning, only the spec and the code. See `workflow/review-rubric.md` items 1–7.
    Then a second session does the design review: it checks the code against our style, with
    `workflow/review-rubric.md` item 8. Fix each "before the claim" finding before step 10.
-8. **Deploy (person approves the push).** Push to `main`. Wait for the deploy workflow to go green.
+8. **Deploy (approved push).** A person approves each push, or The Hand approves it on the person's behalf when all of these hold: the push candidate is built on the current origin/main, the full suite is green, the security and architecture guardians report no blocker, and the pusher pushes by SHA and stops if origin/main moved. The Hand reports each such push to the person. Push to `main`. Wait for the deploy workflow to go green.
 9. **Verify on the deployed service.** Run `examples/run.sh https://fagsem-h2026-team-11.scienta.cloud`. Read the
    request log with `.github/fagdag/logs.sh` and the harness feedback with
    `workflow/harness.sh feedback`.

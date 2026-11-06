@@ -7,8 +7,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -60,7 +60,7 @@ class TalkListsTest {
         Scenario                         | Talk A       | Talk B    | Talk C    | Ranking?
         Different averages               | [3]          | [5]       | [4]       | [B, C, A]
         Same average, different counts   | [4]          | [4, 4]    | [4, 4, 4] | [C, B, A]
-        Same average only after rounding | [4, 4, 4, 5] | [4, 4, 5] | [5]       | [C, A, B]
+        Averages differ at 2 decimals    | [4, 4, 4, 5] | [4, 4, 5] | [5]       | [C, B, A]
         Same average and count           | [4]          | [4]       | [4]       | [A, B, C]
         Unrated talks                    | []           | [1]       | []        | [B, A, C]
         """)

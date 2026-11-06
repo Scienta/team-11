@@ -15,8 +15,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.stream.IntStream;
 import java.util.stream.StreamSupport;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -80,7 +80,7 @@ class CoSpeakersTest {
         R2: a third co-speaker          | [Ada, Bob]         | Cy                   | 409     | a talk has at most 2 co-speakers         | [Ada, Bob]
         R5: already a co-speaker        | [Ada]              | Ada                  | 200     |                                          | [Ada]
         R5: already one, at the limit   | [Ada, Bob]         | Bob                  | 200     |                                          | [Ada, Bob]
-        R3: the main speaker            | []                 | Main                 | 409     | "the main speaker can't be a co-speaker" | []
+        R3: the main speaker            | []                 | Main                 | 400     | "the main speaker can't be a co-speaker" | []
         R1: an unregistered speaker     | []                 | Nobody               | 404     | speaker not found                        | []
         No speaker has id 0 or below    | []                 | {0, -1}              | 404     | speaker not found                        | []
         Speaker id that is not a number | []                 | abc                  | 400     |                                          | []
@@ -95,18 +95,20 @@ class CoSpeakersTest {
 
     @DisplayName("R8: Removes a co-speaker, never the main speaker")
     @Description("""
-            Removing a registered speaker who is not a co-speaker changes nothing, so a double-click
-            on remove does not fail. A blank message is not checked.
+            Removing a registered speaker who is not a co-speaker, or no longer is one, gets 404 and
+            changes nothing: the harness check co-speakers/check-1 asks for it (tick 171). A blank
+            message is not checked.
             """)
     @TableTest("""
-        Scenario                        | Co-speakers before | Removed              | Status? | Message?                            | Co-speakers after?
-        A co-speaker                    | [Ada, Bob]         | Ada                  | 200     |                                     | [Bob]
-        Not a co-speaker                | [Ada]              | Bob                  | 200     |                                     | [Ada]
-        The main speaker                | [Ada]              | Main                 | 409     | "the main speaker can't be removed" | [Ada]
-        An unregistered speaker         | [Ada]              | Nobody               | 404     | speaker not found                   | [Ada]
-        No speaker has id 0 or below    | [Ada]              | {0, -1}              | 404     | speaker not found                   | [Ada]
-        Speaker id that is not a number | [Ada]              | abc                  | 400     |                                     | [Ada]
-        Speaker id past 64 bits         | [Ada]              | 99999999999999999999 | 400     |                                     | [Ada]
+        Scenario                        | Co-speakers before | Removed              | Status? | Message?                                     | Co-speakers after?
+        A co-speaker                    | [Ada, Bob]         | Ada                  | 200     |                                              | [Bob]
+        Not a co-speaker                | [Ada]              | Bob                  | 404     | this speaker is not a co-speaker of the talk | [Ada]
+        No longer a co-speaker          | []                 | Ada                  | 404     | this speaker is not a co-speaker of the talk | []
+        The main speaker                | [Ada]              | Main                 | 409     | "the main speaker can't be removed"          | [Ada]
+        An unregistered speaker         | [Ada]              | Nobody               | 404     | speaker not found                            | [Ada]
+        No speaker has id 0 or below    | [Ada]              | {0, -1}              | 404     | speaker not found                            | [Ada]
+        Speaker id that is not a number | [Ada]              | abc                  | 400     |                                              | [Ada]
+        Speaker id past 64 bits         | [Ada]              | 99999999999999999999 | 400     |                                              | [Ada]
         """)
     void removesACoSpeaker(List<String> before, String removed, int status, String message, List<String> after)
             throws Exception {
@@ -134,14 +136,14 @@ class CoSpeakersTest {
             :talk is the first talk's id and :main is Main's speaker id.
             """)
     @TableTest("""
-        Scenario                      | Path                                | Co-speakers? | Without co-speakers?
-        One talk                      | /talks/:talk                        | [Bob, Ada]   | []
-        All talks                     | /talks                              | [Bob, Ada]   | []
-        One speaker's talks           | /talks?speakerId=:main              | [Bob, Ada]   | []
-        The ranking                   | /talks?sort=rating                  | [Bob, Ada]   | []
-        One speaker's ranking         | /talks?speakerId=:main&sort=rating  | [Bob, Ada]   | []
-        The speaker's own talk list   | /speakers/:main/talks               | [Bob, Ada]   | []
-        Without withdrawn talks       | /talks?includeWithdrawn=false       | [Bob, Ada]   | []
+        Scenario                    | Path                               | Co-speakers? | Without co-speakers?
+        One talk                    | /talks/:talk                       | [Bob, Ada]   | []
+        All talks                   | /talks                             | [Bob, Ada]   | []
+        One speaker's talks         | /talks?speakerId=:main             | [Bob, Ada]   | []
+        The ranking                 | /talks?sort=rating                 | [Bob, Ada]   | []
+        One speaker's ranking       | /talks?speakerId=:main&sort=rating | [Bob, Ada]   | []
+        The speaker's own talk list | /speakers/:main/talks              | [Bob, Ada]   | []
+        Without withdrawn talks     | /talks?includeWithdrawn=false      | [Bob, Ada]   | []
         """)
     void showsTheCoSpeakersWhereverATalkIsShown(String path, List<String> coSpeakers, List<String> none)
             throws Exception {
@@ -215,19 +217,19 @@ class CoSpeakersTest {
     }
 
     @Test
-    @DisplayName("R7: A speaker with 3 talks of their own can still co-speak")
-    void aSpeakerAtTheLimitCanStillCoSpeak() throws Exception {
+    @DisplayName("R7: Refuses a co-speaker who has 3 talks of their own")
+    void refusesACoSpeakerWith3TalksOfTheirOwn() throws Exception {
         for (int i = 0; i < 3; i++) {
             submit(speakers.get("Ada"));
         }
-        assertEquals(200, send("PUT", coSpeakerPath("Ada"), null).statusCode());
+        assertAnswer(409, "this speaker already has 3 talks", send("PUT", coSpeakerPath("Ada"), null));
     }
 
     @Test
-    @DisplayName("R7: Co-speaking does not count towards the limit of 3")
-    void coSpeakingDoesNotCountTowardsTheLimit() throws Exception {
+    @DisplayName("R7: Counts co-speaking towards the limit of 3")
+    void countsCoSpeakingTowardsTheLimit() throws Exception {
         add(List.of("Ada"));
-        for (int i = 0; i < 3; i++) {
+        for (int i = 0; i < 2; i++) {
             assertEquals(201, send("POST", "/talks", talkBody(speakers.get("Ada"))).statusCode());
         }
         assertEquals(409, send("POST", "/talks", talkBody(speakers.get("Ada"))).statusCode());
@@ -300,19 +302,19 @@ class CoSpeakersTest {
             A blank message is not checked.
             """)
     @TableTest("""
-        Scenario                         | Request               | Acting               | Status? | Message?                                           | Co-speakers after?
-        No acting speaker, as before     | PUT Bob               |                      | 200     |                                                    | [Ada, Bob]
-        No acting speaker, as before     | DELETE Ada            |                      | 200     |                                                    | []
-        An empty value, as none          | PUT Bob               | ''                   | 200     |                                                    | [Ada, Bob]
-        An empty value, as none          | DELETE Ada            | ''                   | 200     |                                                    | []
-        The main speaker                 | PUT Bob               | Main                 | 200     |                                                    | [Ada, Bob]
-        The main speaker                 | DELETE Ada            | Main                 | 200     |                                                    | []
-        A co-speaker                     | {PUT Bob, DELETE Ada} | Ada                  | 403     | only the main speaker can change the co-speakers   | [Ada]
-        Another registered speaker       | {PUT Bob, DELETE Ada} | Cy                   | 403     | only the main speaker can change the co-speakers   | [Ada]
-        An unregistered speaker          | {PUT Bob, DELETE Ada} | Nobody               | 403     | only the main speaker can change the co-speakers   | [Ada]
-        No speaker has id 0 or below     | {PUT Bob, DELETE Ada} | {0, -1}              | 403     | only the main speaker can change the co-speakers   | [Ada]
-        Acting id that is not a number   | {PUT Bob, DELETE Ada} | {abc, 1.5}           | 400     |                                                    | [Ada]
-        Acting id past 64 bits           | {PUT Bob, DELETE Ada} | 99999999999999999999 | 400     |                                                    | [Ada]
+        Scenario                       | Request               | Acting               | Status? | Message?                                         | Co-speakers after?
+        No acting speaker, as before   | PUT Bob               |                      | 200     |                                                  | [Ada, Bob]
+        No acting speaker, as before   | DELETE Ada            |                      | 200     |                                                  | []
+        An empty value, as none        | PUT Bob               | ''                   | 200     |                                                  | [Ada, Bob]
+        An empty value, as none        | DELETE Ada            | ''                   | 200     |                                                  | []
+        The main speaker               | PUT Bob               | Main                 | 200     |                                                  | [Ada, Bob]
+        The main speaker               | DELETE Ada            | Main                 | 200     |                                                  | []
+        A co-speaker                   | {PUT Bob, DELETE Ada} | Ada                  | 403     | only the main speaker can change the co-speakers | [Ada]
+        Another registered speaker     | {PUT Bob, DELETE Ada} | Cy                   | 403     | only the main speaker can change the co-speakers | [Ada]
+        An unregistered speaker        | {PUT Bob, DELETE Ada} | Nobody               | 403     | only the main speaker can change the co-speakers | [Ada]
+        No speaker has id 0 or below   | {PUT Bob, DELETE Ada} | {0, -1}              | 403     | only the main speaker can change the co-speakers | [Ada]
+        Acting id that is not a number | {PUT Bob, DELETE Ada} | {abc, 1.5}           | 400     |                                                  | [Ada]
+        Acting id past 64 bits         | {PUT Bob, DELETE Ada} | 99999999999999999999 | 400     |                                                  | [Ada]
         """)
     void onlyTheMainSpeakerChangesTheCoSpeakers(String request, String acting, int status, String message,
                                                 List<String> after) throws Exception {
@@ -329,12 +331,12 @@ class CoSpeakersTest {
             exist. Acting is the actingSpeakerId query parameter.
             """)
     @TableTest("""
-        Scenario                           | Talk                  | Request                     | Acting | Status? | Message?
-        Unknown talk first                 | unknown               | {PUT Bob, DELETE Ada}       | Cy     | 404     | talk not found
-        Before an unregistered speaker     | SUBMITTED             | {PUT Nobody, DELETE Nobody} | Cy     | 403     | only the main speaker can change the co-speakers
-        Before the main speaker as target  | SUBMITTED             | {PUT Main, DELETE Main}     | Cy     | 403     | only the main speaker can change the co-speakers
-        Before the status                  | {WITHDRAWN, REJECTED} | {PUT Bob, DELETE Ada}       | Cy     | 403     | only the main speaker can change the co-speakers
-        The main speaker gets the status   | {WITHDRAWN, REJECTED} | {PUT Bob, DELETE Ada}       | Main   | 409     | "a withdrawn or rejected talk can't be changed"
+        Scenario                          | Talk                  | Request                     | Acting | Status? | Message?
+        Unknown talk first                | unknown               | {PUT Bob, DELETE Ada}       | Cy     | 404     | talk not found
+        Before an unregistered speaker    | SUBMITTED             | {PUT Nobody, DELETE Nobody} | Cy     | 403     | only the main speaker can change the co-speakers
+        Before the main speaker as target | SUBMITTED             | {PUT Main, DELETE Main}     | Cy     | 403     | only the main speaker can change the co-speakers
+        Before the status                 | {WITHDRAWN, REJECTED} | {PUT Bob, DELETE Ada}       | Cy     | 403     | only the main speaker can change the co-speakers
+        The main speaker gets the status  | {WITHDRAWN, REJECTED} | {PUT Bob, DELETE Ada}       | Main   | 409     | "a withdrawn or rejected talk can't be changed"
         """)
     void whoActsIsCheckedAfterTheTalkIsFound(String talkStatus, String request, String acting, int status,
                                              String message) throws Exception {
@@ -411,7 +413,7 @@ class CoSpeakersTest {
     }
 
     private static String lastFieldOf(JsonNode shown) {
-        List<String> names = StreamSupport.stream(((Iterable<String>) shown::fieldNames).spliterator(), false).toList();
+        List<String> names = List.copyOf(shown.propertyNames());
         return names.get(names.size() - 1);
     }
 

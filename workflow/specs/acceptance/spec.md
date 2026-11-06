@@ -15,7 +15,7 @@ on 2026-11-06.
 | R4 | The main speaker of a talk can withdraw it, also when it is `ACCEPTED`, but not when it is `REJECTED` or `WITHDRAWN`. Nobody else can withdraw it. A `WITHDRAWN` talk never changes again. |
 | R5 | The talk's current `status` shows wherever the talk is shown. |
 | R6 | A decision or withdrawal that is not allowed changes nothing. Two committee members who decide on the same talk at the same time never leave it in a state that R2–R4 forbid. |
-| R7 | A `WITHDRAWN` talk does not count towards the limit of 3 talks for each speaker. A `REJECTED` talk counts. |
+| R7 | A `WITHDRAWN` or `REJECTED` talk does not count towards the limit of 3 talks for each speaker. (Changed by the change request [submission-cap-cr](../submission-cap-cr/spec.md): before, a `REJECTED` talk counted.) |
 | R8 | Nobody can rate a talk that is `ACCEPTED`, `REJECTED` or `WITHDRAWN`. |
 | R9 | `GET /talks` and `GET /talks?sort=rating` show `WITHDRAWN` talks after all the other talks. A client can leave out the `WITHDRAWN` talks. |
 
@@ -128,14 +128,15 @@ One speaker has one talk with the status in the table. Each place shows that sta
 | `SUBMITTED` | `ACCEPTED` and `REJECTED` | one 200, one 409 | the decision that got 200 |
 | `SUBMITTED` | `REJECTED` and a withdrawal | one 200, one 409 | the status that got 200 |
 
-### R7: a withdrawn talk does not count towards the limit
+### R7: a withdrawn or rejected talk does not count towards the limit
 
 The speaker has 3 talks, and the third has the status in the table. Then the speaker submits a new talk.
+The `REJECTED` row changed with the change request submission-cap-cr ("change request overrides").
 
 | Status of the third talk | Max talks | Response |
 |--------------------------|-----------|----------|
-| `SUBMITTED`, `ACCEPTED`, `REJECTED`, `WAITLISTED` | 3 | 409 |
-| `WITHDRAWN` | 3 | 201 |
+| `SUBMITTED`, `ACCEPTED`, `WAITLISTED` | 3 | 409 |
+| `WITHDRAWN`, `REJECTED` | 3 | 201 |
 
 ### R8: ratings only for open talks
 

@@ -7,7 +7,8 @@ import java.util.Optional;
 
 /**
  * A time slot, the same in every room of the venue (scheduling R1), and which talks fit it (R4). No two slots
- * overlap, so "at the same time" means "in the same slot" (R6).
+ * overlap, so "at the same time" means "in the same slot" (R6). The slots are declared in the order of the day, so
+ * their natural order is the order of the programme (programme-export R2).
  */
 public enum Slot {
     S1(LocalTime.of(9, 0), LocalTime.of(10, 0), false),

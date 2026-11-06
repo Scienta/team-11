@@ -30,11 +30,23 @@ public sealed interface CoSpeakerChange {
     record Closed() implements Refusal {
     }
 
-    /** The speaker is the talk's main speaker, who can't be added or removed as a co-speaker (R3, R8). */
+    /** The request adds the talk's main speaker as a co-speaker, which the rules never allow (R3). */
+    record MainSpeakerAsCoSpeaker() implements Refusal {
+    }
+
+    /** The request removes the talk's main speaker, who can't be removed (R8). */
     record MainSpeaker() implements Refusal {
+    }
+
+    /** The speaker to remove is not a co-speaker of the talk, or no longer is one. */
+    record NotCoSpeaker() implements Refusal {
     }
 
     /** The talk already has the most co-speakers it can have (R2). */
     record Full(int coSpeakers) implements Refusal {
+    }
+
+    /** The speaker already has as many talks as the limit allows, as main speaker or co-speaker (submission-cap-cr R5). */
+    record SpeakerAtLimit(int talks) implements Refusal {
     }
 }

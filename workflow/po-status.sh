@@ -23,7 +23,7 @@ section_of() {
     ratings | ratings-*) echo Karakterer ;;
     acceptance) echo Godkjenning ;;
     workshop-registration) echo Workshoper ;;
-    programme-scheduling) echo Program ;;
+    programme-scheduling | programme-export | programme-export-*) echo Program ;;
     warm-up | warm-up-*) echo Oppstart ;;
     *) echo Annet ;;
   esac
@@ -38,6 +38,7 @@ feature_name() {
     co-speakers) echo Medforedragsholdere ;;
     workshop-registration) echo "Påmelding til workshop" ;;
     scheduling) echo Programplanlegging ;;
+    programme-export) echo Programeksport ;;
     spring-boot-4) echo "Teknisk oppgradering" ;;
     *) echo "$1" ;;
   esac

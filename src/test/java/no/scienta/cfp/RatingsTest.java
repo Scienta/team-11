@@ -8,8 +8,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -109,7 +109,7 @@ public class RatingsTest {
         assertEquals(ratingCount, shown.get("ratingCount").asInt());
     }
 
-    @DisplayName("R4: Shows the average score with one decimal, halves up")
+    @DisplayName("R4: Shows the average score with two decimals (ratings-cr R3)")
     @Description("""
             Each score comes from a different reviewer. The average and the count are read from
             GET /talks/{id}; the other talk responses carry the same two fields.
@@ -118,9 +118,9 @@ public class RatingsTest {
         Scenario                   | Scores       | Average Rating? | Rating Count?
         No ratings                 | []           |                 | 0
         Average with one decimal   | [4, 5]       | 4.5             | 2
-        Average with a second half | [4, 4, 4, 5] | 4.3             | 4
+        Average with two decimals  | [4, 4, 4, 5] | 4.25            | 4
         """)
-    void showsTheAverageScoreWithOneDecimal(List<Integer> scores, Double averageRating, int ratingCount)
+    void showsTheAverageScoreWithTwoDecimals(List<Integer> scores, Double averageRating, int ratingCount)
             throws Exception {
         rateByDifferentReviewers(scores);
         JsonNode shown = JSON.readTree(api.get("/talks/" + talk).body());

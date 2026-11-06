@@ -671,14 +671,14 @@ HTTP 201
 [Captures]
 rejected_third: jsonpath "$.id"
 
-# R7: the third talk is REJECTED, a fourth is 409
+# R7, submission-cap-cr R2: the third talk is REJECTED and no longer counts, so a fourth is 201
 PUT {{base_url}}/talks/{{rejected_third}}/status
 {"status": "REJECTED"}
 HTTP 200
 
 POST {{base_url}}/talks
 {"title": "One too many (rejected)", "format": "LIGHTNING_10", "level": "BEGINNER", "speakerId": {{granville}}}
-HTTP 409
+HTTP 201
 
 # ================================================================ R8: ratings only for open talks
 

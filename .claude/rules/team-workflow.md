@@ -2,6 +2,13 @@
 
 The steps from feature request to claim are in `workflow/process.md`. Follow them in order.
 
+## Questions and approvals
+
+- Send every question, status, blocker and request for approval (push, PO question, scope) to The
+  Hand, the coordinator session, with SendMessage. The person follows only The Hand's session.
+- Never ask the person in your own session, and never use the AskUserQuestion form. The Hand asks
+  the person in plain chat and sends you the answer.
+
 ## Specs
 
 - Save each feature request unchanged as `workflow/specs/<feature>/request.md`. Write our spec
@@ -19,7 +26,11 @@ The steps from feature request to claim are in `workflow/process.md`. Follow the
 - The legacy code has known traps: the README is out of date, and some comments and constants do not
   match the specs. The spec on the harness is the source of truth, not the code or its comments.
 - Keep each commit small enough to pass the tests on its own. Commit after the tests pass. Do not
-  push: a person approves each push, because a push deploys.
+  push yourself: a push deploys. A person approves each push, or The Hand (the coordinator session)
+  approves it on the person's behalf when all of these hold: the push candidate is built on the
+  current origin/main, the full suite is green, the security and architecture guardians report no
+  blocker, and the pusher pushes by SHA and stops if origin/main moved. The Hand reports each such
+  push to the person.
 - Stage files by path (`git add <path>`), never `git add -A`, `git add .` or `git commit -a`. More
   than one agent session can work in this working tree, and they share one git index. Run
   `git status --short` before each commit.
@@ -41,8 +52,8 @@ The steps from feature request to claim are in `workflow/process.md`. Follow the
   which tests did not run.
 - Run the Hurl examples with `examples/run.sh https://fagsem-h2026-team-11.scienta.cloud`. This
   works inside the sandbox.
-- The default local JDK is 27, but the service and the CI tests run Java 17. Run Maven and the app
-  with `JAVA_HOME=$(/usr/libexec/java_home -v 17)`. Date and number formats from the locale differ
+- The service and the CI tests run Java 25 (Spring Boot 4.1). Run Maven and the app
+  with `JAVA_HOME=$(/usr/libexec/java_home -v 25)`. Date and number formats from the locale differ
   between JDKs.
 - `docker compose` is not installed. Start the local database with
   `docker run -d --rm --name cfp-local -p 5432:5432 -e POSTGRES_DB=cfp -e POSTGRES_USER=cfp -e POSTGRES_PASSWORD=cfp postgres:16-alpine`.

@@ -28,24 +28,24 @@ public class CoSpeakerController {
     @PutMapping
     public TalkResponse add(@PathVariable Long id, @PathVariable Long speakerId,
                        @RequestParam Optional<Long> actingSpeakerId) {
-        return answer(service.add(id, speakerId, actingSpeakerId), "the main speaker can't be a co-speaker");
+        return answer(service.add(id, speakerId, actingSpeakerId));
     }
 
     @DeleteMapping
     public TalkResponse remove(@PathVariable Long id, @PathVariable Long speakerId,
                           @RequestParam Optional<Long> actingSpeakerId) {
-        return answer(service.remove(id, speakerId, actingSpeakerId), "the main speaker can't be removed");
+        return answer(service.remove(id, speakerId, actingSpeakerId));
     }
 
-    /** The changed talk, or the refusal as an error; the message for the main speaker depends on the request. */
-    private static TalkResponse answer(CoSpeakerChange change, String mainSpeakerMessage) {
+    /** The changed talk, or the refusal as an error. */
+    private static TalkResponse answer(CoSpeakerChange change) {
         if (change instanceof CoSpeakerChange.Refusal refused) {
-            throw refusal(refused, mainSpeakerMessage);
+            throw refusal(refused);
         }
         return ((CoSpeakerChange.Changed) change).talk();
     }
 
-    private static ResponseStatusException refusal(CoSpeakerChange.Refusal change, String mainSpeakerMessage) {
+    private static ResponseStatusException refusal(CoSpeakerChange.Refusal change) {
         if (change instanceof CoSpeakerChange.TalkNotFound) {
             return new ResponseStatusException(HttpStatus.NOT_FOUND, "talk not found");
         }
@@ -58,8 +58,18 @@ public class CoSpeakerController {
         if (change instanceof CoSpeakerChange.Closed) {
             return new ResponseStatusException(HttpStatus.CONFLICT, "a withdrawn or rejected talk can't be changed");
         }
+        if (change instanceof CoSpeakerChange.MainSpeakerAsCoSpeaker) {
+            return new ResponseStatusException(HttpStatus.BAD_REQUEST, "the main speaker can't be a co-speaker");
+        }
         if (change instanceof CoSpeakerChange.MainSpeaker) {
-            return new ResponseStatusException(HttpStatus.CONFLICT, mainSpeakerMessage);
+            return new ResponseStatusException(HttpStatus.CONFLICT, "the main speaker can't be removed");
+        }
+        if (change instanceof CoSpeakerChange.NotCoSpeaker) {
+            return new ResponseStatusException(HttpStatus.NOT_FOUND, "this speaker is not a co-speaker of the talk");
+        }
+        if (change instanceof CoSpeakerChange.SpeakerAtLimit atLimit) {
+            return new ResponseStatusException(HttpStatus.CONFLICT,
+                    "this speaker already has " + atLimit.talks() + " talks");
         }
         if (change instanceof CoSpeakerChange.Full full) {
             return new ResponseStatusException(HttpStatus.CONFLICT,

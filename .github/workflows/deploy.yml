@@ -17,6 +17,14 @@ name: deploy
 on:
   push:
     branches: [main]
+    # A push that only changes these files deploys nothing: a redeploy has a cold-start window
+    # where the harness can get a 502. A push with any other file still deploys all of it.
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - 'workflow/**'
+      - 'examples/**'
+      - '.claude/**'
   workflow_dispatch:
 
 # One deploy at a time; a newer push waits rather than cancelling a deploy halfway.
@@ -37,7 +45,7 @@ jobs:
       - uses: actions/setup-java@v5
         with:
           distribution: temurin
-          java-version: "17"
+          java-version: "25"
       - name: Cache ~/.m2
         uses: actions/cache@v4
         with:
@@ -48,19 +56,6 @@ jobs:
           restore-keys: m2-
       - name: Unit tests
         run: ./mvnw -B test
-      # The TableTest report shows failed rows too, so it is made even when a test fails.
-      - uses: actions/setup-java@v5
-        if: ${{ !cancelled() }}
-        with:
-          distribution: temurin
-          java-version: "21" # the report plugin needs 21; the tests above ran on 17
-      - name: TableTest report
-        if: ${{ !cancelled() }}
-        run: ./mvnw -B org.tabletest:tabletest-reporter-maven-plugin:report -Dtabletest.report.format=html -Dtabletest.report.outputDirectory=target/generated-docs/tabletest
-      - uses: actions/upload-pages-artifact@v3
-        if: ${{ !cancelled() }}
-        with:
-          path: target/generated-docs/tabletest
 
   deploy:
     needs: tests
@@ -107,18 +102,4 @@ jobs:
           echo "error_message: $(scw container container get "$SCW_CONTAINER_ID" -o json | jq -r '.error_message // "(none)"')" || true
           .github/fagdag/logs.sh --tail 200 --since "$ROLLOUT_STARTED_AT"
 
-  # Publishes the TableTest report on GitHub Pages for the product owners.
-  report:
-    needs: tests
-    if: ${{ !cancelled() }}
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    permissions:
-      pages: write
-      id-token: write
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - id: deployment
-        uses: actions/deploy-pages@v4
+  # The TableTest report for the product owners is in report.yml, outside the "deploy" group.

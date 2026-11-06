@@ -1,0 +1,62 @@
+# Publishes the TableTest report on GitHub Pages for the product owners.
+#
+# Separate from deploy.yml, so that the report does not hold the "deploy" concurrency group: a new
+# push waits only for the deploy and the tests of the push before it. This workflow runs the tests
+# on its own runner, makes the report even when a test fails (the report shows the failed rows), and
+# publishes it. It deploys nothing to the team URL.
+name: report
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Only the newest report matters: a newer push cancels an older report run.
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "25" # the same JDK as the build; the report plugin needs 21 or later
+      - name: Cache ~/.m2
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.m2/repository
+            ~/.m2/wrapper
+          key: m2-${{ hashFiles('**/pom.xml', '.mvn/wrapper/maven-wrapper.properties') }}
+          restore-keys: m2-
+      # A failed test must not stop the report; deploy.yml shows the test result.
+      - name: Unit tests
+        continue-on-error: true
+        run: ./mvnw -B test
+      - name: TableTest report
+        run: ./mvnw -B org.tabletest:tabletest-reporter-maven-plugin:report -Dtabletest.report.format=html -Dtabletest.report.outputDirectory=target/generated-docs/tabletest
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: target/generated-docs/tabletest
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

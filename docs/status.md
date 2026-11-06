@@ -1,10 +1,10 @@
 # Teststatus
 
-Laget 6. november 2026 kl. 15:18 fra versjon [2355a81](https://github.com/Scienta/team-11/commit/2355a811272b3e9dab7280fe69186c6ee430c0c6).
+Laget 6. november 2026 kl. 15:37 fra versjon [f7e311e](https://github.com/Scienta/team-11/commit/f7e311eea669dec94c82c8caf0a67647c617794c).
 
-✅ Våre tester: alle 83 regler er i orden (364 av 364 eksempler).
+✅ Våre tester: alle 88 regler er i orden (411 av 411 eksempler).
 
-❌ Arrangørenes kontroller: 2 av 33 er ikke i orden (Medforedragsholdere).
+⏳ Arrangørenes kontroller: 30 av 33 er i orden. 3 har ikke kjørt ennå (Karakterer, Medforedragsholdere).
 
 Hver linje er en regel vi tester. Et eksempel er ett konkret tilfelle av regelen.
 Arrangørenes kontroller sjekker tjenesten som kjører nå, og bare funksjoner vi har meldt ferdige.
@@ -26,13 +26,11 @@ Alle detaljer står i [testrapporten](specs/index.md).
 - ✅ **R4** Lengden på foredraget følger av formatet. Foredragsholderen velger den ikke. — 4 av 4 eksempler · [se eksemplene](specs/talks/r4-sets-the-duration-from-the-format.md)
 - ✅ **R5** Et foredrag har ett av de fire formatene: lyntale på 10 eller 20 minutter, presentasjon eller workshop. — 4 av 4 eksempler · [se eksemplene](specs/talks/r5-accepts-only-the-four-formats-in-capitals.md)
 - ✅ **R5** Et foredrag har ett av de tre nivåene: nybegynner, middels eller viderekommen. — 4 av 4 eksempler · [se eksemplene](specs/talks/r5-accepts-only-the-three-levels-in-capitals.md)
-- ✅ **R3, R5** Et foredrag som mangler noe, blir avvist, og svaret sier hva som mangler. — 6 av 6 eksempler · [se eksemplene](specs/talks/r3-r5-refuses-an-incomplete-talk-with-the-reason.md)
-- ✅ **R2, R8** Spør du etter et foredrag eller en foredragsholder som ikke finnes, får du svar om at det ikke finnes. — 2 av 2 eksempler · [se eksemplene](specs/talks/r2-r8-answers-404-for-a-talk-or-speaker-that-does-not-exist.md)
 - ✅ **R1, R2, R3, R5** Et foredrag kan ha høyst to medforedragsholdere. De må være registrert, og hovedforedragsholderen kan ikke være en av dem. — 10 av 10 eksempler · [se eksemplene](specs/co-speakers/r1-r2-r3-r5-adds-another-registered-speaker-at-most-two.md)
 - ✅ **R4** Alle foredrag viser medforedragsholderne i den rekkefølgen de ble lagt til. — 7 av 7 eksempler · [se eksemplene](specs/co-speakers/r4-shows-the-co-speakers-last-in-the-order-added-wherever-a-talk-is-shown.md)
 - ✅ **R4** Medforedragsholderne vises også når et foredrag blir godkjent, avvist, satt på venteliste eller trukket. — 2 av 2 eksempler · [se eksemplene](specs/co-speakers/r4-shows-the-co-speakers-in-the-answers-of-the-acceptance-endpoints.md)
 - ✅ **R6** En foredragsholders egen liste viser bare foredrag der hen er hovedforedragsholder. — 2 av 2 eksempler · [se eksemplene](specs/co-speakers/r6-a-co-speaker-s-own-talk-list-shows-only-their-own-talks.md)
-- ✅ **R8** En medforedragsholder kan fjernes igjen. Hovedforedragsholderen kan ikke fjernes. — 7 av 7 eksempler · [se eksemplene](specs/co-speakers/r8-removes-a-co-speaker-never-the-main-speaker.md)
+- ✅ **R8** En medforedragsholder kan fjernes igjen. Hovedforedragsholderen kan ikke fjernes. — 8 av 8 eksempler · [se eksemplene](specs/co-speakers/r8-removes-a-co-speaker-never-the-main-speaker.md)
 - ✅ **R9** Et foredrag som er trukket eller avvist, kan ikke få nye eller færre medforedragsholdere. — 2 av 2 eksempler · [se eksemplene](specs/co-speakers/r9-a-withdrawn-or-rejected-talk-can-t-be-changed.md)
 - ✅ Et ukjent foredrag gir en tydelig feilmelding. — 4 av 4 eksempler · [se eksemplene](specs/co-speakers/answers-404-for-an-unknown-talk-and-400-for-a-talk-id-that-is-not-a-number.md)
 - ✅ **R12** Når forespørselen sier hvem som gjør endringen, kan bare hovedforedragsholderen legge til eller fjerne medforedragsholdere. — 12 av 12 eksempler · [se eksemplene](specs/co-speakers/r12-only-the-main-speaker-changes-the-co-speakers-when-the-request-says-who-acts.md)
@@ -41,10 +39,13 @@ Alle detaljer står i [testrapporten](specs/index.md).
 ## Karakterer
 
 - ✅ **R1** Hver vurderer har et nummer. Vi tar bare imot gyldige numre. — 6 av 6 eksempler · [se eksemplene](specs/ratings/r1-accepts-a-reviewer-from-1-to-9223372036854775807.md)
-- ✅ **R1, R2** En ugyldig karakter blir avvist, og svaret sier hvorfor. — 6 av 6 eksempler · [se eksemplene](specs/ratings/r1-r2-refuses-a-rating-with-the-reason-before-it-looks-for-the-talk.md)
 - ✅ **R2** Karakteren er et helt tall fra 1 til 5. — 7 av 7 eksempler · [se eksemplene](specs/ratings/r2-accepts-only-a-whole-number-from-1-to-5-as-score.md)
 - ✅ **R3** Hver vurderer har én karakter per foredrag. Den siste karakteren gjelder. — 2 av 2 eksempler · [se eksemplene](specs/ratings/r3-keeps-one-rating-per-reviewer-the-latest-score.md)
-- ✅ **R4** Snittet vises med én desimal. En halv rundes opp. — 3 av 3 eksempler · [se eksemplene](specs/ratings/r4-shows-the-average-score-with-one-decimal-halves-up.md)
+- ✅ **R4** Snittet vises med to desimaler. — 3 av 3 eksempler · [se eksemplene](specs/ratings/r4-shows-the-average-score-with-two-decimals-ratings-cr-r3.md)
+- ✅ **R1, R2, R4, R6** Med 5 karakterer eller flere teller ikke den høyeste og den laveste, bare én av hver. Antallet teller alle. — 14 av 14 eksempler · [se eksemplene](specs/ratings-change-request/r1-r2-r4-r6-leaves-out-one-highest-and-one-lowest-score-from-5-ratings.md)
+- ✅ **R3** Snittet rundes av til to desimaler. Står det midt mellom, går det til det partallet som er nærmest (3,125 blir 3,12 og 3,375 blir 3,38). — 6 av 6 eksempler · [se eksemplene](specs/ratings-change-request/r3-rounds-the-exact-average-to-2-decimals-ties-to-even.md)
+- ✅ **R1, R2** En vurderer som gir ny karakter, teller én gang, med den siste karakteren. — 3 av 3 eksempler · [se eksemplene](specs/ratings-change-request/r1-r2-counts-a-reviewer-who-rates-again-once-with-the-latest-score.md)
+- ✅ **R5** Rangeringen går etter det avrundede snittet med to desimaler. — 6 av 6 eksempler · [se eksemplene](specs/ratings-change-request/r5-ranks-talks-by-the-rounded-average.md)
 - ✅ **R5** Listen viser alle foredrag med det eldste først, eller bare foredragene til én foredragsholder. — 4 av 4 eksempler · [se eksemplene](specs/ratings-talk-lists/r5-lists-all-talks-oldest-first-or-the-talks-of-one-speaker.md)
 - ✅ **R6** Rangeringen går etter snittet, så etter antall karakterer, så etter hvor gammelt foredraget er. — 5 av 5 eksempler · [se eksemplene](specs/ratings-talk-lists/r6-ranks-talks-by-shown-average-then-rating-count-then-age.md)
 - ✅ Listen er bare rangert når man ber om det. Ellers kommer det eldste foredraget først. — 4 av 4 eksempler · [se eksemplene](specs/ratings-talk-lists/ranks-talks-only-for-the-sort-order-rating.md)
@@ -111,8 +112,12 @@ Alle detaljer står i [testrapporten](specs/index.md).
 - ✅ E-postadresser skjules i loggen. — 7 av 7 eksempler · [se eksemplene](specs/request-log-filter-test/masks-each-email-in-the-logged-bodies.md)
 - ✅ Avmeldingskoder skjules i loggen. — 10 av 10 eksempler · [se eksemplene](specs/request-log-filter-test/masks-each-cancellation-token-in-the-logged-bodies.md)
 - ✅ Også en stor forespørsel blir logget raskt. — 4 av 4 eksempler · [se eksemplene](specs/request-log-filter-test/logs-a-large-body-in-a-short-time.md)
-- ✅ I eksporten til regneark blir en verdi som ligner en formel, lagret som tekst. — 6 av 6 eksempler · [se eksemplene](specs/csv-field-test/exports-a-value-that-starts-like-a-formula-as-text.md)
-- ✅ I eksporten til regneark får en verdi med semikolon eller linjeskift anførselstegn rundt seg. — 4 av 4 eksempler · [se eksemplene](specs/csv-field-test/quotes-a-value-with-a-semicolon-or-a-line-break.md)
-- ✅ I statistikken vises snittet av foredragenes snitt med én desimal. En halv rundes opp. — 4 av 4 eksempler · [se eksemplene](specs/reports/averages-the-talks-shown-averages-one-decimal-halves-up.md)
-- ✅ I statistikken vises samlet lengde på alle foredrag i hele timer. En halv time rundes opp. — 6 av 6 eksempler · [se eksemplene](specs/reports/counts-the-total-length-of-all-talks-in-whole-hours-rounded.md)
+- ✅ I eksporten til regneark blir en verdi som ligner en formel, lagret som tekst. — 6 av 6 eksempler · [se eksemplene](specs/utils-test/exports-a-value-that-starts-like-a-formula-as-text.md)
+- ✅ I eksporten til regneark får en verdi med semikolon eller linjeskift anførselstegn rundt seg. — 4 av 4 eksempler · [se eksemplene](specs/utils-test/quotes-a-value-with-a-semicolon-or-a-line-break.md)
 - ✅ Tjenesten avviser en forespørsel som er større enn 1 MB. — 3 av 3 eksempler · [se eksemplene](specs/request-limits/refuses-a-request-body-larger-than-1-mb.md)
+- ✅ **R1** Tjenesten kjører på Spring Boot 4 og Java 25. — 3 av 3 eksempler · [se eksemplene](specs/spring-boot-4-upgrade/r1-runs-on-spring-boot-4-and-java-25.md)
+- ✅ **R2** En nettadresse med skråstrek til slutt virker som uten, også etter oppgraderingen. — 13 av 13 eksempler · [se eksemplene](specs/spring-boot-4-upgrade/r2-answers-a-path-with-a-trailing-slash-like-the-path-without-it.md)
+- ✅ **R2** Feilsvar kommer som JSON i UTF-8, med de samme feltene som før. — 9 av 9 eksempler · [se eksemplene](specs/spring-boot-4-upgrade/r2-answers-every-error-as-json-in-utf-8-with-the-boot-error-body.md)
+- ✅ **R2** Grensen på 1 MB for en forespørsel gjelder også med skråstrek til slutt i nettadressen. — 3 av 3 eksempler · [se eksemplene](specs/spring-boot-4-upgrade/r2-limits-the-request-body-on-a-path-with-a-trailing-slash-too.md)
+- ✅ **R2** Tjenesten leser forespørsler like romslig som før oppgraderingen. — 5 av 5 eksempler · [se eksemplene](specs/spring-boot-4-upgrade/r2-reads-request-bodies-as-leniently-as-before.md)
+- ✅ **R2** En karakter må fortsatt være et helt tall. — 8 av 8 eksempler · [se eksemplene](specs/spring-boot-4-upgrade/r2-takes-only-a-json-whole-number-as-a-score.md)

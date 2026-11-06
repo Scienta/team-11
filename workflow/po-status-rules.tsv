@@ -18,7 +18,11 @@ ratings/r1-accepts-a-reviewer-from-1-to-9223372036854775807	Hver vurderer har et
 ratings/r1-r2-refuses-a-rating-with-the-reason-before-it-looks-for-the-talk	En ugyldig karakter blir avvist, og svaret sier hvorfor.
 ratings/r2-accepts-only-a-whole-number-from-1-to-5-as-score	Karakteren er et helt tall fra 1 til 5.
 ratings/r3-keeps-one-rating-per-reviewer-the-latest-score	Hver vurderer har én karakter per foredrag. Den siste karakteren gjelder.
-ratings/r4-shows-the-average-score-with-one-decimal-halves-up	Snittet vises med én desimal. En halv rundes opp.
+ratings/r4-shows-the-average-score-with-two-decimals-ratings-cr-r3	Snittet vises med to desimaler.
+ratings-change-request/r1-r2-r4-r6-leaves-out-one-highest-and-one-lowest-score-from-5-ratings	Med 5 karakterer eller flere teller ikke den høyeste og den laveste, bare én av hver. Antallet teller alle.
+ratings-change-request/r3-rounds-the-exact-average-to-2-decimals-ties-to-even	Snittet rundes av til to desimaler. Står det midt mellom, går det til det partallet som er nærmest (3,125 blir 3,12 og 3,375 blir 3,38).
+ratings-change-request/r1-r2-counts-a-reviewer-who-rates-again-once-with-the-latest-score	En vurderer som gir ny karakter, teller én gang, med den siste karakteren.
+ratings-change-request/r5-ranks-talks-by-the-rounded-average	Rangeringen går etter det avrundede snittet med to desimaler.
 ratings-talk-lists/r5-lists-all-talks-oldest-first-or-the-talks-of-one-speaker	Listen viser alle foredrag med det eldste først, eller bare foredragene til én foredragsholder.
 ratings-talk-lists/r6-ranks-talks-by-shown-average-then-rating-count-then-age	Rangeringen går etter snittet, så etter antall karakterer, så etter hvor gammelt foredraget er.
 ratings-talk-lists/ranks-talks-only-for-the-sort-order-rating	Listen er bare rangert når man ber om det. Ellers kommer det eldste foredraget først.
@@ -84,3 +88,18 @@ programme-scheduling/r5-keeps-one-talk-per-place-and-each-talk-once	Det er ett f
 programme-scheduling/r6-keeps-each-speaker-in-one-room-at-a-time	Ingen foredragsholder eller medforedragsholder skal være i to rom på samme tidspunkt.
 programme-scheduling/r7-leaves-the-programme-as-it-is-when-a-talk-changes	Når et foredrag endres etterpå, for eksempel trekkes, står programmet som før. Komiteen kan ta det ut.
 programme-scheduling/r8-keeps-the-rules-when-requests-come-at-the-same-time	Også når flere i komiteen endrer programmet samtidig, holder reglene.
+spring-boot-4-upgrade/r1-runs-on-spring-boot-4-and-java-25	Tjenesten kjører på Spring Boot 4 og Java 25.
+spring-boot-4-upgrade/r2-answers-a-path-with-a-trailing-slash-like-the-path-without-it	En nettadresse med skråstrek til slutt virker som uten, også etter oppgraderingen.
+spring-boot-4-upgrade/r2-answers-every-error-as-json-in-utf-8-with-the-boot-error-body	Feilsvar kommer som JSON i UTF-8, med de samme feltene som før.
+spring-boot-4-upgrade/r2-limits-the-request-body-on-a-path-with-a-trailing-slash-too	Grensen på 1 MB for en forespørsel gjelder også med skråstrek til slutt i nettadressen.
+spring-boot-4-upgrade/r2-reads-request-bodies-as-leniently-as-before	Tjenesten leser forespørsler like romslig som før oppgraderingen.
+spring-boot-4-upgrade/r2-takes-only-a-json-whole-number-as-a-score	En karakter må fortsatt være et helt tall.
+programme-export/r1-r2-r7-lists-only-the-talks-on-the-programme	Programmet kan hentes for nettsiden og som fil til trykkeriet. Begge viser bare foredragene som står på programmet, i samme rekkefølge.
+programme-export/r3-shows-each-talk-as-it-is-now	Hver linje viser tidspunkt, rom, tittel, format og foredragsholdere slik de er nå, også når foredraget er endret etter at det kom på programmet.
+programme-export/r4-names-the-main-speaker-then-the-co-speakers-as-added	Foredragsholderne står med navn: hovedforedragsholderen først, så medforedragsholderne i den rekkefølgen de ble lagt til.
+programme-export/r5-serves-each-view-in-its-own-type-whatever-the-client-asks-for	Filen til trykkeriet er alltid en CSV-fil, og nettsiden får alltid JSON, uansett hva den som spør ber om.
+programme-export/r5-r6-writes-a-stored-title-into-the-csv-as-the-print-shop-needs-it	Titler med æ, ø, å, komma, anførselstegn eller linjeskift kommer riktig fram i filen til trykkeriet.
+programme-export-the-csv-file/r5-r6-r7-writes-the-header-then-one-line-per-row	Filen til trykkeriet starter med en fast overskriftslinje, og har så én linje per foredrag. Et tomt program gir bare overskriften.
+programme-export-the-csv-file/r2-orders-the-rows-by-start-then-by-room	Programmet leses som en dag: det tidligste tidspunktet først, og på samme tidspunkt etter rom.
+programme-export-the-csv-file/r6-quotes-a-field-only-when-it-has-to	En verdi i filen står i anførselstegn bare når den må, for eksempel når den har et komma.
+programme-export-the-csv-file/r4-joins-the-speakers-with-a-semicolon-in-one-field	I filen står alle foredragsholderne i ett felt, skilt med semikolon.

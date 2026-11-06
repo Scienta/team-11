@@ -29,7 +29,7 @@ class TalkServiceTest {
         TalkForm form = form();
         form.title = " ";
         ResponseStatusException e = assertThrows(ResponseStatusException.class, () -> service.submitTalk(form));
-        assertEquals(HttpStatus.BAD_REQUEST, e.getStatus());
+        assertEquals(HttpStatus.BAD_REQUEST, e.getStatusCode());
     }
 
     @Test
@@ -37,14 +37,14 @@ class TalkServiceTest {
         TalkForm form = form();
         form.format = "KEYNOTE";
         ResponseStatusException e = assertThrows(ResponseStatusException.class, () -> service.submitTalk(form));
-        assertEquals(HttpStatus.BAD_REQUEST, e.getStatus());
+        assertEquals(HttpStatus.BAD_REQUEST, e.getStatusCode());
     }
 
     @Test
     void unknownSpeakerIsRejected() {
         when(speakerDao.exists(7L)).thenReturn(false);
         ResponseStatusException e = assertThrows(ResponseStatusException.class, () -> service.submitTalk(form()));
-        assertEquals(HttpStatus.BAD_REQUEST, e.getStatus());
+        assertEquals(HttpStatus.BAD_REQUEST, e.getStatusCode());
     }
 
     private TalkForm form() {

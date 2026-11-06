@@ -49,7 +49,14 @@ other's way, and give the person one place to look.
   says who the owner is.
 - Make reports, such as the TableTest report (`docs/specs/`), in a separate `git worktree` of
   `HEAD`. Then the report does not show uncommitted work from other sessions.
-- Pushes go through The Hand, and a person approves each push. A push deploys.
+- Pushes go through The Hand. A push deploys. A person approves each push, or The Hand approves it on
+  the person's behalf when all of these hold:
+  - the push candidate is built on the current `origin/main`;
+  - the full suite is green;
+  - the security and architecture guardians report no blocker;
+  - the pusher pushes by SHA and stops if `origin/main` moved.
+
+  The Hand reports each such push to the person. (The user's decision, 14:40.)
 - One push can carry the commits of several sessions.
 
 ## Independent checks
