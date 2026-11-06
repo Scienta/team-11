@@ -149,9 +149,9 @@ Frode showed byte-equal answers for 16 requests.
 
 | # | Finding | Refactoring | When | Status |
 |---|---------|-------------|------|--------|
-| G19 | `TalkListing`, a service, throws a 400 `ResponseStatusException` for an unknown sort, and `TalkListQuery.sort` is a `String` (P2, P3). | Replace Type Code with Enum `TalkOrder`, parsed by `TalkListQuery.parse` in the controller | tidy after | open: check again on `TalkService` after PR #8 |
-| G20 | The ranking in `TalkListing.orderedTalks` is a `for` loop with a hand-written comparator. | Replace Loop with Pipeline: `partitioningBy` and `Comparator.comparing(…).thenComparing(…)` | tidy after | open: check again on `TalkService` after PR #8 |
-| G21 | `TalkRatings.addTo` changes each `TalkDto`. | Make `TalkDto` a record (P5) | later | open: check again on `TalkService` after PR #8 |
+| G19 | `TalkListing`, a service, throws a 400 `ResponseStatusException` for an unknown sort, and `TalkListQuery.sort` is a `String` (P2, P3). | Replace Type Code with Enum `TalkOrder`, parsed by `TalkListQuery.parse` in the controller | tidy after | open: still in `TalkService` after PR #8 (400 for an unknown sort, two `listTalks` overloads with a flag) |
+| G20 | The ranking in `TalkListing.orderedTalks` is a `for` loop with a hand-written comparator. | Replace Loop with Pipeline: `partitioningBy` and `Comparator.comparing(…).thenComparing(…)` | tidy after | done in PR #8: a `RANKING` comparator with streams |
+| G21 | `TalkRatings.addTo` changes each `TalkDto`. | Make `TalkDto` a record (P5) | later | done in PR #8: `Talk` and `TalkResponse` are records |
 
 ### 2026-11-06: programme export `b700b6e` (guardian)
 
@@ -221,9 +221,24 @@ so there is no deadlock.
 that does not answer gets the same fixed 500 message. No blocker. For the Boot 4 rebase, keep
 `jakarta.servlet` in that file.
 
+### 2026-11-06: tech debt PR #8, merged as `7e03f8f` (guardian, after the merge)
+
+No blocker. Carl Kristian merged it before the review. The full suite at `7e03f8f` on Java 25: 734
+tests, 0 failures. The live `/health` reported `7e03f8f`, and `examples/run.sh` against the team URL
+passed 11 of 11 files (1023 requests).
+
+- `ConferenceService` is gone: `TalkService`, `SpeakerService`, `RatingService` and
+  `ConferenceStatistics` take its place (D1).
+- The ports keep the behaviour: the ratings-cr average is now `RatingSummary.of` (the trim from 5, 2
+  decimals, `HALF_EVEN`), `TalkDao.TALKS_THAT_COUNT` still counts co-speaker talks, `TalkLimit` stays,
+  and `DatabaseFailureAdvice` still handles `TransactionException`.
+- `TalkResponse` sets the JSON field order with `@JsonPropertyOrder`. The sealed outcomes and the
+  `TalkStatus` rule fields do not change.
+- G20 and G21 are done. G19 stays open. `TalkFormat` is now an enum (G12, in part): `Slot.fits`,
+  `WorkshopTalk` and `ProgrammeRow` still take the format as a `String`.
+
 ## Watch list
 
 - Spring Boot 4 (PR #5): after the merge, check that `report.yml`, when it lands, has Java 25 (fix 10).
-- PR #8: after the merge, check G19–G21 on `TalkService`.
 - Merges from Carl Kristian's laptop: check only the fit with P1–P8 and what our features rely on.
   Do not repeat his team's feature review.
