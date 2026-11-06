@@ -3,10 +3,11 @@ package no.scienta.cfp;
 import java.util.Optional;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * The committee's decisions on a talk and the speaker's withdrawal (Acceptance R1–R6). A refused change leaves the
- * talk as it was.
+ * talk as it was. Each change runs in one transaction, so it holds one database connection.
  */
 @Service
 public class AcceptanceService {
@@ -21,12 +22,14 @@ public class AcceptanceService {
         this.statusDao = statusDao;
     }
 
+    @Transactional
     public StatusChange decide(long talkId, Decision decision) {
         return findTalk(talkId)
                 .map(talk -> moveTo(talk, decision.status()))
                 .orElseGet(StatusChange.NotFound::new);
     }
 
+    @Transactional
     public StatusChange withdraw(long talkId, Withdrawal withdrawal) {
         return findTalk(talkId)
                 .map(talk -> withdrawFor(talk, withdrawal.speakerId()))
