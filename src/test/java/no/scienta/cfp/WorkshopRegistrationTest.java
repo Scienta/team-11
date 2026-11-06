@@ -27,6 +27,7 @@ import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.tabletest.junit.Description;
 import org.tabletest.junit.TableTest;
+import org.tabletest.junit.TypeConverter;
 
 /**
  * Registration for a workshop: who can register, for which workshops, how many, and the organisers' list. Runs the
@@ -35,7 +36,7 @@ import org.tabletest.junit.TableTest;
  */
 @DisplayName("Workshop registration")
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-class WorkshopRegistrationTest {
+public class WorkshopRegistrationTest {
 
     private static final ObjectMapper JSON = new ObjectMapper();
 
@@ -59,22 +60,41 @@ class WorkshopRegistrationTest {
 
     @DisplayName("R1: Registers an attendee only with a name and a real email")
     @Description("""
-            Each row registers for an accepted workshop. A blank cell sends JSON null. The email rule
-            is the same as for speakers.
+            Each row registers for an accepted workshop. A blank cell leaves the field out of the
+            body, and null sends JSON null. The email rule is the same as for speakers.
             """)
     @TableTest("""
         Scenario       | Name         | Email           | Status?
         Name and email | Ada Lovelace | ada@example.com | 201
         Empty name     | ''           | ada@example.com | 400
         Name of spaces | '   '        | ada@example.com | 400
+        Name is null   | null         | ada@example.com | 400
         No name        |              | ada@example.com | 400
         Not an email   | Ada Lovelace | not-an-email    | 400
         Empty email    | Ada Lovelace | ''              | 400
+        Email is null  | Ada Lovelace | null            | 400
         No email       | Ada Lovelace |                 | 400
         """)
-    void registersAnAttendeeOnlyWithANameAndARealEmail(String name, String email, int status) throws Exception {
+    void registersAnAttendeeOnlyWithANameAndARealEmail(JsonValue name, JsonValue email, int status) throws Exception {
         long workshop = talkWith("WORKSHOP", "ACCEPTED");
-        assertEquals(status, register(workshop, name, email).statusCode());
+        assertEquals(status, send("POST", registrationsPath(workshop), body(name, email)).join().statusCode());
+    }
+
+    @DisplayName("Answers 400 for a request it cannot use")
+    @Description("""
+            Each row submits and accepts one workshop first, which gets ID 1. A blank body sends no
+            body at all.
+            """)
+    @TableTest("""
+        Scenario                | Method      | Workshop ID | Body                                                   | Status?
+        No body                 | POST        | 1           |                                                        | 400
+        Body that is not JSON   | POST        | 1           | '{"name": "Ada Lovelace"'                              | 400
+        Body that is a list     | POST        | 1           | '[]'                                                   | 400
+        ID that is not a number | {POST, GET} | abc         | '{"name": "Ada Lovelace", "email": "ada@example.com"}' | 400
+        """)
+    void answers400ForARequestItCannotUse(String method, String workshopId, String body, int status) throws Exception {
+        talkWith("WORKSHOP", "ACCEPTED");
+        assertEquals(status, send(method, "/workshops/" + workshopId + "/registrations", body).join().statusCode());
     }
 
     @DisplayName("R2: Takes registrations only for a workshop")
@@ -300,6 +320,37 @@ class WorkshopRegistrationTest {
     private static String registration(String name, String email) {
         ObjectNode body = JSON.createObjectNode().put("name", name).put("email", email);
         return body.toString();
+    }
+
+    /** A value for one field of a JSON body: text, or JSON null. A field without a value is left out. */
+    record JsonValue(String text) {
+
+        boolean isNull() {
+            return text == null;
+        }
+    }
+
+    @TypeConverter
+    public static JsonValue parseJsonValue(String cell) {
+        return new JsonValue("null".equals(cell) ? null : cell);
+    }
+
+    private static String body(JsonValue name, JsonValue email) {
+        ObjectNode body = JSON.createObjectNode();
+        putIfPresent(body, "name", name);
+        putIfPresent(body, "email", email);
+        return body.toString();
+    }
+
+    private static void putIfPresent(ObjectNode body, String field, JsonValue value) {
+        if (value == null) {
+            return;
+        }
+        if (value.isNull()) {
+            body.putNull(field);
+        } else {
+            body.put(field, value.text());
+        }
     }
 
     private static String registrationsPath(long workshop) {
